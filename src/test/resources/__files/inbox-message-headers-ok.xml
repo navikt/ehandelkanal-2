@@ -1,0 +1,21 @@
+<inbox-query-response version="1.0">
+    <messages>
+        <message>
+            <self>http://localhost:20000/vefasrest/inbox/1</self>
+            <xml-document>http://localhost:20000/vefasrest/messages/1/xml-document</xml-document>
+            <message-meta-data>
+                <msg-no>1</msg-no>
+                <direction>IN</direction>
+                <received>2018-07-23T13:53:37.000+02:00</received>
+                <uuid>8fb0086e-efaa-4a70-bf2d-5b91870986e1</uuid>
+                <peppol-header>
+                    <sender>9908:810418052</sender>
+                    <receiver>9908:889640782</receiver>
+                    <channel>SREST</channel>
+                    <document-id>urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:www.cenbii.eu:transaction:biitrns010:ver2.0:extended:urn:www.peppol.eu:bis:peppol4a:ver2.0:extended:urn:www.difi.no:ehf:faktura:ver2.0::2.1</document-id>
+                    <process-id>urn:www.cenbii.eu:profile:bii04:ver2.0</process-id>
+                </peppol-header>
+            </message-meta-data>
+        </message>
+    </messages>
+</inbox-query-response>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StandardBusinessDocument xmlns="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader">
+    <StandardBusinessDocumentHeader>
+        <HeaderVersion>1.0</HeaderVersion>
+        <Sender>
+            <Identifier Authority="iso6523-actorid-upis">9908:810418052</Identifier>
+        </Sender>
+        <Receiver>
+            <Identifier Authority="iso6523-actorid-upis">9908:889640782</Identifier>
+        </Receiver>
+        <DocumentIdentification>
+            <Standard>urn:oasis:names:specification:ubl:schema:xsd:Catalogue-2</Standard>
+            <TypeVersion>2.1</TypeVersion>
+            <InstanceIdentifier>bc60b8b3-23a4-4427-ab98-d96a58044dea</InstanceIdentifier>
+            <Type>Catalogue</Type>
+            <CreationDateAndTime>2018-09-26T19:13:30.3304088+02:00</CreationDateAndTime>
+        </DocumentIdentification>
+        <BusinessScope>
+            <Scope>
+                <Type>DOCUMENTID</Type>
+                <InstanceIdentifier>urn:oasis:names:specification:ubl:schema:xsd:Catalogue-2::Catalogue##urn:www.cenbii.eu:transaction:biitrns019:ver2.0:extended:urn:www.peppol.eu:bis:peppol1a:ver2.0:extended:urn:www.difi.no:ehf:katalog:ver1.0::2.1</InstanceIdentifier>
+            </Scope>
+            <Scope>
+                <Type>PROCESSID</Type>
+                <InstanceIdentifier>urn:www.cenbii.eu:profile:bii01:ver2.0</InstanceIdentifier>
+            </Scope>
+        </BusinessScope>
+    </StandardBusinessDocumentHeader>
+    <Catalogue xmlns:sdt="urn:oasis:names:specification:ubl:schema:xsd:SpecializedDatatypes-2"
+               xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+               xmlns:a="urn:oasis:names:specification:ubl:schema:xsd:Catalogue-2"
+               xmlns:udt="urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+               xmlns="urn:oasis:names:specification:ubl:schema:xsd:Catalogue-2"
+               xmlns:ccts="urn:oasis:names:specification:ubl:schema:xsd:CoreComponentParameters-2">
+    </Catalogue>
+</StandardBusinessDocument>
