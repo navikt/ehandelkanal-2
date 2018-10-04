@@ -1,5 +1,6 @@
 package no.nav.ehandel.kanal
 
+import org.amshove.kluent.shouldBeEqualTo
 import java.io.File
 
 private class Utils
@@ -11,3 +12,9 @@ inline fun <reified T> String.getResource(): T {
         else -> throw Exception("Invalid return type")
     }
 }
+
+infix fun String.shouldBeXmlEqualTo(other: String) {
+    this.stripCharacters() shouldBeEqualTo other.stripCharacters()
+}
+
+private fun String.stripCharacters() = this.replace("[\n\r\t\\s+]".toRegex(), "")

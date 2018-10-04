@@ -9,7 +9,6 @@ import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.mock.MockEndpoint
 import org.apache.camel.impl.JndiRegistry
 import org.apache.camel.test.junit4.CamelTestSupport
-import org.assertj.core.api.Assertions
 import org.junit.Test
 
 class InboundSbdhRemoverTest : CamelTestSupport() {
@@ -25,7 +24,7 @@ class InboundSbdhRemoverTest : CamelTestSupport() {
         val input: String = "/inbound-catalogue-ok.xml".getResource()
         producer.sendBody(input)
         val exchange = result.assertExchangeReceived(0)
-        Assertions.assertThat(exchange.getBody<String>()).isXmlEqualTo("/inbound-catalogue-ok-sbdh-removed.xml".getResource<String>())
+        exchange.getBody<String>() shouldBeXmlEqualTo "/inbound-catalogue-ok-sbdh-removed.xml".getResource()
         result.assertIsSatisfied()
     }
 

@@ -4,11 +4,15 @@ import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_SENDER
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.CamelHeader.TRACE_ID
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
+import org.amshove.kluent.AnyException
+import org.amshove.kluent.shouldBeTrue
+import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldNotContain
+import org.amshove.kluent.shouldNotThrow
 import org.apache.camel.Exchange
 import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.DefaultExchange
-import org.assertj.core.api.Assertions
 import org.junit.Test
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -29,11 +33,11 @@ class InboundSbdhMetaDataExtractorTest {
         val exchange = document.createExchangeWithBody()
         InboundSbdhMetaDataExtractor.process(exchange)
 
-        Assertions.assertThat(exchange.getHeader<String>(EHF_DOCUMENT_SENDER)).isEqualTo(sender.substringAfter(":"))
-        Assertions.assertThat(exchange.getHeader<String>(EHF_DOCUMENT_TYPE)).isEqualTo(declaredDocumentType)
-        Assertions.assertThat(exchange.getHeader<String>(EHF_DOCUMENT_TYPE)).isEqualTo(actualDocumentType)
-        Assertions.assertThat(exchange.getHeader<String>(FILE_NAME)).isEqualTo("${creationDateAndTime.formattedTimestamp()}-$documentId.xml")
-        Assertions.assertThat(exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java)).isEqualTo(true)
+        exchange.getHeader<String>(EHF_DOCUMENT_SENDER) shouldEqual sender.substringAfter(":")
+        exchange.getHeader<String>(EHF_DOCUMENT_TYPE) shouldEqual declaredDocumentType
+        exchange.getHeader<String>(EHF_DOCUMENT_TYPE) shouldEqual actualDocumentType
+        exchange.getHeader<String>(FILE_NAME) shouldEqual "${creationDateAndTime.formattedTimestamp()}-$documentId.xml"
+        exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
     }
 
     @Test
@@ -47,51 +51,51 @@ class InboundSbdhMetaDataExtractorTest {
         val exchange = document.createExchangeWithBody()
         InboundSbdhMetaDataExtractor.process(exchange)
 
-        Assertions.assertThat(exchange.getHeader<String>(EHF_DOCUMENT_SENDER)).isEqualTo(sender.substringAfter(":"))
-        Assertions.assertThat(exchange.getHeader<String>(EHF_DOCUMENT_TYPE)).isEqualTo("Unknown")
-        Assertions.assertThat(exchange.getHeader<String>(FILE_NAME)).isEqualTo("${creationDateAndTime.formattedTimestamp()}-$documentId.xml")
-        Assertions.assertThat(exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java)).isEqualTo(true)
+        exchange.getHeader<String>(EHF_DOCUMENT_SENDER) shouldEqual sender.substringAfter(":")
+        exchange.getHeader<String>(EHF_DOCUMENT_TYPE) shouldEqual "Unknown"
+        exchange.getHeader<String>(FILE_NAME) shouldEqual "${creationDateAndTime.formattedTimestamp()}-$documentId.xml"
+        exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
     }
 
     @Test
     fun `SBD without whitespace between SBDH and document`() {
         val document = "/inbound-invoice-no-whitespace-sbd-document.xml".getResource<String>()
-        val exchange = document.createExchangeWithBody()
-        Assertions.assertThatCode { InboundSbdhMetaDataExtractor.process(exchange) }.doesNotThrowAnyException()
-        Assertions.assertThat(exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java)).isEqualTo(true)
+        val exchange = document.createExchangeWithBody();
+        { InboundSbdhMetaDataExtractor.process(exchange) } shouldNotThrow AnyException
+        exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
     }
 
     @Test
     fun `minified SBD (all in one line)`() {
         val document = "/inbound-invoice-minified.xml".getResource<String>()
-        val exchange = document.createExchangeWithBody()
-        Assertions.assertThatCode { InboundSbdhMetaDataExtractor.process(exchange) }.doesNotThrowAnyException()
-        Assertions.assertThat(exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java)).isEqualTo(true)
+        val exchange = document.createExchangeWithBody();
+        { InboundSbdhMetaDataExtractor.process(exchange) } shouldNotThrow AnyException
+        exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
     }
 
     @Test
     fun `SBDH with prefix on DocumentIdentifier UUID`() {
         val document = "/inbound-catalogue-special-uuid.xml".getResource<String>()
-        val exchange = document.createExchangeWithBody()
-        Assertions.assertThatCode { InboundSbdhMetaDataExtractor.process(exchange) }.doesNotThrowAnyException()
-        Assertions.assertThat(exchange.getHeader<String>(FILE_NAME)).doesNotContain(":")
-        Assertions.assertThat(exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java)).isEqualTo(true)
+        val exchange = document.createExchangeWithBody();
+        { InboundSbdhMetaDataExtractor.process(exchange) } shouldNotThrow AnyException
+        exchange.getHeader<String>(FILE_NAME) shouldNotContain ":"
+        exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
     }
 
     @Test
     fun `SBDH with different timestamp`() {
         val document = "/inbound-catalogue-different-timestamp.xml".getResource<String>()
-        val exchange = document.createExchangeWithBody()
-        Assertions.assertThatCode { InboundSbdhMetaDataExtractor.process(exchange) }.doesNotThrowAnyException()
-        Assertions.assertThat(exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java)).isEqualTo(true)
+        val exchange = document.createExchangeWithBody();
+        { InboundSbdhMetaDataExtractor.process(exchange) } shouldNotThrow AnyException
+        exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
     }
 
     @Test
     fun `SBDH with another different timestamp`() {
         val document = "/inbound-catalogue-different-timestamp-2.xml".getResource<String>()
-        val exchange = document.createExchangeWithBody()
-        Assertions.assertThatCode { InboundSbdhMetaDataExtractor.process(exchange) }.doesNotThrowAnyException()
-        Assertions.assertThat(exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java)).isEqualTo(true)
+        val exchange = document.createExchangeWithBody();
+        { InboundSbdhMetaDataExtractor.process(exchange) } shouldNotThrow AnyException
+        exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
     }
 
     private fun createDocumentFromTemplate(

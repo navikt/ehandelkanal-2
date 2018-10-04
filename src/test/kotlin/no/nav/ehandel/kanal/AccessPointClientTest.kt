@@ -19,9 +19,9 @@ import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder
 import com.nhaarman.mockitokotlin2.mock
 import no.nav.ehandel.kanal.CamelHeader.TRACE_ID
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
+import org.amshove.kluent.shouldEqualTo
 import org.apache.camel.Exchange
 import org.apache.camel.Message
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Test
@@ -65,7 +65,7 @@ class AccessPointClientTest {
 
         val count = vefaClient.getInboxCount()
         verifyRequest(getRequestedFor(urlEqualTo(url)), inboxApiKey)
-        assertThat(count).isEqualTo(10)
+        count shouldEqualTo 10
     }
 
     @Test
@@ -85,7 +85,7 @@ class AccessPointClientTest {
         )
         val body = vefaClient.getInboxMessageHeaders(exchange)
         verifyRequest(getRequestedFor(urlEqualTo(url)), inboxApiKey)
-        assertThat(body).isXmlEqualToContentOf("/__files/inbox-message-headers-ok.xml".getResource())
+        body shouldBeXmlEqualTo "/__files/inbox-message-headers-ok.xml".getResource()
     }
 
     @Test
@@ -105,7 +105,7 @@ class AccessPointClientTest {
         )
         val body = vefaClient.downloadMessagePayload(exchange, "1")
         verifyRequest(getRequestedFor(urlEqualTo(url)), messagesApiKey)
-        assertThat(body).isXmlEqualToContentOf("/__files/message-faktura-invoice-ok.xml".getResource())
+        body shouldBeXmlEqualTo "/__files/message-faktura-invoice-ok.xml".getResource()
     }
 
     @Test
@@ -125,7 +125,7 @@ class AccessPointClientTest {
         )
         val body = vefaClient.markMessageAsRead("1")
         verifyRequest(postRequestedFor(urlEqualTo(url)), inboxApiKey)
-        assertThat(body).isXmlEqualToContentOf("/__files/inbox-message-read-ok.xml".getResource())
+        body shouldBeXmlEqualTo "/__files/inbox-message-read-ok.xml".getResource()
     }
 
     // TODO: Add case for failing read (also in IT)
