@@ -37,4 +37,16 @@ object Metrics {
         .name("message_size_bytes")
         .help("Request size in bytes")
         .register()
+
+    val exhaustedDeliveriesLegalarchive: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("exhausted_deliveries_legalarchive")
+        .help("Number of exhausted deliveries to legal archive (file likely too large)")
+        .register()
+
+    val exhaustedDeliveriesErrorHandler: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("exhausted_deliveries_errorhandler")
+        .help("Number of exhausted deliveries in error handler (to manuellBehandling)")
+        .register()
 }

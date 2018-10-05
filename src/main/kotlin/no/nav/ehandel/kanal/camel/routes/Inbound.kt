@@ -6,6 +6,8 @@ import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.EbasysProps
 import no.nav.ehandel.kanal.FileAreaProps
+import no.nav.ehandel.kanal.Metrics.exhaustedDeliveriesErrorHandler
+import no.nav.ehandel.kanal.Metrics.exhaustedDeliveriesLegalarchive
 import no.nav.ehandel.kanal.Metrics.messageSize
 import no.nav.ehandel.kanal.Metrics.messagesFailed
 import no.nav.ehandel.kanal.Metrics.messagesSuccessful
@@ -65,6 +67,7 @@ object Inbound : RouteBuilder() {
                     LOGGER.error {
                         "Exhausted all attempts to deliver failed message to manuellBehandling - retrying on next poll"
                     }
+                    exhaustedDeliveriesErrorHandler.inc()
                 }
             .end()
             .to("log:no.nav.ehandel.kanal?level=ERROR&showCaughtException=true&showStackTrace=true&showBody=false&showBodyType=false")
@@ -93,7 +96,10 @@ object Inbound : RouteBuilder() {
                 .redeliveryDelay(1000)
                 .useExponentialBackOff()
                 .maximumRedeliveryDelay(10000)
-                .process { LOGGER.error { "Exhausted all attempts to log message to legal archive, continuing..." } }
+                .process {
+                    LOGGER.error { "Exhausted all attempts to log message to legal archive, continuing..." }
+                    exhaustedDeliveriesLegalarchive.inc()
+                }
                 .continued(true)
             .end()
             .process { LOGGER.info { "Processing inbound file" } }

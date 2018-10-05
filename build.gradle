@@ -8,9 +8,8 @@ buildscript {
     ext.difi_commons_sbdh_version = '0.9.5'
     ext.difi_peppol_sbdh_version = '1.1.0'
     ext.kotlin_logging_version = '1.6.10'
-    ext.jaxb_api_version = '2.3.0'
-    ext.jaxb_basics_runtime_version = '1.11.1'
-    ext.jaxb_version = '2.3.0.1'
+    ext.jaxb_api_version = '2.4.0-b180830.0359'
+    ext.jaxb_runtime_version = '2.4.0-b180830.0438'
     ext.ktor_version = '0.9.5'
     ext.logstash_version = '5.2'
     ext.logback_version = '1.2.3'
@@ -24,7 +23,7 @@ buildscript {
 
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.2.71'
-    id 'org.jmailen.kotlinter' version '1.19.0'
+    id 'org.jmailen.kotlinter' version '1.20.0'
     id 'com.github.ben-manes.versions' version '0.20.0'
     id 'application'
 }
@@ -32,7 +31,7 @@ plugins {
 mainClassName = 'no.nav.ehandel.kanal.EhandelBootstrapKt'
 
 group 'no.nav.integrasjon'
-version '1.0.21-SNAPSHOT'
+version '1.0.21'
 
 repositories {
     jcenter()
@@ -71,8 +70,7 @@ dependencies {
         "io.prometheus:simpleclient_common:$prometheus_version",
         "io.prometheus:simpleclient_hotspot:$prometheus_version",
         "com.sun.activation:javax.activation:$javax_activation_version",
-        "org.jvnet.jaxb2_commons:jaxb2-basics-runtime:$jaxb_basics_runtime_version",
-        "org.glassfish.jaxb:jaxb-runtime:$jaxb_version",
+        "org.glassfish.jaxb:jaxb-runtime:$jaxb_runtime_version",
         "javax.xml.bind:jaxb-api:$jaxb_api_version"
 
     testImplementation "org.amshove.kluent:kluent:$kluent_version",
@@ -81,7 +79,7 @@ dependencies {
         "com.nhaarman.mockitokotlin2:mockito-kotlin:$mockito_kotlin_version"
 
     testCompileOnly 'junit:junit:4.12'
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.1.0'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
 }
 
 compileKotlin {
