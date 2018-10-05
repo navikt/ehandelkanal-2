@@ -1,6 +1,7 @@
 package no.nav.ehandel.kanal.camel.routes
 
 import mu.KotlinLogging
+import no.nav.common.juridisklogg.client.LegalArchiveException
 import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.EbasysProps
@@ -14,7 +15,6 @@ import no.nav.ehandel.kanal.catalogueSizeLimit
 import no.nav.ehandel.kanal.getHeader
 import no.nav.ehandel.kanal.humanReadableByteCount
 import org.apache.camel.Exchange
-import org.apache.camel.LoggingLevel
 import org.apache.camel.builder.RouteBuilder
 
 private val LOGGER = KotlinLogging.logger { }
@@ -56,10 +56,24 @@ object Inbound : RouteBuilder() {
         // Errorhandler
         from(INBOUND_EHF_ERROR.uri).routeId(INBOUND_EHF_ERROR.id)
             .onException(Exception::class.java)
-                .continued(true)
+                .maximumRedeliveries(30)
+                .redeliveryDelay(1000)
+                .useExponentialBackOff()
+                .maximumRedeliveryDelay(10000)
+                .handled(true)
+                .process {
+                    LOGGER.error {
+                        "Exhausted all attempts to deliver failed message to manuellBehandling - retrying on next poll"
+                    }
+                }
             .end()
             .to("log:no.nav.ehandel.kanal?level=ERROR&showCaughtException=true&showStackTrace=true&showBody=false&showBodyType=false")
-            .process { LOGGER.error(it.exception) { "Failed delivery of incoming EHF (msgNo ${it.getHeader<String>(CamelHeader.MSG_NO)}" } }
+            .process {
+                LOGGER.error {
+                    "Failed delivery of incoming EHF (msgNo ${it.getHeader<String>(CamelHeader.MSG_NO)}) " +
+                    "- attempting to deliver file to manuellBehandling"
+                }
+            }
             .to(ebasysInboundUnknownFiles)
             .process {
                 LOGGER.info { "File transferred to EBASYS (manuellBehandling)" }
@@ -70,10 +84,18 @@ object Inbound : RouteBuilder() {
         // Main Route
         from(INBOUND_EHF.uri).routeId(INBOUND_EHF.id)
             .errorHandler(deadLetterChannel(INBOUND_EHF_ERROR.uri)
-                .maximumRedeliveries(5)
+                .maximumRedeliveries(30)
                 .redeliveryDelay(1000)
-                .maximumRedeliveryDelay(5000)
-                .retryAttemptedLogLevel(LoggingLevel.DEBUG))
+                .useExponentialBackOff()
+                .maximumRedeliveryDelay(10000))
+            .onException(LegalArchiveException::class.java)
+                .maximumRedeliveries(30)
+                .redeliveryDelay(1000)
+                .useExponentialBackOff()
+                .maximumRedeliveryDelay(10000)
+                .process { LOGGER.error { "Exhausted all attempts to log message to legal archive, continuing..." } }
+                .continued(true)
+            .end()
             .process { LOGGER.info { "Processing inbound file" } }
             .to(INBOUND_SBDH_EXTRACTOR)
             .process { LOGGER.info { "SBDH removed" } }
