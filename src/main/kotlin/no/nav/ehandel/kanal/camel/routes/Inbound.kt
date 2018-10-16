@@ -102,14 +102,20 @@ object Inbound : RouteBuilder() {
                 }
                 .continued(true)
             .end()
-            .process { LOGGER.info { "Processing inbound file" } }
+            .setHeader(Exchange.FILE_LENGTH, simple("\${body.length()}"))
+            .process {
+                LOGGER.info { "Processing inbound file" }
+                it.getHeader<Long>(Exchange.FILE_LENGTH).let { size ->
+                    LOGGER.info { "Size before SBDH removal: ${size.humanReadableByteCount()}" }
+                }
+            }
             .to(INBOUND_SBDH_EXTRACTOR)
             .process { LOGGER.info { "SBDH removed" } }
             .setHeader(Exchange.FILE_LENGTH, simple("\${body.length()}"))
             .process {
                 it.getHeader<Long>(Exchange.FILE_LENGTH).let { size ->
                     messageSize.observe(size.toDouble())
-                    LOGGER.info { "Size: ${size.humanReadableByteCount()}" }
+                    LOGGER.info { "Size after SBDH removal: ${size.humanReadableByteCount()}" }
                 }
             }
             .choice() // Content based routing
