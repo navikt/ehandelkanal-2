@@ -31,7 +31,8 @@ val INBOUND_EHF_ERROR = RouteId("inboundEhfError", "direct:inboundEhfError")
 private val ebasysInbound = "${EbasysProps.url}?username=${EbasysProps.username}&password=${EbasysProps.password}" +
     "&binary=true&throwExceptionOnConnectFailed=true&tempFileName=\$simple{file:name}.inprogress&passiveMode=true"
 private val ebasysInboundUnknownFiles = "${EbasysProps.url}/${EbasysProps.unknownFileDirectory}?username=${EbasysProps.username}" +
-    "&password=${EbasysProps.password}&binary=true&throwExceptionOnConnectFailed=true&tempFileName=\$simple{file:name}.inprogress&passiveMode=true"
+    "&password=${EbasysProps.password}&binary=true&throwExceptionOnConnectFailed=true" +
+    "&tempFileName=\$simple{file:name}.inprogress&passiveMode=true&timeout=300000"
 private val fileAreaInboundLargeCatalogues = "${FileAreaProps.eFaktura}/katalog" // TODO: Tilgang til filomraadet
 private val mqInbound = "jms:queue:${QueueProps.inName}?connectionFactory=#mqConnectionFactory"
 
