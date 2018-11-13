@@ -71,10 +71,12 @@ dependencies {
         "org.glassfish.jaxb:jaxb-runtime:$jaxb_runtime_version",
         "javax.xml.bind:jaxb-api:$jaxb_api_version"
 
-    testImplementation "org.amshove.kluent:kluent:$kluent_version",
-        "org.apache.camel:camel-test:$camel_version",
+    testImplementation "org.apache.camel:camel-test:$camel_version",
         "com.github.tomakehurst:wiremock:$wiremock_version",
         "com.nhaarman.mockitokotlin2:mockito-kotlin:$mockito_kotlin_version"
+    testImplementation("org.amshove.kluent:kluent:$kluent_version") {
+        exclude group: 'com.nhaarman', module: 'mockito-kotlin-kt'
+    }
 
     testCompileOnly 'junit:junit:4.12'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
