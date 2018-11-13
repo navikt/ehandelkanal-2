@@ -47,8 +47,6 @@ test {
     }
 }
 
-kotlin { experimental { coroutines "enable"} }
-
 dependencies {
     implementation "org.http4k:http4k-core:$http4k_version",
         "org.http4k:http4k-server-apache:$http4k_version",
