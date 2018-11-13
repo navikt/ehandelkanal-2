@@ -11,7 +11,7 @@ import io.ktor.client.response.readText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.AccessPointProps
 import no.nav.ehandel.kanal.getBody

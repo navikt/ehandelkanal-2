@@ -1,6 +1,6 @@
 package no.nav.ehandel.kanal.legalarchive
 
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.common.juridisklogg.client.ArchiveRequest
 import no.nav.common.juridisklogg.client.RestArchiver
