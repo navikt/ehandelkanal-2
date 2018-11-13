@@ -66,9 +66,11 @@ object AccessPoint : RouteBuilder() {
         // Separate route for marking message as read with redelivery in case of failures to prevent reprocessing a message
         from(ACCESS_POINT_READ.uri).routeId(ACCESS_POINT_READ.id)
             .errorHandler(defaultErrorHandler().logHandled(true)
-                .maximumRedeliveries(10)
-                .redeliveryDelay(1000)
-                .retryAttemptedLogLevel(LoggingLevel.WARN)
+                .retryAttemptedLogLevel(LoggingLevel.ERROR)
+                .maximumRedeliveries(300)
+                .redeliveryDelay(5000)
+                .useExponentialBackOff()
+                .maximumRedeliveryDelay(300000)
             )
             .to("$ACCESS_POINT_CLIENT?method=markMessageAsRead(\${header.MSG_NO})")
             .process { MDC.clear() }
