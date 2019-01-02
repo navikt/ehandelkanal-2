@@ -155,6 +155,19 @@ class InboundIT {
         assertMockEndpointsSatisfied()
     }
 
+    @Test
+    fun `valid invoice with ISO-8859-1 encoding`() {
+        setUpStubs("message-faktura-invoice-iso8859-1-ok.xml")
+        setUpInboundValidExpectations()
+        ebasys.run {
+            expectedMessageCount(1) // Expect that message is sent to Ebasys
+            expectedHeaderReceived(LEGAL_ARCHIVE_CAMEL_HEADER, 1) // Expect that the message has legal archive header set
+        }
+        NotifyBuilder(camelContext).wereSentTo(ACCESS_POINT_READ.uri).whenExactlyCompleted(1).create().matches(3, TimeUnit.SECONDS)
+        verify(exactly(1), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
+        assertMockEndpointsSatisfied()
+    }
+
     private fun assertMockEndpointsSatisfied() {
         mockEndpoints.map { it.assertIsSatisfied() }
     }

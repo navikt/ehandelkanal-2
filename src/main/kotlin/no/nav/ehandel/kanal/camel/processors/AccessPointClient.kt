@@ -7,6 +7,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.url
 import io.ktor.client.response.HttpResponse
+import io.ktor.client.response.readBytes
 import io.ktor.client.response.readText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -61,11 +62,11 @@ object AccessPointClient : Processor {
     fun downloadMessagePayload(exchange: Exchange, msgNo: String): String =
         runBlocking {
             InboundLogger.downloadInboundMessage(exchange, msgNo)
-            httpClient.get<String> {
+            httpClient.get<HttpResponse> {
                 url("${AccessPointProps.messages.url}/$msgNo/xml-document")
                 header(AccessPointProps.messages.header, AccessPointProps.messages.apiKey)
                 header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
-            }
+            }.readBytes().toString(Charsets.UTF_8)
         }
 
     fun markMessageAsRead(msgNo: String): String = runBlocking {
