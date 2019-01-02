@@ -25,6 +25,7 @@ val httpClient: HttpClient = HttpClient(Apache) {
         socketTimeout = 30_000
         connectTimeout = 30_000
         connectionRequestTimeout = 30_000
+        response.defaultCharset = Charsets.UTF_8
     }
 }
 
