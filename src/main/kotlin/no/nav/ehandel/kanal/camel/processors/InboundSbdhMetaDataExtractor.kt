@@ -41,7 +41,6 @@ object InboundSbdhMetaDataExtractor : Processor {
                     exchange.getIn().body = outputStream.toString(reader.encoding)
                 }
             }
-            println(exchange.getBody<String>())
             LOGGER.debug { "Exchange body contains XML. Setting exchangeproperty '$CAMEL_XML_PROPERTY' to true." }
             exchange.setProperty(CAMEL_XML_PROPERTY, "true")
             messagesReceived.labels(exchange.getHeader(EHF_DOCUMENT_TYPE)).inc()

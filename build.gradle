@@ -32,7 +32,7 @@ plugins {
 mainClassName = 'no.nav.ehandel.kanal.EhandelBootstrapKt'
 
 group 'no.nav.integrasjon'
-version '1.0.32'
+version '1.0.33'
 
 repositories {
     jcenter()
