@@ -33,7 +33,7 @@ pipeline {
         }
         stage('extract application files') {
             steps {
-                sh './gradlew installDist'
+                sh './gradlew shadowJar'
             }
         }
         stage('push docker image') {
@@ -65,7 +65,6 @@ pipeline {
             postProcess action: 'always'
             junit '**/build/test-results/test/*.xml'
             archiveArtifacts artifacts: '**/build/libs/*', allowEmptyArchive: true
-            archiveArtifacts artifacts: '**/build/install/*', allowEmptyArchive: true
         }
         success {
             postProcess action: 'success'
