@@ -1,6 +1,5 @@
 package no.nav.ehandel.kanal.camel.processors
 
-import io.ktor.util.toLocalDateTime
 import mu.KotlinLogging
 import no.difi.vefa.peppol.common.model.Header
 import no.difi.vefa.peppol.sbdh.SbdReader
@@ -15,6 +14,7 @@ import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.Processor
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.xml.stream.XMLOutputFactory
 import javax.xml.stream.XMLStreamConstants
@@ -34,10 +34,10 @@ object InboundSbdhMetaDataExtractor : Processor {
                 extractSbdhMetadata(exchange, sbdReader.header, reader.localName)
 
                 ByteArrayOutputStream().use { outputStream ->
-                    val xmlStreamWriter = XMLOutputFactory.newFactory()
-                        .createXMLStreamWriter(outputStream, reader.encoding)
-                    copy(reader, xmlStreamWriter)
-                    xmlStreamWriter.close()
+                    XMLOutputFactory.newFactory().createXMLStreamWriter(outputStream, reader.encoding).run {
+                        copy(reader, this)
+                        close()
+                    }
                     exchange.getIn().body = outputStream.toString(reader.encoding)
                 }
             }
@@ -49,13 +49,14 @@ object InboundSbdhMetaDataExtractor : Processor {
             LOGGER.error(e) { "Error occurred during parsing of exchange body" }
             LOGGER.debug { "Exchange body probably does not contain XML. Setting exchangeproperty '$CAMEL_XML_PROPERTY' to false." }
             exchange.setProperty(CAMEL_XML_PROPERTY, "false")
+            exchange.getIn().setHeader(EHF_DOCUMENT_TYPE, "Unknown")
         }
     }
 
     private fun extractSbdhMetadata(exchange: Exchange, header: Header, documentType: String) {
         val documentId = header.identifier.identifier.substringAfterLast(":")
         val creationDateAndTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS")
-            .format(header.creationTimestamp.toLocalDateTime())
+            .format(header.creationTimestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime())
         val sender = header.sender.identifier.substringAfterLast(":")
         val declaredDocumentType = header.instanceType.type
 
@@ -79,18 +80,17 @@ object InboundSbdhMetaDataExtractor : Processor {
                 XMLStreamConstants.END_DOCUMENT -> writer.writeEndDocument()
                 XMLStreamConstants.START_ELEMENT -> {
                     writer.writeStartElement(reader.prefix, reader.localName, reader.namespaceURI)
-
-                    for (i in 0 until reader.namespaceCount)
+                    repeat(reader.namespaceCount) { i ->
                         writer.writeNamespace(reader.getNamespacePrefix(i), reader.getNamespaceURI(i))
-                    for (i in 0 until reader.attributeCount) {
-                        val prefix = reader.getAttributePrefix(i)
-                        if (prefix == null || "" == prefix)
-                            writer.writeAttribute(reader.getAttributeLocalName(i), reader.getAttributeValue(i))
-                        else
-                            writer.writeAttribute(
+                    }
+                    repeat(reader.attributeCount) { i ->
+                        when (val prefix = reader.getAttributePrefix(i)) {
+                            null, "" -> writer.writeAttribute(reader.getAttributeLocalName(i), reader.getAttributeValue(i))
+                            else -> writer.writeAttribute(
                                 prefix, reader.getAttributeNamespace(i),
                                 reader.getAttributeLocalName(i), reader.getAttributeValue(i)
                             )
+                        }
                     }
                 }
                 XMLStreamConstants.END_ELEMENT -> writer.writeEndElement()
