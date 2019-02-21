@@ -57,7 +57,7 @@ object AccessPoint : RouteBuilder() {
             .end()
             .setHeader(CamelHeader.TRACE_ID, xpath("/message/message-meta-data/uuid/text()", String::class.java))
             .setHeader(CamelHeader.MSG_NO, xpath("/message/message-meta-data/msg-no/text()", String::class.java))
-            .process { it -> MDC.put("callId", it.getHeader(CamelHeader.TRACE_ID)) }
+            .process { MDC.put("callId", it.getHeader(CamelHeader.TRACE_ID)) }
             .to("$ACCESS_POINT_CLIENT?method=downloadMessagePayload(*, \${header.MSG_NO})")
             .process { messagesReceivedTotal.inc() }
             .to(INBOUND_EHF.uri)
