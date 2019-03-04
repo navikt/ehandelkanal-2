@@ -14,6 +14,7 @@ import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.Processor
 import org.joda.time.DateTime
 import org.joda.time.LocalDateTime
+import java.io.InputStream
 import javax.xml.bind.JAXB
 
 private val LOGGER = KotlinLogging.logger { }
@@ -34,7 +35,7 @@ object InboundDataExtractor : Processor {
     private fun extractCsvValues(exchange: Exchange): CsvValues? =
         when (val documentType = DocumentType.valueOfOrDefault(exchange.getHeader(EHF_DOCUMENT_TYPE))) {
             DocumentType.Invoice -> {
-                JAXB.unmarshal(exchange.getBody<String>(), InvoiceType::class.java).let { invoice ->
+                JAXB.unmarshal(exchange.getBody<InputStream>(), InvoiceType::class.java).let { invoice ->
                     CsvValues(
                         fileName = exchange.getHeader(FILE_NAME),
                         type = documentType,
@@ -49,7 +50,7 @@ object InboundDataExtractor : Processor {
                 }
             }
             DocumentType.CreditNote -> {
-                JAXB.unmarshal(exchange.getBody<String>(), CreditNoteType::class.java).let { creditNote ->
+                JAXB.unmarshal(exchange.getBody<InputStream>(), CreditNoteType::class.java).let { creditNote ->
                     CsvValues(
                         fileName = exchange.getHeader(FILE_NAME),
                         type = documentType,
