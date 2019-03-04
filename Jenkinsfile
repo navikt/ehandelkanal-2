@@ -12,6 +12,7 @@ pipeline {
         APPLICATION_NAME = 'ehandelkanal-2'
         DOCKER_SLUG = 'integrasjon'
         FASIT_ENVIRONMENT = 'q1'
+        KUBECONFIG = 'kubeconfig'
     }
 
     stages {
@@ -41,21 +42,15 @@ pipeline {
                 dockerUtils action: 'createPushImage'
             }
         }
-        stage('validate & upload nais.yaml to nexus m2internal') {
-            steps {
-                nais action: 'validate'
-                nais action: 'upload'
-            }
-        }
         stage('deploy to preprod') {
             steps {
-                deployApp action: 'jiraPreprod'
+                deployApp action: 'kubectlDeploy', cluster: 'preprod-fss', placeholderFile: "config-preprod.env"
             }
         }
         stage('deploy to production') {
             when { environment name: 'DEPLOY_TO', value: 'production' }
             steps {
-                deployApp action: 'jiraProd'
+                deployApp action: 'kubectlDeploy', cluster: 'prod-fss', placeholderFile: "config-prod.env"
                 githubStatus action: 'tagRelease'
             }
         }

@@ -16,6 +16,7 @@ private val LOGGER = KotlinLogging.logger { }
 private val threadPool = Executors.newFixedThreadPool(6)
 
 const val ACCESS_POINT_CLIENT = "bean:accessPointClient"
+const val INBOUND_DATA_EXTRACTOR = "bean:inboundDataExtractor"
 
 val INBOX_QUEUE = RouteId("inboxQueue", "direct:inboxQueue")
 val INBOX_POLLER = RouteId("inboxPoller", "timer://inboxpoller?period=10s")
@@ -62,6 +63,8 @@ object AccessPoint : RouteBuilder() {
             .process { messagesReceivedTotal.inc() }
             .to(INBOUND_EHF.uri)
             .to(ACCESS_POINT_READ.uri)
+            .to(INBOUND_DATA_EXTRACTOR)
+            .process { MDC.clear() }
 
         // Separate route for marking message as read with redelivery in case of failures to prevent reprocessing a message
         from(ACCESS_POINT_READ.uri).routeId(ACCESS_POINT_READ.id)
@@ -73,6 +76,5 @@ object AccessPoint : RouteBuilder() {
                 .maximumRedeliveryDelay(300000)
             )
             .to("$ACCESS_POINT_CLIENT?method=markMessageAsRead(\${header.MSG_NO})")
-            .process { MDC.clear() }
     }
 }

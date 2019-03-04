@@ -4,21 +4,22 @@ import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.ConfigurationProperties.Companion.systemProperties
 import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
-import com.natpryce.konfig.Misconfiguration
 import com.natpryce.konfig.intType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
-import java.util.Properties
+import java.io.File
 
-val config = systemProperties() overriding
-    EnvironmentVariables() overriding
-    ConfigurationProperties.fromResourceAsStream("application.properties")
+private const val VAULT_APPLICATION_PROPERTIES_PATH = "/var/run/secrets/nais.io/vault/application.properties"
 
-private fun ConfigurationProperties.Companion.fromResourceAsStream(resourceName: String): ConfigurationProperties {
-    val input = this::class.java.classLoader.getResourceAsStream(resourceName)
-    return (input ?: throw Misconfiguration("resource $resourceName not found")).use {
-        ConfigurationProperties(Properties().apply { load(input) })
-    }
+val config = if (System.getenv("APP_PROFILE") == "remote") {
+    systemProperties() overriding
+        EnvironmentVariables() overriding
+        ConfigurationProperties.fromFile(File(VAULT_APPLICATION_PROPERTIES_PATH)) overriding
+        ConfigurationProperties.fromResource("application.properties")
+} else {
+    systemProperties() overriding
+        EnvironmentVariables() overriding
+        ConfigurationProperties.fromResource("application.properties")
 }
 
 object AccessPointProps {
@@ -43,6 +44,14 @@ object AccessPointProps {
         apiKey = config[Key("vefasrest.transmit.apikey", stringType)],
         header = config[Key("vefasrest.transmit.header", stringType)]
     )
+}
+
+object DatabaseProps {
+    val url = config[Key("db.url", stringType)]
+    val username = config[Key("db.username", stringType)]
+    val password = config[Key("db.password", stringType)]
+    val vaultMountPath = config[Key("db.vault.mount.path", stringType)]
+    val name = config[Key("db.name", stringType)]
 }
 
 object EbasysProps {
@@ -85,3 +94,4 @@ object QueueProps {
 
 val catalogueSizeLimit = config[Key("catalogue.mqsizelimit", intType)]
 val appName = config[Key("app.name", stringType)]
+val appProfileLocal = config[Key("app.profile", stringType)] == "local"
