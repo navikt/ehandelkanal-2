@@ -42,10 +42,10 @@ object InboundDataExtractor : Processor {
                         orgnummer = invoice.accountingSupplierParty.party.partyIdentification.firstOrNull()?.id?.value?.toIntOrNull(),
                         fakturanummer = invoice.orderReference.id.value.toIntOrNull(),
                         navn = invoice.accountingSupplierParty.party.partyName.firstOrNull()?.name?.value,
-                        belop = invoice.legalMonetaryTotal.taxInclusiveAmount.value.longValueExact(), // TODO
-                        valuta = invoice.legalMonetaryTotal.taxInclusiveAmount.currencyID, // TODO
+                        belop = invoice.legalMonetaryTotal?.taxInclusiveAmount?.value, // TODO
+                        valuta = invoice.legalMonetaryTotal?.taxInclusiveAmount?.currencyID, // TODO
                         mottattDato = DateTime.now().withTimeAtStartOfDay(),
-                        fakturaDato = LocalDateTime(invoice.issueDate.value.toGregorianCalendar().timeInMillis).toDateTime()
+                        fakturaDato = LocalDateTime(invoice?.issueDate?.value?.toGregorianCalendar()?.timeInMillis).toDateTime()
                     )
                 }
             }
@@ -54,13 +54,13 @@ object InboundDataExtractor : Processor {
                     CsvValues(
                         fileName = exchange.getHeader(FILE_NAME),
                         type = documentType,
-                        orgnummer = creditNote.accountingSupplierParty.party.partyIdentification.firstOrNull()?.id?.value?.toIntOrNull(),
-                        fakturanummer = creditNote.orderReference.id.value.toIntOrNull(),
-                        navn = creditNote.accountingSupplierParty.party.partyName.firstOrNull()?.name?.value,
-                        belop = creditNote.legalMonetaryTotal.taxInclusiveAmount.value.longValueExact(), // TODO
-                        valuta = creditNote.legalMonetaryTotal.taxInclusiveAmount.currencyID, // TODO
+                        orgnummer = creditNote?.accountingSupplierParty?.party?.partyIdentification?.firstOrNull()?.id?.value?.toIntOrNull(),
+                        fakturanummer = creditNote?.orderReference?.id?.value?.toIntOrNull(),
+                        navn = creditNote?.accountingSupplierParty?.party?.partyName?.firstOrNull()?.name?.value,
+                        belop = creditNote?.legalMonetaryTotal?.taxInclusiveAmount?.value, // TODO
+                        valuta = creditNote?.legalMonetaryTotal?.taxInclusiveAmount?.currencyID, // TODO
                         mottattDato = DateTime.now().withTimeAtStartOfDay(),
-                        fakturaDato = LocalDateTime(creditNote.issueDate.value.toGregorianCalendar().timeInMillis).toDateTime()
+                        fakturaDato = LocalDateTime(creditNote?.issueDate?.value?.toGregorianCalendar()?.timeInMillis).toDateTime()
                     )
                 }
             }

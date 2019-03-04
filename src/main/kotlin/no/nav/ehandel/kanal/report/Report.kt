@@ -11,6 +11,8 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 object Report {
 
@@ -79,12 +81,12 @@ data class CsvValues(
     val orgnummer: Int?,
     val fakturanummer: Int?,
     val navn: String?,
-    val belop: Long?,
+    val belop: BigDecimal?,
     val valuta: String?,
     val mottattDato: DateTime,
     val fakturaDato: DateTime
 ) {
-    override fun toString() = "$fileName,$type,$orgnummer,$fakturanummer,$navn,$belop,$valuta,${mottattDato.formatDate()},${fakturaDato.formatDate()}"
+    override fun toString() = "$fileName,$type,$orgnummer,$fakturanummer,$navn,${belop?.setScale(2, RoundingMode.HALF_EVEN)},$valuta,${mottattDato.formatDate()},${fakturaDato.formatDate()}"
 
     companion object {
         fun csvHeader() = "fileName,type,orgnummer,fakturanummer,navn,belop,valuta,mottattDato,fakturaDato"

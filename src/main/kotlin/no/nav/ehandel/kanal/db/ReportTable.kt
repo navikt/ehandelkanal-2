@@ -9,7 +9,7 @@ object ReportTable : Table() {
     val orgNumber = integer("org_number").nullable()
     val invoiceNumber = integer("invoice_number").nullable()
     val partyName = varchar("party_name", length = 256).nullable()
-    val amount = long("amount").nullable()
+    val amount = decimal(name = "amount", precision = 4, scale = 18).nullable()
     val currency = varchar("currency", length = 32).nullable()
     val receivedAt = date("received_at")
     val issuedAt = date("issued_at")
