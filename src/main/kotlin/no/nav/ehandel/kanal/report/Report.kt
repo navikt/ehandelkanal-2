@@ -79,7 +79,7 @@ data class CsvValues(
     val fileName: String,
     val type: DocumentType,
     val orgnummer: Int?,
-    val fakturanummer: Int?,
+    val fakturanummer: String?,
     val navn: String?,
     val belop: BigDecimal?,
     val valuta: String?,
