@@ -23,6 +23,7 @@ private val LOGGER = KotlinLogging.logger { }
 const val INBOUND_LOGGER_BEAN = "bean:inboundLogger"
 const val INBOUND_SBDH_EXTRACTOR = "bean:inboundSbdhExtractor"
 const val INBOUND_FTP_TEST_ROUTE = "inboundFtpConnectionTest"
+const val INBOUND_DATA_EXTRACTOR = "bean:inboundDataExtractor"
 
 val INBOUND_CATALOGUE = RouteId("catalogue", "direct:catalogue")
 val INBOUND_EHF = RouteId("inboundEhf", "direct:inbound")
@@ -134,6 +135,7 @@ object Inbound : RouteBuilder() {
                     .to(ebasysInboundUnknownFiles)
                     .process { LOGGER.error { "File transferred to EBASYS (manuellBehandling)" } }
             .end()
+            .to(INBOUND_DATA_EXTRACTOR)
             .process { messagesSuccessful.inc() }
 
         // Conditional handling of catalogues based on size
