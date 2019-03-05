@@ -45,7 +45,7 @@ class Database(private val applicationState: ApplicationState) {
         }
     }
 
-    private fun initLocal() {
+    fun initLocal() {
         Flyway.configure().run {
             dataSource(DatabaseProps.url, DatabaseProps.username, DatabaseProps.password)
             load().migrate()

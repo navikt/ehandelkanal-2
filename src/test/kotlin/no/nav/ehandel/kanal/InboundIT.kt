@@ -27,6 +27,7 @@ import no.nav.ehandel.kanal.camel.routes.INBOUND_FTP_TEST_ROUTE
 import no.nav.ehandel.kanal.camel.routes.INBOUND_LOGGER_BEAN
 import no.nav.ehandel.kanal.camel.routes.INBOUND_SBDH_EXTRACTOR
 import no.nav.ehandel.kanal.camel.routes.INBOX_QUEUE
+import no.nav.ehandel.kanal.db.Database
 import no.nav.ehandel.kanal.legalarchive.LEGAL_ARCHIVE_CAMEL_HEADER
 import org.apache.camel.builder.AdviceWithRouteBuilder
 import org.apache.camel.builder.NotifyBuilder
@@ -278,7 +279,8 @@ class InboundIT {
                             .withBody("{\"id\":\"1\"}")
                     )
             )
-            bootstrap(camelContext, server, ApplicationState(running = true, initialized = true))
+            bootstrap(camelContext, server)
+            Database(ApplicationState(running = true, initialized = true)).initLocal()
         }
     }
 }
