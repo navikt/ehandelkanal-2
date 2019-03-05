@@ -49,4 +49,10 @@ object Metrics {
         .name("exhausted_deliveries_errorhandler")
         .help("Number of exhausted deliveries in error handler (to manuellBehandling)")
         .register()
+
+    val exhaustedDeliveriesReport: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("exhausted_deliveries_report")
+        .help("Number of exhausted deliveries to report database")
+        .register()
 }

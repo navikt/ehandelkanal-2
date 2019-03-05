@@ -1,14 +1,17 @@
 package no.nav.ehandel.kanal.camel.processors
 
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.difi.commons.ubl21.jaxb.CreditNoteType
 import no.difi.commons.ubl21.jaxb.InvoiceType
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.DocumentType
+import no.nav.ehandel.kanal.Metrics
 import no.nav.ehandel.kanal.report.CsvValues
 import no.nav.ehandel.kanal.report.Report
 import no.nav.ehandel.kanal.getBody
 import no.nav.ehandel.kanal.getHeader
+import no.nav.ehandel.kanal.retry
 import org.apache.camel.Exchange
 import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.Processor
@@ -22,13 +25,19 @@ private val LOGGER = KotlinLogging.logger { }
 object InboundDataExtractor : Processor {
 
     override fun process(exchange: Exchange) {
-        try {
-            extractCsvValues(exchange)?.let { values ->
-                Report.insert(values)
-                LOGGER.info { "Entry successfully inserted" }
+        runBlocking {
+            try {
+                retry(callName = "inbound_data_extractor", attempts = 100, maxDelay = 60_000) {
+                    extractCsvValues(exchange)?.let { values ->
+                        Report.insert(values)
+                        LOGGER.info { "Entry successfully inserted" }
+                    }
+                }
+            } catch (e: Throwable) {
+                LOGGER.error(e) { "Could not insert new entry into report table" }
+                Metrics.exhaustedDeliveriesReport.inc()
+                throw e
             }
-        } catch (e: Throwable) {
-            LOGGER.error(e) { "Could not insert new entry into report table" }
         }
     }
 

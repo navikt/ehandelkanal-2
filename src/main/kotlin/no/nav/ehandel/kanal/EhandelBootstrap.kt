@@ -48,16 +48,7 @@ fun main() = runBlocking {
     val applicationState = ApplicationState()
     val camelContext = configureCamelContext(defaultRegistry())
     val server = createHttpServer(applicationState = applicationState)
-    bootstrap(camelContext, server)
-
-    launch(backgroundTaskContext) {
-        try {
-            Database(applicationState).init()
-        } catch (e: Throwable) {
-            logger.error(e) { "Database jobs were cancelled, failing self tests" }
-            applicationState.running = false
-        }
-    }
+    bootstrap(camelContext, server, applicationState)
 
     try {
         val job = launch {
@@ -83,11 +74,21 @@ fun main() = runBlocking {
     }
 }
 
-fun bootstrap(camelContext: CamelContext, server: ApplicationEngine) {
+fun bootstrap(camelContext: CamelContext, server: ApplicationEngine, applicationState: ApplicationState) {
     DefaultExports.initialize()
     AccessPointClient.init()
     camelContext.start()
     server.start(wait = false)
+    runBlocking {
+        launch(backgroundTaskContext) {
+            try {
+                Database(applicationState).init()
+            } catch (e: Throwable) {
+                logger.error(e) { "Database jobs were cancelled, failing self tests" }
+                applicationState.running = false
+            }
+        }
+    }
 }
 
 fun defaultRegistry() = SimpleRegistry().apply {

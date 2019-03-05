@@ -31,6 +31,7 @@ import no.nav.ehandel.kanal.legalarchive.LEGAL_ARCHIVE_CAMEL_HEADER
 import org.apache.camel.builder.AdviceWithRouteBuilder
 import org.apache.camel.builder.NotifyBuilder
 import org.apache.camel.component.mock.MockEndpoint
+import org.h2.tools.DeleteDbFiles
 import org.junit.After
 import org.junit.Before
 import org.junit.BeforeClass
@@ -80,6 +81,7 @@ class InboundIT {
         verifyAccessPointRequests()
         wireMockRule.resetRequests()
         camelContext.stop()
+        DeleteDbFiles.execute("./", "integrationtestdb", true)
     }
 
     @Test
@@ -276,7 +278,7 @@ class InboundIT {
                             .withBody("{\"id\":\"1\"}")
                     )
             )
-            bootstrap(camelContext, server)
+            bootstrap(camelContext, server, ApplicationState(running = true, initialized = true))
         }
     }
 }
