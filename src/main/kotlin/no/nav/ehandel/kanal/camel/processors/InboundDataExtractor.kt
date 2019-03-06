@@ -26,22 +26,22 @@ object InboundDataExtractor : Processor {
 
     override fun process(exchange: Exchange) {
         runBlocking {
-            try {
-                retry(callName = "inbound_data_extractor", attempts = 100, maxDelay = 60_000) {
-                    extractCsvValues(exchange)?.let { values ->
+            extractCsvValues(exchange)?.let { values ->
+                try {
+                    retry(callName = "Report Table Insert", attempts = 100, maxDelay = 60_000) {
                         Report.insert(values)
-                        LOGGER.info { "Entry successfully inserted" }
                     }
+                    LOGGER.info { "Entry successfully inserted" }
+                } catch (e: Throwable) {
+                    LOGGER.error(e) { "Could not insert new entry into report table" }
+                    Metrics.exhaustedDeliveriesReport.inc()
+                    throw e
                 }
-            } catch (e: Throwable) {
-                LOGGER.error(e) { "Could not insert new entry into report table" }
-                Metrics.exhaustedDeliveriesReport.inc()
-                throw e
             }
         }
     }
 
-    private fun extractCsvValues(exchange: Exchange): CsvValues? =
+    private fun extractCsvValues(exchange: Exchange): CsvValues? = try {
         when (val documentType = DocumentType.valueOfOrDefault(exchange.getHeader(EHF_DOCUMENT_TYPE))) {
             DocumentType.Invoice -> {
                 JAXB.unmarshal(exchange.getBody<InputStream>(), InvoiceType::class.java).let { invoice ->
@@ -78,4 +78,9 @@ object InboundDataExtractor : Processor {
                 null
             }
         }
+    } catch (e: Throwable) {
+        LOGGER.error(e) { "Failed to unmarshal and extract data from inbound exchange - likely invalid message" }
+        Metrics.xmlParsingErrorsCounter.inc()
+        null
+    }
 }

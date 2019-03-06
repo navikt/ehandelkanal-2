@@ -55,4 +55,10 @@ object Metrics {
         .name("exhausted_deliveries_report")
         .help("Number of exhausted deliveries to report database")
         .register()
+
+    val xmlParsingErrorsCounter: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("xml_parsing_errors")
+        .help("Number of messages that could not be JAXB unmarshalled")
+        .register()
 }
