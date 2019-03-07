@@ -25,6 +25,7 @@ object Report {
                         date.withHourOfDay(23)
                             .withMinuteOfHour(59)
                             .withSecondOfMinute(59)
+                            .withMillisOfSecond(999)
                     )
                 }
             } ?: table.selectAll())
