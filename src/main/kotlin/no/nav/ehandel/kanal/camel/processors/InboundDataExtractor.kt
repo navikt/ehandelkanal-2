@@ -51,8 +51,8 @@ object InboundDataExtractor : Processor {
                         orgnummer = invoice?.accountingSupplierParty?.party?.endpointID?.value?.toIntOrNull(),
                         fakturanummer = invoice?.id?.value?.toString(),
                         navn = invoice?.accountingSupplierParty?.party?.partyName?.firstOrNull()?.name?.value,
-                        belop = invoice?.legalMonetaryTotal?.taxInclusiveAmount?.value, // TODO
-                        valuta = invoice?.legalMonetaryTotal?.taxInclusiveAmount?.currencyID, // TODO
+                        belop = invoice?.legalMonetaryTotal?.payableAmount?.value,
+                        valuta = invoice?.legalMonetaryTotal?.payableAmount?.currencyID,
                         mottattDato = DateTime.now().withTimeAtStartOfDay(),
                         fakturaDato = LocalDateTime(invoice?.issueDate?.value?.toGregorianCalendar()?.timeInMillis).toDateTime()
                     )
@@ -66,8 +66,8 @@ object InboundDataExtractor : Processor {
                         orgnummer = creditNote?.accountingSupplierParty?.party?.endpointID?.value?.toIntOrNull(),
                         fakturanummer = creditNote?.id?.value?.toString(),
                         navn = creditNote?.accountingSupplierParty?.party?.partyName?.firstOrNull()?.name?.value,
-                        belop = creditNote?.legalMonetaryTotal?.taxInclusiveAmount?.value, // TODO
-                        valuta = creditNote?.legalMonetaryTotal?.taxInclusiveAmount?.currencyID, // TODO
+                        belop = creditNote?.legalMonetaryTotal?.payableAmount?.value,
+                        valuta = creditNote?.legalMonetaryTotal?.payableAmount?.currencyID,
                         mottattDato = DateTime.now().withTimeAtStartOfDay(),
                         fakturaDato = LocalDateTime(creditNote?.issueDate?.value?.toGregorianCalendar()?.timeInMillis).toDateTime()
                     )
