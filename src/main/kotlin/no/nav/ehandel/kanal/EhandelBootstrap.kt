@@ -15,6 +15,7 @@ import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.prometheus.client.hotspot.DefaultExports
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -50,12 +51,25 @@ fun main() = runBlocking {
     val server = createHttpServer(applicationState = applicationState)
     bootstrap(camelContext, server)
 
-    launch(backgroundTaskContext) {
-        try {
-            Database(applicationState).init()
-        } catch (e: Throwable) {
-            logger.error(e) { "Database jobs were cancelled, failing self tests" }
-            applicationState.running = false
+    when (appProfileLocal) {
+        true -> Database.initLocal()
+        false -> {
+            launchBackgroundTask(
+                applicationState = applicationState,
+                callName = "Vault - Token Renewal Task",
+                maxDelay = 60_000L,
+                attempts = 10
+            ) {
+                Vault.renewVaultTokenTask(applicationState)
+            }
+            launchBackgroundTask(
+                applicationState = applicationState,
+                callName = "DB - Credentials Renewal Task",
+                maxDelay = 60_000L,
+                attempts = 10
+            ) {
+                Database.runRenewCredentialsTask(Database.initRemote()) { applicationState.running }
+            }
         }
     }
 
@@ -130,5 +144,24 @@ fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) = emb
     routing {
         nais(readinessCheck = { applicationState.initialized }, livenessCheck = { applicationState.running })
         report()
+    }
+}
+
+private fun CoroutineScope.launchBackgroundTask(
+    applicationState: ApplicationState,
+    callName: String,
+    attempts: Int,
+    maxDelay: Long,
+    block: suspend () -> Any
+) {
+    launch(backgroundTaskContext) {
+        try {
+            retry(callName = callName, attempts = attempts, maxDelay = maxDelay) {
+                block()
+            }
+        } catch (e: Throwable) {
+            logger.error(e) { "Background task '$callName' was cancelled, failing self tests" }
+            applicationState.running = false
+        }
     }
 }

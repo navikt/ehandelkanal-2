@@ -280,7 +280,7 @@ class InboundIT {
                     )
             )
             bootstrap(camelContext, server)
-            Database(ApplicationState(running = true, initialized = true)).initLocal()
+            Database.initLocal()
         }
     }
 }
