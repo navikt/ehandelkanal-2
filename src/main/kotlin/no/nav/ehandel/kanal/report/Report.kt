@@ -89,6 +89,11 @@ data class CsvValues(
 ) {
     override fun toString() = "$fileName,$type,$orgnummer,$fakturanummer,$navn,${belop?.setScale(2, RoundingMode.HALF_EVEN)},$valuta,${mottattDato.formatDate()},${fakturaDato.formatDate()}"
 
+    fun logString() = csvHeader()
+        .split(",")
+        .zip(this.toString().split(","))
+        .toMap()
+
     companion object {
         fun csvHeader() = "fileName,type,orgnummer,fakturanummer,navn,belop,valuta,mottattDato,fakturaDato"
     }

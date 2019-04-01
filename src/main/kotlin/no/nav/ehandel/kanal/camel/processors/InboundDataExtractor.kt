@@ -31,7 +31,7 @@ object InboundDataExtractor : Processor {
                     retry(callName = "Report Table Insert", attempts = 100, maxDelay = 60_000) {
                         Report.insert(values)
                     }
-                    LOGGER.info { "Entry successfully inserted" }
+                    LOGGER.info { "Entry successfully inserted: ${values.logString()}" }
                 } catch (e: Throwable) {
                     LOGGER.error(e) { "Could not insert new entry into report table" }
                     Metrics.exhaustedDeliveriesReport.inc()
