@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.difi.commons.ubl21.jaxb.CreditNoteType
 import no.difi.commons.ubl21.jaxb.InvoiceType
+import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.DocumentType
 import no.nav.ehandel.kanal.Metrics
@@ -48,7 +49,7 @@ object InboundDataExtractor : Processor {
                     CsvValues(
                         fileName = exchange.getHeader(FILE_NAME),
                         type = documentType,
-                        orgnummer = invoice?.accountingSupplierParty?.party?.endpointID?.value?.toIntOrNull(),
+                        orgnummer = invoice?.accountingSupplierParty?.party?.endpointID?.value?.toIntOrNull() ?: exchange.getHeader(CamelHeader.EHF_DOCUMENT_SENDER),
                         fakturanummer = invoice?.id?.value?.toString(),
                         navn = invoice?.accountingSupplierParty?.party?.partyName?.firstOrNull()?.name?.value,
                         belop = invoice?.legalMonetaryTotal?.payableAmount?.value,
@@ -63,7 +64,7 @@ object InboundDataExtractor : Processor {
                     CsvValues(
                         fileName = exchange.getHeader(FILE_NAME),
                         type = documentType,
-                        orgnummer = creditNote?.accountingSupplierParty?.party?.endpointID?.value?.toIntOrNull(),
+                        orgnummer = creditNote?.accountingSupplierParty?.party?.endpointID?.value?.toIntOrNull() ?: exchange.getHeader(CamelHeader.EHF_DOCUMENT_SENDER),
                         fakturanummer = creditNote?.id?.value?.toString(),
                         navn = creditNote?.accountingSupplierParty?.party?.partyName?.firstOrNull()?.name?.value,
                         belop = creditNote?.legalMonetaryTotal?.payableAmount?.value,
