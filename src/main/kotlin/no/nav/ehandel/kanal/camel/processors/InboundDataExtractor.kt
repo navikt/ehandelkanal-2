@@ -49,7 +49,7 @@ object InboundDataExtractor : Processor {
                     CsvValues(
                         fileName = exchange.getHeader(FILE_NAME),
                         type = documentType,
-                        orgnummer = invoice?.accountingSupplierParty?.party?.endpointID?.value?.toIntOrNull() ?: exchange.getHeader(CamelHeader.EHF_DOCUMENT_SENDER),
+                        orgnummer = invoice?.accountingSupplierParty?.party?.endpointID?.value ?: exchange.getHeader(CamelHeader.EHF_DOCUMENT_SENDER),
                         fakturanummer = invoice?.id?.value?.toString(),
                         navn = invoice?.accountingSupplierParty?.party?.partyName?.firstOrNull()?.name?.value,
                         belop = invoice?.legalMonetaryTotal?.payableAmount?.value,
@@ -64,7 +64,7 @@ object InboundDataExtractor : Processor {
                     CsvValues(
                         fileName = exchange.getHeader(FILE_NAME),
                         type = documentType,
-                        orgnummer = creditNote?.accountingSupplierParty?.party?.endpointID?.value?.toIntOrNull() ?: exchange.getHeader(CamelHeader.EHF_DOCUMENT_SENDER),
+                        orgnummer = creditNote?.accountingSupplierParty?.party?.endpointID?.value ?: exchange.getHeader(CamelHeader.EHF_DOCUMENT_SENDER),
                         fakturanummer = creditNote?.id?.value?.toString(),
                         navn = creditNote?.accountingSupplierParty?.party?.partyName?.firstOrNull()?.name?.value,
                         belop = creditNote?.legalMonetaryTotal?.payableAmount?.value,

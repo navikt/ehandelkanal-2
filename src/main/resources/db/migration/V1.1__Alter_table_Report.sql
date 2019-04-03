@@ -1,0 +1,2 @@
+ALTER TABLE Report
+ALTER COLUMN org_number TYPE VARCHAR(128);

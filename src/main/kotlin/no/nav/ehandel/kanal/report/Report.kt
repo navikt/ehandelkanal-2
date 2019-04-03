@@ -79,7 +79,7 @@ private fun ResultRow.toCsvValues(): CsvValues =
 data class CsvValues(
     val fileName: String,
     val type: DocumentType,
-    val orgnummer: Int?,
+    val orgnummer: String?,
     val fakturanummer: String?,
     val navn: String?,
     val belop: BigDecimal?,
