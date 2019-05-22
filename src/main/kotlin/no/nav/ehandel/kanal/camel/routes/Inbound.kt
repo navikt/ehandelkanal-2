@@ -28,6 +28,7 @@ const val INBOUND_DATA_EXTRACTOR = "bean:inboundDataExtractor"
 val INBOUND_CATALOGUE = RouteId("catalogue", "direct:catalogue")
 val INBOUND_EHF = RouteId("inboundEhf", "direct:inbound")
 val INBOUND_EHF_ERROR = RouteId("inboundEhfError", "direct:inboundEhfError")
+val INBOUND_REPORT = RouteId("report", "direct:report")
 
 private val ebasysInbound = "${EbasysProps.url}?username=${EbasysProps.username}&password=${EbasysProps.password}" +
     "&binary=true&throwExceptionOnConnectFailed=true&tempFileName=\$simple{file:name}.inprogress&passiveMode=true"
@@ -135,8 +136,16 @@ object Inbound : RouteBuilder() {
                     .to(ebasysInboundUnknownFiles)
                     .process { LOGGER.error { "File transferred to EBASYS (manuellBehandling)" } }
             .end()
-            .to(INBOUND_DATA_EXTRACTOR)
+            .to(INBOUND_REPORT.uri)
             .process { messagesSuccessful.inc() }
+
+        from(INBOUND_REPORT.uri).routeId(INBOUND_REPORT.id)
+            .errorHandler(deadLetterChannel(ebasysInboundUnknownFiles)
+                .maximumRedeliveries(5)
+                .redeliveryDelay(1000)
+                .useExponentialBackOff()
+                .maximumRedeliveryDelay(10000))
+            .to(INBOUND_DATA_EXTRACTOR)
 
         // Conditional handling of catalogues based on size
         from(INBOUND_CATALOGUE.uri).routeId(INBOUND_CATALOGUE.id)
