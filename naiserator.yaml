@@ -31,7 +31,6 @@ spec:
     - {{INGRESS_URL}}
   vault:
     enabled: true
-    sidecar: true
   resources:
     limits:
       cpu: 1000m
