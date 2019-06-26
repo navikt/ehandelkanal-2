@@ -29,6 +29,7 @@ object InboundDataExtractor : Processor {
         runBlocking {
             extractCsvValues(exchange)?.let { values ->
                 try {
+                    LOGGER.debug { "Attempting to insert entry: ${values.logString()}" }
                     retry(callName = "Report Table Insert", attempts = 100, maxDelay = 60_000) {
                         Report.insert(values)
                     }
