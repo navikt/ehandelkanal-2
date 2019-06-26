@@ -1,0 +1,2 @@
+ALTER TABLE Report
+ALTER COLUMN invoice_number TYPE VARCHAR(256);
