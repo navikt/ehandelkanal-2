@@ -1,5 +1,8 @@
 package no.nav.ehandel.kanal
 
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.UUID
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_SENDER
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.CamelHeader.TRACE_ID
@@ -14,9 +17,6 @@ import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.DefaultExchange
 import org.junit.Test
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.UUID
 
 private val camelContext = DefaultCamelContext()
 

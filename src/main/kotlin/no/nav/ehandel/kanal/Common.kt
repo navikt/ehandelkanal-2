@@ -6,17 +6,20 @@ import com.fasterxml.jackson.datatype.joda.JodaModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
-import io.ktor.client.features.auth.basic.BasicAuth
+import io.ktor.client.features.auth.Auth
+import io.ktor.client.features.auth.providers.basic
 import io.ktor.features.origin
 import io.ktor.request.ApplicationRequest
+import java.util.UUID
+import kotlin.math.ln
+import kotlin.math.pow
+import kotlin.reflect.KClass
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 import org.apache.camel.Exchange
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.MDC
-import java.util.UUID
-import kotlin.reflect.KClass
 
 private val logger = KotlinLogging.logger { }
 
@@ -31,14 +34,17 @@ object CamelHeader {
 }
 
 val httpClient: HttpClient = HttpClient(Apache) {
-    install(BasicAuth) {
-        username = ServiceUserProps.username
-        password = ServiceUserProps.password
-    }
     engine {
         socketTimeout = 30_000
         connectTimeout = 30_000
         connectionRequestTimeout = 30_000
+    }
+    install(Auth) {
+        basic {
+            username = ServiceUserProps.username
+            password = ServiceUserProps.password
+            sendWithoutRequest = true
+        }
     }
 }
 
@@ -84,10 +90,11 @@ fun DateTime.formatDate(): String = DateTimeFormat.forPattern("yyyy-MM-dd").prin
 fun Long.humanReadableByteCount(): String {
     val unit = 1000
     if (this < unit) return "$this B"
-    val exp = (Math.log(this.toDouble()) / Math.log(unit.toDouble())).toInt()
+    val exp = (ln(this.toDouble()) / ln(unit.toDouble())).toInt()
     val pre = "kMGTPE"[exp - 1]
-    return String.format("%.1f %sB", this / Math.pow(unit.toDouble(), exp.toDouble()), pre)
+    return String.format("%.1f %sB", this / unit.toDouble().pow(exp.toDouble()), pre)
 }
+
 internal fun ApplicationRequest.url(): String {
     val port = when (origin.port) {
         in listOf(80, 443) -> ""

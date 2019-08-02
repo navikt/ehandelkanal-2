@@ -4,9 +4,9 @@ import com.bettercloud.vault.SslConfig
 import com.bettercloud.vault.Vault
 import com.bettercloud.vault.VaultConfig
 import com.bettercloud.vault.VaultException
+import java.io.File
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
-import java.io.File
 
 private val logger = KotlinLogging.logger { }
 

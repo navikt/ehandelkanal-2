@@ -3,6 +3,8 @@ package no.nav.ehandel.kanal.db
 import com.bettercloud.vault.VaultException
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import java.util.concurrent.Executors
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -13,8 +15,6 @@ import no.nav.ehandel.kanal.Vault.suggestedRefreshIntervalInMillis
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.util.concurrent.Executors
-import kotlin.coroutines.CoroutineContext
 
 private val logger = KotlinLogging.logger { }
 private val dispatcher: CoroutineContext = Executors.newFixedThreadPool(5).asCoroutineDispatcher()

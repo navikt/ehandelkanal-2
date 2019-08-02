@@ -1,5 +1,7 @@
 package no.nav.ehandel.kanal.report
 
+import java.math.BigDecimal
+import java.math.RoundingMode
 import no.nav.ehandel.kanal.DocumentType
 import no.nav.ehandel.kanal.db.ReportTable
 import no.nav.ehandel.kanal.db.dbQuery
@@ -11,8 +13,6 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import java.math.BigDecimal
-import java.math.RoundingMode
 
 object Report {
 

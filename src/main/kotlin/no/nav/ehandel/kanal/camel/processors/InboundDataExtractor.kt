@@ -1,5 +1,7 @@
 package no.nav.ehandel.kanal.camel.processors
 
+import java.io.InputStream
+import javax.xml.bind.JAXB
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.difi.commons.ubl21.jaxb.CreditNoteType
@@ -8,18 +10,16 @@ import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.DocumentType
 import no.nav.ehandel.kanal.Metrics
-import no.nav.ehandel.kanal.report.CsvValues
-import no.nav.ehandel.kanal.report.Report
 import no.nav.ehandel.kanal.getBody
 import no.nav.ehandel.kanal.getHeader
+import no.nav.ehandel.kanal.report.CsvValues
+import no.nav.ehandel.kanal.report.Report
 import no.nav.ehandel.kanal.retry
 import org.apache.camel.Exchange
 import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.Processor
 import org.joda.time.DateTime
 import org.joda.time.LocalDateTime
-import java.io.InputStream
-import javax.xml.bind.JAXB
 
 private val LOGGER = KotlinLogging.logger { }
 

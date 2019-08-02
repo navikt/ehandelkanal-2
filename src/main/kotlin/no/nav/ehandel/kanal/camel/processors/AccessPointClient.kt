@@ -12,6 +12,7 @@ import io.ktor.client.response.readText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
+import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.AccessPointProps
@@ -22,7 +23,6 @@ import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.camel.language.NamespacePrefix
 import org.apache.camel.language.XPath
-import java.io.IOException
 
 private val LOGGER = KotlinLogging.logger { }
 

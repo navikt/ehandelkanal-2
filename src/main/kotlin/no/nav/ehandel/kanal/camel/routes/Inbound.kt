@@ -1,7 +1,6 @@
 package no.nav.ehandel.kanal.camel.routes
 
 import mu.KotlinLogging
-import no.nav.common.juridisklogg.client.LegalArchiveException
 import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.EbasysProps
@@ -16,6 +15,7 @@ import no.nav.ehandel.kanal.RouteId
 import no.nav.ehandel.kanal.catalogueSizeLimit
 import no.nav.ehandel.kanal.getHeader
 import no.nav.ehandel.kanal.humanReadableByteCount
+import no.nav.ehandel.kanal.legalarchive.LegalArchiveException
 import org.apache.camel.Exchange
 import org.apache.camel.builder.RouteBuilder
 

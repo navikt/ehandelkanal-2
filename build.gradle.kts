@@ -3,18 +3,18 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 group = "no.nav.integrasjon"
 version = "1.0.46-SNAPSHOT"
 
-val camel_version = "2.22.2"
-val ibm_mq_version = "9.1.1.0"
-val juridisklogg_client_version = "1.0.9"
-val jackson_version = "2.9.8"
+val camel_version = "2.24.1"
+val ibm_mq_version = "9.1.3.0"
+val jackson_version = "2.9.9"
+val fuel_version = "2.2.0"
 val konfig_version = "1.6.10.0"
 val difi_commons_sbdh_version = "0.9.5"
 val difi_peppol_sbdh_version = "1.1.2"
-val kotlin_logging_version = "1.6.25"
+val kotlin_logging_version = "1.7.2"
 val jaxb_api_version = "2.4.0-b180830.0359"
 val jaxb_runtime_version = "2.4.0-b180830.0438"
-val ktor_version = "1.1.3"
-val logstash_version = "5.2"
+val ktor_version = "1.2.3"
+val logstash_version = "6.1"
 val logback_version = "1.2.3"
 val prometheus_version = "0.6.0"
 val javax_activation_version = "1.2.0"
@@ -22,20 +22,20 @@ val difi_commons_ubl_version = "0.9.5"
 val hikari_version = "3.3.1"
 val vault_driver_version = "3.1.0"
 val flyway_version = "5.2.4"
-val h2_version = "1.4.198"
-val postgres_version = "42.2.5"
-val exposed_version = "0.12.2"
-val wiremock_version = "2.20.0"
-val mockito_kotlin_version = "2.0.0-RC2"
-val kluent_version = "1.48"
+val h2_version = "1.4.199"
+val postgres_version = "42.2.6"
+val exposed_version = "0.16.3"
+val wiremock_version = "2.24.0"
+val mockito_kotlin_version = "2.1.0"
+val kluent_version = "1.53"
 
 plugins {
     application
-    kotlin("jvm") version "1.3.21"
-    id("org.jmailen.kotlinter") version "1.21.0"
-    id("com.github.ben-manes.versions") version "0.20.0"
+    kotlin("jvm") version "1.3.41"
+    id("org.jmailen.kotlinter") version "2.1.0"
+    id("com.github.ben-manes.versions") version "0.21.0"
     id("org.flywaydb.flyway") version "5.2.4"
-    id("com.github.johnrengelman.shadow") version "4.0.4"
+    id("com.github.johnrengelman.shadow") version "5.1.0"
 }
 
 application {
@@ -45,8 +45,6 @@ application {
 repositories {
     maven(url="https://dl.bintray.com/kotlin/ktor")
     maven(url="https://kotlin.bintray.com/kotlinx")
-    maven(url="https://repo.adeo.no/repository/maven-releases/")
-    maven(url="https://repo.adeo.no/repository/maven-snapshots/")
     mavenCentral()
     jcenter()
 }
@@ -58,7 +56,10 @@ dependencies {
     implementation("io.ktor:ktor-jackson:$ktor_version")
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-apache:$ktor_version")
-    implementation("io.ktor:ktor-client-auth-basic:$ktor_version")
+    implementation("io.ktor:ktor-client-auth-basic-jvm:$ktor_version")
+    implementation("io.ktor:ktor-client-auth-jvm:$ktor_version")
+    implementation("com.github.kittinunf.fuel:fuel:$fuel_version")
+    implementation("com.github.kittinunf.fuel:fuel-jackson:$fuel_version")
     implementation("com.natpryce:konfig:$konfig_version")
     implementation("com.fasterxml.jackson.core:jackson-databind:$jackson_version")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
@@ -69,7 +70,6 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstash_version")
     implementation("io.github.microutils:kotlin-logging:$kotlin_logging_version")
-    implementation("no.nav.common:juridisklogg-rest-client:$juridisklogg_client_version")
     implementation("no.difi.commons:commons-sbdh:$difi_commons_sbdh_version")
     implementation("no.difi.vefa:peppol-sbdh:$difi_peppol_sbdh_version")
     implementation("com.ibm.mq:com.ibm.mq.allclient:$ibm_mq_version")
@@ -93,7 +93,7 @@ dependencies {
         exclude(group = "com.nhaarman", module = "mockito-kotlin-kt")
     }
     testCompileOnly("junit:junit:4.12")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.3.1")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.5.1")
 }
 
 tasks {
@@ -108,7 +108,7 @@ tasks {
         testLogging.events("passed", "skipped", "failed")
     }
     withType<Wrapper> {
-        gradleVersion = "5.2.1"
+        gradleVersion = "5.5.1"
         distributionType = Wrapper.DistributionType.BIN
     }
 }

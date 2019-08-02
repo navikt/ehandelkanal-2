@@ -2,8 +2,6 @@ package no.nav.ehandel.kanal.legalarchive
 
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import no.nav.common.juridisklogg.client.ArchiveRequest
-import no.nav.common.juridisklogg.client.RestArchiver
 import no.nav.ehandel.kanal.LegalArchiveProps
 import no.nav.ehandel.kanal.ServiceUserProps
 import no.nav.ehandel.kanal.getBody

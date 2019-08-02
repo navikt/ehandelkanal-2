@@ -1,7 +1,7 @@
 package no.nav.ehandel.kanal
 
-import org.amshove.kluent.shouldBeEqualTo
 import java.io.File
+import org.amshove.kluent.shouldBeEqualTo
 
 private class Utils
 

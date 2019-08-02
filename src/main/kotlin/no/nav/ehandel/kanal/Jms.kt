@@ -2,8 +2,8 @@ package no.nav.ehandel.kanal
 
 import com.ibm.mq.jms.MQXAConnectionFactory
 import com.ibm.msg.client.wmq.WMQConstants
-import org.springframework.jms.connection.UserCredentialsConnectionFactoryAdapter
 import javax.jms.ConnectionFactory
+import org.springframework.jms.connection.UserCredentialsConnectionFactoryAdapter
 
 val mqConnectionFactory: ConnectionFactory = UserCredentialsConnectionFactoryAdapter().apply {
     setTargetConnectionFactory(MQXAConnectionFactory().apply {

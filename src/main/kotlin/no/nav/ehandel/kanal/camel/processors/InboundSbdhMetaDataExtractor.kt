@@ -1,5 +1,13 @@
 package no.nav.ehandel.kanal.camel.processors
 
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import javax.xml.stream.XMLOutputFactory
+import javax.xml.stream.XMLStreamConstants
+import javax.xml.stream.XMLStreamReader
+import javax.xml.stream.XMLStreamWriter
 import mu.KotlinLogging
 import no.difi.vefa.peppol.common.model.Header
 import no.difi.vefa.peppol.sbdh.SbdReader
@@ -12,14 +20,6 @@ import no.nav.ehandel.kanal.log.InboundLogger
 import org.apache.camel.Exchange
 import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.Processor
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import javax.xml.stream.XMLOutputFactory
-import javax.xml.stream.XMLStreamConstants
-import javax.xml.stream.XMLStreamReader
-import javax.xml.stream.XMLStreamWriter
 
 private val LOGGER = KotlinLogging.logger { }
 

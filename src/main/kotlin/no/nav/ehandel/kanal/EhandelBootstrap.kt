@@ -15,6 +15,9 @@ import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.prometheus.client.hotspot.DefaultExports
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import kotlin.system.exitProcess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -22,8 +25,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
-import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
 import no.nav.ehandel.kanal.camel.processors.InboundDataExtractor
+import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
 import no.nav.ehandel.kanal.camel.routes.AccessPoint
 import no.nav.ehandel.kanal.camel.routes.Inbound
 import no.nav.ehandel.kanal.camel.routes.logAndSet
@@ -38,9 +41,6 @@ import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.SimpleRegistry
 import org.apache.camel.spi.Registry
 import org.slf4j.event.Level
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger { }
 private val backgroundTaskContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()

@@ -1,5 +1,7 @@
 package no.nav.ehandel.kanal.camel.routes
 
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.Metrics.messagesReceivedTotal
@@ -9,8 +11,6 @@ import no.nav.ehandel.kanal.getHeader
 import org.apache.camel.LoggingLevel
 import org.apache.camel.builder.RouteBuilder
 import org.slf4j.MDC
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOGGER = KotlinLogging.logger { }
 private val threadPool = Executors.newFixedThreadPool(6)
