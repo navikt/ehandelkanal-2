@@ -9,6 +9,7 @@ import no.difi.commons.ubl21.jaxb.InvoiceType
 import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.DocumentType
+import no.nav.ehandel.kanal.InvalidDocumentException
 import no.nav.ehandel.kanal.Metrics
 import no.nav.ehandel.kanal.getBody
 import no.nav.ehandel.kanal.getHeader
@@ -81,8 +82,9 @@ object InboundDataExtractor : Processor {
             }
         }
     } catch (e: Throwable) {
-        LOGGER.error(e) { "Failed to unmarshal and extract data from inbound exchange - likely invalid message" }
+        val message = "Failed to unmarshal and extract data from inbound exchange - likely invalid message"
+        LOGGER.error(e) { message }
         Metrics.xmlParsingErrorsCounter.inc()
-        null
+        throw InvalidDocumentException(message = message, cause = e)
     }
 }

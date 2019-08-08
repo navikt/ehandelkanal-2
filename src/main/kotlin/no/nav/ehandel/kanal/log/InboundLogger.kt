@@ -2,11 +2,11 @@ package no.nav.ehandel.kanal.log
 
 import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.CamelHeader.TRACE_ID
+import no.nav.ehandel.kanal.LegalArchiveException
 import no.nav.ehandel.kanal.LoggerProps
 import no.nav.ehandel.kanal.catalogueSizeLimit
 import no.nav.ehandel.kanal.getHeader
 import no.nav.ehandel.kanal.legalarchive.EventLogger
-import no.nav.ehandel.kanal.legalarchive.LegalArchiveException
 import no.nav.ehandel.kanal.legalarchive.LegalArchiveLogger
 import org.apache.camel.Exchange
 

@@ -5,6 +5,8 @@ import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.EbasysProps
 import no.nav.ehandel.kanal.FileAreaProps
+import no.nav.ehandel.kanal.InvalidDocumentException
+import no.nav.ehandel.kanal.LegalArchiveException
 import no.nav.ehandel.kanal.Metrics.exhaustedDeliveriesErrorHandler
 import no.nav.ehandel.kanal.Metrics.exhaustedDeliveriesLegalarchive
 import no.nav.ehandel.kanal.Metrics.messageSize
@@ -15,7 +17,6 @@ import no.nav.ehandel.kanal.RouteId
 import no.nav.ehandel.kanal.catalogueSizeLimit
 import no.nav.ehandel.kanal.getHeader
 import no.nav.ehandel.kanal.humanReadableByteCount
-import no.nav.ehandel.kanal.legalarchive.LegalArchiveException
 import org.apache.camel.Exchange
 import org.apache.camel.builder.RouteBuilder
 
@@ -104,6 +105,11 @@ object Inbound : RouteBuilder() {
                 }
                 .continued(true)
             .end()
+            .onException(InvalidDocumentException::class.java)
+                .maximumRedeliveries(0)
+                .to(INBOUND_EHF_ERROR.uri)
+                .handled(true)
+            .end()
             .setHeader(Exchange.FILE_LENGTH, simple("\${body.length()}"))
             .process {
                 LOGGER.info { "Processing inbound file" }
@@ -120,9 +126,7 @@ object Inbound : RouteBuilder() {
                     LOGGER.info { "Size after SBDH removal: ${size.humanReadableByteCount()}" }
                 }
             }
-            .process { LOGGER.info { "Inserting entry to report" } }
             .to(INBOUND_DATA_EXTRACTOR)
-            .process { LOGGER.info { "Report entry successfully inserted" } }
             .choice() // Content based routing
                 .`when`(header(EHF_DOCUMENT_TYPE).isEqualTo("Catalogue"))
                     .to(INBOUND_CATALOGUE.uri)

@@ -5,7 +5,7 @@ import com.github.kittinunf.fuel.core.extensions.authentication
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import java.lang.Exception
-import java.lang.RuntimeException
+import no.nav.ehandel.kanal.LegalArchiveException
 
 class RestArchiver(private val username: String, private val password: String, private val url: String) {
 
@@ -43,8 +43,3 @@ class RestArchiver(private val username: String, private val password: String, p
         val mapper = jacksonObjectMapper()
     }
 }
-
-class LegalArchiveException(
-    override val message: String,
-    override val cause: Throwable
-) : RuntimeException(message, cause)

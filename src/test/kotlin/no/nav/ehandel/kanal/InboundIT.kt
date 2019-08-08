@@ -193,6 +193,18 @@ class InboundIT {
         assertMockEndpointsSatisfied()
     }
 
+    @Test
+    fun `invalid invoice with missing namespace prefix declaration`() {
+        setUpStubs("message-faktura-invoice-missing-namespace-prefix.xml")
+        setUpInboundValidExpectations()
+        ebasysUnknownFiles.expectedMessageCount(1)
+
+        NotifyBuilder(camelContext).fromRoute(ACCESS_POINT_READ.id).whenExactlyCompleted(1).create()
+            .matches(3, TimeUnit.SECONDS)
+        verify(exactly(0), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
+        assertMockEndpointsSatisfied()
+    }
+
     private fun assertMockEndpointsSatisfied() {
         mockEndpoints.map { it.assertIsSatisfied() }
     }
