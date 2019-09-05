@@ -6,14 +6,13 @@ version = "1.0.47-SNAPSHOT"
 val camel_version = "2.24.1"
 val ibm_mq_version = "9.1.3.0"
 val jackson_version = "2.9.9"
-val fuel_version = "2.2.0"
 val konfig_version = "1.6.10.0"
 val difi_commons_sbdh_version = "0.9.5"
 val difi_peppol_sbdh_version = "1.1.2"
-val kotlin_logging_version = "1.7.2"
+val kotlin_logging_version = "1.7.6"
 val jaxb_api_version = "2.4.0-b180830.0359"
 val jaxb_runtime_version = "2.4.0-b180830.0438"
-val ktor_version = "1.2.3"
+val ktor_version = "1.2.4"
 val logstash_version = "6.1"
 val logback_version = "1.2.3"
 val prometheus_version = "0.6.0"
@@ -21,20 +20,20 @@ val javax_activation_version = "1.2.0"
 val difi_commons_ubl_version = "0.9.5"
 val hikari_version = "3.3.1"
 val vault_driver_version = "3.1.0"
-val flyway_version = "5.2.4"
+val flyway_version = "6.0.1"
 val h2_version = "1.4.199"
 val postgres_version = "42.2.6"
-val exposed_version = "0.16.3"
-val wiremock_version = "2.24.0"
+val exposed_version = "0.17.3"
+val wiremock_version = "2.24.1"
 val mockito_kotlin_version = "2.1.0"
 val kluent_version = "1.53"
 
 plugins {
     application
-    kotlin("jvm") version "1.3.41"
-    id("org.jmailen.kotlinter") version "2.1.0"
-    id("com.github.ben-manes.versions") version "0.21.0"
-    id("org.flywaydb.flyway") version "5.2.4"
+    kotlin("jvm") version "1.3.50"
+    id("org.jmailen.kotlinter") version "2.1.1"
+    id("com.github.ben-manes.versions") version "0.24.0"
+    id("org.flywaydb.flyway") version "6.0.1"
     id("com.github.johnrengelman.shadow") version "5.1.0"
 }
 
@@ -58,8 +57,8 @@ dependencies {
     implementation("io.ktor:ktor-client-apache:$ktor_version")
     implementation("io.ktor:ktor-client-auth-basic-jvm:$ktor_version")
     implementation("io.ktor:ktor-client-auth-jvm:$ktor_version")
-    implementation("com.github.kittinunf.fuel:fuel:$fuel_version")
-    implementation("com.github.kittinunf.fuel:fuel-jackson:$fuel_version")
+    implementation("io.ktor:ktor-client-json-jvm:$ktor_version")
+    implementation("io.ktor:ktor-client-jackson:$ktor_version")
     implementation("com.natpryce:konfig:$konfig_version")
     implementation("com.fasterxml.jackson.core:jackson-databind:$jackson_version")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
