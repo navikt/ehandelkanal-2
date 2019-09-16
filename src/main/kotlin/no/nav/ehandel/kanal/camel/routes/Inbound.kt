@@ -38,6 +38,12 @@ private val ebasysInboundUnknownFiles = "${EbasysProps.url}/${EbasysProps.unknow
 private val fileAreaInboundLargeCatalogues = "${FileAreaProps.eFaktura}/katalog" // TODO: Tilgang til filomraadet
 private val mqInbound = "jms:queue:${QueueProps.inName}?connectionFactory=#mqConnectionFactory"
 
+private fun Exchange.shutdown(errorMessage: String) {
+    LOGGER.error { errorMessage }
+    AccessPoint.readyToProcess.set(false)
+    this.context.stop()
+}
+
 object Inbound : RouteBuilder() {
     override fun configure() {
         // Loop for testing FTP connection
@@ -46,14 +52,12 @@ object Inbound : RouteBuilder() {
             .routeId(INBOUND_FTP_TEST_ROUTE)
             .onException(Exception::class.java)
                 .handled(true)
-                .process { ex ->
-                    LOGGER.error { "FTP connection failed" }
-                    AccessPoint.readyToProcess.set(false)
-                    ex.context.apply {
+                .process { exchange ->
+                    exchange.context.apply {
                         shutdownStrategy.isLogInflightExchangesOnTimeout = false
                         shutdownStrategy.timeout = 1
                     }
-                    System.exit(1)
+                    exchange.shutdown(errorMessage = "FTP connection failed")
                 }
             .end()
             .process { LOGGER.info { "Testing FTP connection - ${it.getHeader<String>(Exchange.FILE_NAME)}" } }
@@ -109,6 +113,12 @@ object Inbound : RouteBuilder() {
                 .maximumRedeliveries(0)
                 .to(INBOUND_EHF_ERROR.uri)
                 .handled(true)
+            .end()
+            .onException(OutOfMemoryError::class.java)
+                .maximumRedeliveries(0)
+                .process { exchange ->
+                    exchange.shutdown(errorMessage = "Ran out of memory, shutting down to trigger restart")
+                }
             .end()
             .setHeader(Exchange.FILE_LENGTH, simple("\${body.length()}"))
             .process {
