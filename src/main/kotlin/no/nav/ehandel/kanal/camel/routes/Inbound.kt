@@ -1,5 +1,6 @@
 package no.nav.ehandel.kanal.camel.routes
 
+import kotlin.system.exitProcess
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
@@ -19,7 +20,6 @@ import no.nav.ehandel.kanal.getHeader
 import no.nav.ehandel.kanal.humanReadableByteCount
 import org.apache.camel.Exchange
 import org.apache.camel.builder.RouteBuilder
-import kotlin.system.exitProcess
 
 private val LOGGER = KotlinLogging.logger { }
 const val INBOUND_LOGGER_BEAN = "bean:inboundLogger"
