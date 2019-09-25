@@ -19,6 +19,7 @@ import no.nav.ehandel.kanal.catalogueSizeLimit
 import no.nav.ehandel.kanal.getHeader
 import no.nav.ehandel.kanal.humanReadableByteCount
 import org.apache.camel.Exchange
+import org.apache.camel.builder.PredicateBuilder
 import org.apache.camel.builder.RouteBuilder
 
 private val LOGGER = KotlinLogging.logger { }
@@ -26,6 +27,8 @@ const val INBOUND_LOGGER_BEAN = "bean:inboundLogger"
 const val INBOUND_SBDH_EXTRACTOR = "bean:inboundSbdhExtractor"
 const val INBOUND_FTP_TEST_ROUTE = "inboundFtpConnectionTest"
 const val INBOUND_DATA_EXTRACTOR = "bean:inboundDataExtractor"
+
+private const val LEGAL_ARCHIVE_SIZE_LIMIT: Long = 20_000_000L
 
 val INBOUND_CATALOGUE = RouteId("catalogue", "direct:catalogue")
 val INBOUND_EHF = RouteId("inboundEhf", "direct:inbound")
@@ -141,7 +144,21 @@ object Inbound : RouteBuilder() {
             .choice() // Content based routing
                 .`when`(header(EHF_DOCUMENT_TYPE).isEqualTo("Catalogue"))
                     .to(INBOUND_CATALOGUE.uri)
-                .`when`(header(EHF_DOCUMENT_TYPE).`in`("Invoice", "CreditNote"))
+                .`when`(PredicateBuilder.and(
+                    header(EHF_DOCUMENT_TYPE).`in`("Invoice", "CreditNote"),
+                    simple("\${header.CamelFileLength} > $LEGAL_ARCHIVE_SIZE_LIMIT")
+                ))
+                    .process {
+                        LOGGER.info {
+                            "File exceeds permitted size of legal archive, skipping storage of file to legal archive"
+                        }
+                    }
+                    .to(ebasysInbound)
+                    .to("$INBOUND_LOGGER_BEAN?method=sentToEbasys")
+                .`when`(PredicateBuilder.and(
+                    header(EHF_DOCUMENT_TYPE).`in`("Invoice", "CreditNote"),
+                    simple("\${header.CamelFileLength} <= $LEGAL_ARCHIVE_SIZE_LIMIT")
+                ))
                     .to("$INBOUND_LOGGER_BEAN?method=logFileToLegalArchive")
                     .to(ebasysInbound)
                     .to("$INBOUND_LOGGER_BEAN?method=sentToEbasys")
