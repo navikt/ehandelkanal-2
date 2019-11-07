@@ -1,7 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 group = "no.nav.integrasjon"
-version = "1.0.51-SNAPSHOT"
+version = "1.0.51"
 
 val camel_version = "2.24.2"
 val ibm_mq_version = "9.1.3.0"
