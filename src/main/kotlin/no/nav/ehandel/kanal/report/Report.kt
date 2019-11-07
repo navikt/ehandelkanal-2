@@ -29,7 +29,7 @@ object Report {
                     )
                 }
             } ?: table.selectAll())
-            .map(ResultRow::toCsvValues)
+                .map(ResultRow::toCsvValues)
         }
     }
 
@@ -87,7 +87,14 @@ data class CsvValues(
     val mottattDato: DateTime,
     val fakturaDato: DateTime
 ) {
-    override fun toString() = "$fileName,$type,$orgnummer,${fakturanummer?.trim()?.replace(",", " ")},${navn?.trim()?.replace(",", " ")},${belop?.setScale(2, RoundingMode.HALF_EVEN)},${valuta?.trim()},${mottattDato.formatDate()},${fakturaDato.formatDate()}"
+    override fun toString() =
+        "$fileName,$type,$orgnummer,${fakturanummer?.trim()?.replace(",", " ")},${navn?.trim()?.replace(
+            ",",
+            " "
+        )},${belop?.setScale(
+            2,
+            RoundingMode.HALF_EVEN
+        )},${valuta?.trim()},${mottattDato.formatDate()},${fakturaDato.formatDate()}"
 
     fun logString() = csvHeader()
         .split(",")

@@ -8,11 +8,9 @@ import io.ktor.client.request.post
 import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.AccessPointProps
-import no.nav.ehandel.kanal.getBody
 import no.nav.ehandel.kanal.httpClient
 import no.nav.ehandel.kanal.log.InboundLogger
 import org.apache.camel.Exchange
@@ -90,29 +88,33 @@ object AccessPointClient : Processor {
         }
     }
 
-    @Throws(IOException::class)
-    fun sendToOutbox(exchange: Exchange, sender: String, receiver: String, documentId: String, processId: String): String =
-        runBlocking {
-            LOGGER.info { "Sending new message to outbox" }
-            val response = httpClient.submitFormWithBinaryData<String> {
-                url("${AccessPointProps.outbox.url}/")
-                header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
-                header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
-                formData {
-                    append("file", exchange.getBody<ByteArray>())
-                    append("SenderID", sender)
-                    append("RecipientID", receiver)
-                    append("DocumentID", documentId)
-                    append("ProcessID", processId)
-                }
+    suspend fun sendToOutbox(
+        payload: ByteArray,
+        sender: String,
+        receiver: String,
+        documentId: String,
+        processId: String
+    ): String {
+        LOGGER.info { "Sending new message to outbox" }
+        val response = httpClient.submitFormWithBinaryData<String> {
+            url("${AccessPointProps.outbox.url}/")
+            header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
+            header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
+            formData {
+                append("file", payload)
+                append("SenderID", sender)
+                append("RecipientID", receiver)
+                append("DocumentID", documentId)
+                append("ProcessID", processId)
             }
-            LOGGER.info { "Post response: $response" }
-            response
         }
+        LOGGER.info { "Post response: $response" }
+        return response
+    }
 
-    fun transmitMessage(msgNo: String): String = runBlocking {
+    suspend fun transmitMessage(msgNo: String): String {
         LOGGER.info { "Transmitting MsgNo $msgNo to external" }
-        httpClient.get<String> {
+        return httpClient.get {
             url("${AccessPointProps.transmit.url}/$msgNo")
             header(AccessPointProps.transmit.header, AccessPointProps.transmit.apiKey)
             header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
@@ -133,7 +135,13 @@ object AccessPointClient : Processor {
         @XPath(value = "namespace-uri(/*)") rootNamespace: String,
         @XPath(value = "local-name(/*)") localName: String,
         customizationId: String,
-        @XPath(value = "/*/cbc:UBLVersionID/text()", namespaces = [(NamespacePrefix(prefix = "cbc", uri = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"))])
+        @XPath(
+            value = "/*/cbc:UBLVersionID/text()",
+            namespaces = [(NamespacePrefix(
+                prefix = "cbc",
+                uri = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+            ))]
+        )
         ublVersion: String
     ): String {
         LOGGER.apply {

@@ -24,6 +24,7 @@ val config = if (System.getenv("APP_PROFILE") == "remote") {
 
 object AccessPointProps {
     data class Properties(val url: String, val apiKey: String, val header: String)
+
     val inbox = Properties(
         url = config[Key("vefasrest.inbox.url", stringType)].removeSuffix("/"),
         apiKey = config[Key("vefasrest.inbox.apikey", stringType)],

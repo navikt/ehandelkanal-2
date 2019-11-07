@@ -10,6 +10,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.jackson.JacksonConverter
 import io.ktor.request.path
+import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
@@ -35,6 +36,7 @@ import no.nav.ehandel.kanal.log.InboundLogger
 import no.nav.ehandel.kanal.routes.exceptionHandler
 import no.nav.ehandel.kanal.routes.nais
 import no.nav.ehandel.kanal.routes.notFoundHandler
+import no.nav.ehandel.kanal.routes.outbound
 import no.nav.ehandel.kanal.routes.report
 import org.apache.camel.CamelContext
 import org.apache.camel.impl.DefaultCamelContext
@@ -144,6 +146,9 @@ fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) = emb
     routing {
         nais(readinessCheck = { applicationState.initialized }, livenessCheck = { applicationState.running })
         report()
+        route("/api/v1") {
+            outbound()
+        }
     }
 }
 
