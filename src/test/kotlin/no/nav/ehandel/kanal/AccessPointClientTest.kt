@@ -129,6 +129,8 @@ class AccessPointClientTest {
         body shouldBeXmlEqualTo "/__files/inbox-message-read-ok.xml".getResource()
     }
 
+    // TODO: outbound and transmit
+
     // TODO: Add case for failing read (also in IT)
 
     private fun verifyRequest(request: RequestPatternBuilder, apiKey: String) {
