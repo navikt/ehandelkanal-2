@@ -3,9 +3,12 @@ package no.nav.ehandel.kanal.routes
 import com.fasterxml.jackson.annotation.JsonInclude
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
+import io.ktor.client.features.ResponseException
+import io.ktor.client.response.readText
 import io.ktor.features.StatusPages
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.getCorrelationId
 import no.nav.ehandel.kanal.url
@@ -18,6 +21,12 @@ fun StatusPages.Configuration.exceptionHandler() {
     }
     exception<IllegalArgumentException> { cause ->
         call.logErrorAndRespond(cause, HttpStatusCode.BadRequest) { "Invalid input" }
+    }
+    exception<ResponseException> { cause ->
+        logger.error(cause) {
+            runBlocking { cause.response.readText() }
+        }
+        call.logErrorAndRespond(cause) { "An external service responded with a HTTP error" }
     }
 }
 
