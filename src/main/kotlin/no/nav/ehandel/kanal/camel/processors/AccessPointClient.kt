@@ -6,12 +6,8 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.url
-import io.ktor.client.response.HttpResponse
-import io.ktor.client.response.readBytes
-import io.ktor.client.response.readText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.http.isSuccess
 import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -59,30 +55,39 @@ object AccessPointClient : Processor {
         }
     }
 
-    fun downloadMessagePayload(exchange: Exchange, msgNo: String): String =
-        runBlocking {
+    @ExperimentalStdlibApi
+    fun downloadMessagePayload(exchange: Exchange, msgNo: String): String {
+        val payload = runBlocking {
             InboundLogger.downloadInboundMessage(exchange, msgNo)
-            httpClient.get<HttpResponse> {
+            httpClient.get<ByteArray> {
                 url("${AccessPointProps.messages.url}/$msgNo/xml-document")
                 header(AccessPointProps.messages.header, AccessPointProps.messages.apiKey)
                 header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
-            }.readBytes().toString(Charsets.UTF_8)
+            }
         }
+        return try {
+            payload.decodeToString(throwOnInvalidSequence = true)
+        } catch (e: Throwable) {
+            LOGGER.error(e) { "Could not parse downloaded payload as UTF-8, attempting to parse as ISO 8859-1" }
+            payload.toString(Charsets.ISO_8859_1)
+                .also { LOGGER.info { "Successfully parsed downloaded payload as ISO 8859-1" } }
+        }
+    }
 
     fun markMessageAsRead(msgNo: String): String = runBlocking {
         LOGGER.trace { "Marking MsgNo $msgNo as read" }
-        val response = httpClient.post<HttpResponse> {
-            url("${AccessPointProps.inbox.url}/$msgNo/read")
-            header(AccessPointProps.inbox.header, AccessPointProps.inbox.apiKey)
-            header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
+        try {
+            httpClient.post<String> {
+                url("${AccessPointProps.inbox.url}/$msgNo/read")
+                header(AccessPointProps.inbox.header, AccessPointProps.inbox.apiKey)
+                header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
+            }.also {
+                LOGGER.info { "Successfully marked MsgNo $msgNo as read" }
+            }
+        } catch (e: Throwable) {
+            LOGGER.error(e) { "Could not mark MsgNo $msgNo as read" }
+            throw e
         }
-        if (response.status.isSuccess())
-            LOGGER.info { "Successfully marked MsgNo $msgNo as read" }
-        else {
-            LOGGER.error { "Could not mark MsgNo $msgNo as read" }
-            throw RuntimeException("Error response from Access Point")
-        }
-        response.readText()
     }
 
     @Throws(IOException::class)

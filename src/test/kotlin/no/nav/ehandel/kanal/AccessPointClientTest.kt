@@ -88,6 +88,7 @@ class AccessPointClientTest {
         body shouldBeXmlEqualTo "/__files/inbox-message-headers-ok.xml".getResource()
     }
 
+    @ExperimentalStdlibApi
     @Test
     fun `download message payload`() {
         val url = "/vefasrest/messages/1/xml-document"
