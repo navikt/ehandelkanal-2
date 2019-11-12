@@ -97,7 +97,7 @@ object AccessPointClient : Processor {
     ): String {
         LOGGER.info { "Sending new message to outbox" }
         val response = httpClient.submitFormWithBinaryData<String> {
-            url("${AccessPointProps.outbox.url}/")
+            url(AccessPointProps.outbox.url)
             header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
             header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
             formData {

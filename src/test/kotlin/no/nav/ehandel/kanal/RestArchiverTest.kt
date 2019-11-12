@@ -46,7 +46,6 @@ class RestArchiverTest {
     fun `a valid request with invalid credentials should fail`() {
         val archiver = RestArchiver(username, wrongPassword, url)
         val archiveId = { archiver.archiveDocument(request) }
-        val expectedErrorMessage = "HTTP Exception 401 Unauthorized"
         archiveId shouldThrow LegalArchiveException::class withCause ClientRequestException::class
         verify(
             1, WireMock.postRequestedFor(WireMock.urlEqualTo("/archive"))
