@@ -222,14 +222,14 @@ private fun WireMockServer.accessPointStub(
             else -> throw IllegalArgumentException("Unsupported Http Method")
         }.apply {
             withHeader(API_KEY_HEADER, equalTo(apiKey))
-            withHeader("Accept", equalTo("${acceptHeaderValue.contentType}/${acceptHeaderValue.contentSubtype}"))
+            withHeader("Accept", equalTo("$acceptHeaderValue"))
             withBasicAuth(username, password)
             willReturn(
                 aResponse()
                     .withStatus(httpStatusCode.value)
                     .withHeader(
                         ContentTypeHeader.KEY,
-                        "${acceptHeaderValue.contentType}/${acceptHeaderValue.contentSubtype}; charset=utf-8"
+                        "$acceptHeaderValue; charset=utf-8"
                     )
                     .apply {
                         when (body) {

@@ -8,6 +8,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.AccessPointProps
@@ -36,7 +37,7 @@ object AccessPointClient : Processor {
         Integer.valueOf(httpClient.get<String> {
             url("${AccessPointProps.inbox.url}/count")
             header(AccessPointProps.inbox.header, AccessPointProps.inbox.apiKey)
-            header(HttpHeaders.Accept, ContentType.Text.Plain.toString())
+            header(HttpHeaders.Accept, ContentType.Text.Plain)
         }).also {
             LOGGER.trace { "Inbox count: $it" }
         }
@@ -47,7 +48,7 @@ object AccessPointClient : Processor {
         httpClient.get<String> {
             url("${AccessPointProps.inbox.url}/")
             header(AccessPointProps.inbox.header, AccessPointProps.inbox.apiKey)
-            header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
+            header(HttpHeaders.Accept, ContentType.Application.Xml)
         }.also {
             LOGGER.trace { "Inbox messages: $it" }
         }
@@ -60,7 +61,7 @@ object AccessPointClient : Processor {
             httpClient.get<ByteArray> {
                 url("${AccessPointProps.messages.url}/$msgNo/xml-document")
                 header(AccessPointProps.messages.header, AccessPointProps.messages.apiKey)
-                header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
+                header(HttpHeaders.Accept, ContentType.Application.Xml)
             }
         }
         return try {
@@ -78,7 +79,7 @@ object AccessPointClient : Processor {
             httpClient.post<String> {
                 url("${AccessPointProps.inbox.url}/$msgNo/read")
                 header(AccessPointProps.inbox.header, AccessPointProps.inbox.apiKey)
-                header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
+                header(HttpHeaders.Accept, ContentType.Application.Xml)
             }.also {
                 LOGGER.info { "Successfully marked MsgNo $msgNo as read" }
             }
@@ -96,17 +97,16 @@ object AccessPointClient : Processor {
         processId: String
     ): String {
         LOGGER.info { "Sending new message to outbox" }
-        val response = httpClient.submitFormWithBinaryData<String> {
+        val response = httpClient.submitFormWithBinaryData<String>(formData = formData {
+            append("file", payload, headersOf(HttpHeaders.ContentType, "${ContentType.Application.Xml}"))
+            append("SenderID", sender, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+            append("RecipientID", receiver, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+            append("DocumentID", documentId, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+            append("ProcessID", processId, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+        }) {
             url(AccessPointProps.outbox.url)
             header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
-            header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
-            formData {
-                append("file", payload)
-                append("SenderID", sender)
-                append("RecipientID", receiver)
-                append("DocumentID", documentId)
-                append("ProcessID", processId)
-            }
+            header(HttpHeaders.Accept, ContentType.Application.Xml)
         }
         LOGGER.info { "Post response: $response" }
         return response
@@ -117,7 +117,7 @@ object AccessPointClient : Processor {
         return httpClient.get {
             url("${AccessPointProps.transmit.url}/$msgNo")
             header(AccessPointProps.transmit.header, AccessPointProps.transmit.apiKey)
-            header(HttpHeaders.Accept, ContentType.Application.Xml.toString())
+            header(HttpHeaders.Accept, ContentType.Application.Xml)
         }
     }
 
