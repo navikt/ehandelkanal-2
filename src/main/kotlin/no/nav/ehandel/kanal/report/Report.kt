@@ -13,6 +13,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
+import java.util.StringJoiner
 
 object Report {
 
@@ -87,14 +88,17 @@ data class CsvValues(
     val mottattDato: DateTime,
     val fakturaDato: DateTime
 ) {
-    override fun toString() =
-        "$fileName,$type,$orgnummer,${fakturanummer?.trim()?.replace(",", " ")},${navn?.trim()?.replace(
-            ",",
-            " "
-        )},${belop?.setScale(
-            2,
-            RoundingMode.HALF_EVEN
-        )},${valuta?.trim()},${mottattDato.formatDate()},${fakturaDato.formatDate()}"
+    override fun toString(): String = StringJoiner(",")
+        .add(fileName)
+        .add("$type")
+        .add(orgnummer)
+        .add(fakturanummer.escapeQuotes())
+        .add(navn.escapeQuotes())
+        .add("${belop?.setScale(2, RoundingMode.HALF_EVEN)}")
+        .add(valuta?.trim())
+        .add(mottattDato.formatDate())
+        .add(fakturaDato.formatDate())
+        .toString()
 
     fun logString() = csvHeader()
         .split(",")
@@ -105,3 +109,5 @@ data class CsvValues(
         fun csvHeader() = "fileName,type,orgnummer,fakturanummer,navn,belop,valuta,mottattDato,fakturaDato"
     }
 }
+
+private fun String?.escapeQuotes(): String = "\"$this\""
