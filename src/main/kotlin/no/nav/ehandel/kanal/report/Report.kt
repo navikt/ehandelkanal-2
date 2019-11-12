@@ -2,6 +2,7 @@ package no.nav.ehandel.kanal.report
 
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.StringJoiner
 import no.nav.ehandel.kanal.DocumentType
 import no.nav.ehandel.kanal.db.ReportTable
 import no.nav.ehandel.kanal.db.dbQuery
@@ -13,25 +14,22 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import java.util.StringJoiner
 
 object Report {
 
     suspend fun getAll(date: DateTime? = null) = dbQuery {
-        ReportTable.let { table ->
-            (date?.let {
-                table.select {
-                    ReportTable.receivedAt.between(
-                        date.withTimeAtStartOfDay(),
-                        date.withHourOfDay(23)
-                            .withMinuteOfHour(59)
-                            .withSecondOfMinute(59)
-                            .withMillisOfSecond(999)
-                    )
-                }
-            } ?: table.selectAll())
-                .map(ResultRow::toCsvValues)
-        }
+        val rows = date?.let {
+            ReportTable.select {
+                ReportTable.receivedAt.between(
+                    date.withTimeAtStartOfDay(),
+                    date.withHourOfDay(23)
+                        .withMinuteOfHour(59)
+                        .withSecondOfMinute(59)
+                        .withMillisOfSecond(999)
+                )
+            }
+        } ?: ReportTable.selectAll()
+        rows.map(ResultRow::toCsvValues)
     }
 
     fun insert(csvValues: CsvValues) = transaction {

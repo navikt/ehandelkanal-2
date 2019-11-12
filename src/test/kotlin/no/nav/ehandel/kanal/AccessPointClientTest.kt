@@ -17,7 +17,6 @@ import com.github.tomakehurst.wiremock.http.ContentTypeHeader
 import com.github.tomakehurst.wiremock.junit.WireMockRule
 import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder
 import com.nhaarman.mockitokotlin2.mock
-import io.ktor.http.HttpStatusCode
 import no.nav.ehandel.kanal.CamelHeader.TRACE_ID
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
 import org.amshove.kluent.shouldEqualTo
@@ -132,22 +131,18 @@ class AccessPointClientTest {
 
     @Test
     fun `given a valid request, when sending to outbound it should succeed`() {
-
     }
 
     @Test
     fun `given an invalid request, when sending to outbound it should fail`() {
-
     }
 
     @Test
     fun `given a valid msgNo, when attempting to mark an outbound message for transmission, it should succeed`() {
-
     }
 
     @Test
     fun `given an invalid msgNo, when attempting to mark an outbound message for transmission, it should fail`() {
-
     }
 
     // TODO: Add case for failing read (also in IT)
