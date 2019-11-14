@@ -55,7 +55,9 @@ class RestArchiver(private val username: String, private val password: String, p
             }
             return objectMapper.readTree(response).get("id").asText()
         } catch (e: Throwable) {
-            throw LegalArchiveException(e.localizedMessage, e)
+            throw LegalArchiveException(
+                e.localizedMessage ?: e.message ?: "Unknown error during logging to legal archive", e
+            )
         }
     }
 }
