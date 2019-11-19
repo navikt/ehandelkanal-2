@@ -26,7 +26,12 @@ spec:
     path: /internal/prometheus
   istio:
     enabled: false
-  ingresses: {{{ingresses}}}
+  {{#if ingresses}}
+  ingresses:
+    {{#each ingresses}}
+    - "{{this}}"
+    {{/each}}
+  {{/if}}
   vault:
     enabled: true
   resources:
