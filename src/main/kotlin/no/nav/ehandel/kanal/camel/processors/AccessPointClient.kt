@@ -12,8 +12,8 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.AccessPointProps
-import no.nav.ehandel.kanal.httpClient
-import no.nav.ehandel.kanal.log.InboundLogger
+import no.nav.ehandel.kanal.common.singletons.httpClient
+import no.nav.ehandel.kanal.services.log.InboundLogger
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.camel.language.NamespacePrefix

@@ -1,13 +1,13 @@
-package no.nav.ehandel.kanal.log
+package no.nav.ehandel.kanal.services.log
 
-import no.nav.ehandel.kanal.CamelHeader
-import no.nav.ehandel.kanal.CamelHeader.TRACE_ID
-import no.nav.ehandel.kanal.LegalArchiveException
 import no.nav.ehandel.kanal.LoggerProps
 import no.nav.ehandel.kanal.catalogueSizeLimit
-import no.nav.ehandel.kanal.getHeader
-import no.nav.ehandel.kanal.legalarchive.EventLogger
-import no.nav.ehandel.kanal.legalarchive.LegalArchiveLogger
+import no.nav.ehandel.kanal.common.LegalArchiveException
+import no.nav.ehandel.kanal.common.constants.CamelHeader
+import no.nav.ehandel.kanal.common.constants.CamelHeader.TRACE_ID
+import no.nav.ehandel.kanal.common.extensions.getHeader
+import no.nav.ehandel.kanal.services.legalarchive.EventLogger
+import no.nav.ehandel.kanal.services.legalarchive.LegalArchiveLogger
 import org.apache.camel.Exchange
 
 object InboundLogger {

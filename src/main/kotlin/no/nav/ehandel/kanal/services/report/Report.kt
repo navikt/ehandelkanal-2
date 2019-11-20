@@ -1,12 +1,12 @@
-package no.nav.ehandel.kanal.report
+package no.nav.ehandel.kanal.services.report
 
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.StringJoiner
-import no.nav.ehandel.kanal.DocumentType
+import no.nav.ehandel.kanal.common.extensions.formatDate
+import no.nav.ehandel.kanal.common.models.DocumentType
 import no.nav.ehandel.kanal.db.ReportTable
 import no.nav.ehandel.kanal.db.dbQuery
-import no.nav.ehandel.kanal.formatDate
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.insert

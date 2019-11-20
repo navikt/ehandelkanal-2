@@ -1,6 +1,9 @@
 package no.nav.ehandel.kanal
 
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
+import no.nav.ehandel.kanal.common.extensions.getBody
+import no.nav.ehandel.kanal.helpers.getResource
+import no.nav.ehandel.kanal.helpers.shouldBeXmlEqualTo
 import org.apache.camel.EndpointInject
 import org.apache.camel.Produce
 import org.apache.camel.ProducerTemplate

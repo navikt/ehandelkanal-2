@@ -31,13 +31,19 @@ import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
 import no.nav.ehandel.kanal.camel.routes.AccessPoint
 import no.nav.ehandel.kanal.camel.routes.Inbound
 import no.nav.ehandel.kanal.camel.routes.logAndSet
+import no.nav.ehandel.kanal.common.constants.MDC_CALL_ID
+import no.nav.ehandel.kanal.common.functions.randomUuid
+import no.nav.ehandel.kanal.common.functions.retry
+import no.nav.ehandel.kanal.common.models.ApplicationState
+import no.nav.ehandel.kanal.common.singletons.objectMapper
 import no.nav.ehandel.kanal.db.Database
-import no.nav.ehandel.kanal.log.InboundLogger
+import no.nav.ehandel.kanal.db.Vault
 import no.nav.ehandel.kanal.routes.exceptionHandler
 import no.nav.ehandel.kanal.routes.nais
 import no.nav.ehandel.kanal.routes.notFoundHandler
 import no.nav.ehandel.kanal.routes.outbound
 import no.nav.ehandel.kanal.routes.report
+import no.nav.ehandel.kanal.services.log.InboundLogger
 import org.apache.camel.CamelContext
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.SimpleRegistry
@@ -161,7 +167,11 @@ private fun CoroutineScope.launchBackgroundTask(
 ) {
     launch(backgroundTaskContext) {
         try {
-            retry(callName = callName, attempts = attempts, maxDelay = maxDelay) {
+            retry(
+                callName = callName,
+                attempts = attempts,
+                maxDelay = maxDelay
+            ) {
                 block()
             }
         } catch (e: Throwable) {

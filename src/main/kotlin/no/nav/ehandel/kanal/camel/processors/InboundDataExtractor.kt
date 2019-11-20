@@ -6,16 +6,16 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.difi.commons.ubl21.jaxb.CreditNoteType
 import no.difi.commons.ubl21.jaxb.InvoiceType
-import no.nav.ehandel.kanal.CamelHeader
-import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
-import no.nav.ehandel.kanal.DocumentType
-import no.nav.ehandel.kanal.InvalidDocumentException
 import no.nav.ehandel.kanal.Metrics
-import no.nav.ehandel.kanal.getBody
-import no.nav.ehandel.kanal.getHeader
-import no.nav.ehandel.kanal.report.CsvValues
-import no.nav.ehandel.kanal.report.Report
-import no.nav.ehandel.kanal.retry
+import no.nav.ehandel.kanal.common.InvalidDocumentException
+import no.nav.ehandel.kanal.common.constants.CamelHeader
+import no.nav.ehandel.kanal.common.constants.CamelHeader.EHF_DOCUMENT_TYPE
+import no.nav.ehandel.kanal.common.extensions.getBody
+import no.nav.ehandel.kanal.common.extensions.getHeader
+import no.nav.ehandel.kanal.common.functions.retry
+import no.nav.ehandel.kanal.common.models.DocumentType
+import no.nav.ehandel.kanal.services.report.CsvValues
+import no.nav.ehandel.kanal.services.report.Report
 import org.apache.camel.Exchange
 import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.Processor
@@ -31,7 +31,11 @@ object InboundDataExtractor : Processor {
             extractCsvValues(exchange)?.let { values ->
                 try {
                     LOGGER.debug { "Attempting to insert entry: ${values.logString()}" }
-                    retry(callName = "Report Table Insert", attempts = 100, maxDelay = 60_000) {
+                    retry(
+                        callName = "Report Table Insert",
+                        attempts = 100,
+                        maxDelay = 60_000
+                    ) {
                         Report.insert(values)
                     }
                     LOGGER.info { "Entry successfully inserted: ${values.logString()}" }
@@ -51,7 +55,8 @@ object InboundDataExtractor : Processor {
                     CsvValues(
                         fileName = exchange.getHeader(FILE_NAME),
                         type = documentType,
-                        orgnummer = invoice?.accountingSupplierParty?.party?.endpointID?.value ?: exchange.getHeader(CamelHeader.EHF_DOCUMENT_SENDER),
+                        orgnummer = invoice?.accountingSupplierParty?.party?.endpointID?.value ?: exchange.getHeader(
+                            CamelHeader.EHF_DOCUMENT_SENDER),
                         fakturanummer = invoice?.id?.value,
                         navn = invoice?.accountingSupplierParty?.party?.partyName?.firstOrNull()?.name?.value,
                         belop = invoice?.legalMonetaryTotal?.payableAmount?.value,
@@ -66,7 +71,8 @@ object InboundDataExtractor : Processor {
                     CsvValues(
                         fileName = exchange.getHeader(FILE_NAME),
                         type = documentType,
-                        orgnummer = creditNote?.accountingSupplierParty?.party?.endpointID?.value ?: exchange.getHeader(CamelHeader.EHF_DOCUMENT_SENDER),
+                        orgnummer = creditNote?.accountingSupplierParty?.party?.endpointID?.value ?: exchange.getHeader(
+                            CamelHeader.EHF_DOCUMENT_SENDER),
                         fakturanummer = creditNote?.id?.value,
                         navn = creditNote?.accountingSupplierParty?.party?.partyName?.firstOrNull()?.name?.value,
                         belop = creditNote?.legalMonetaryTotal?.payableAmount?.value,

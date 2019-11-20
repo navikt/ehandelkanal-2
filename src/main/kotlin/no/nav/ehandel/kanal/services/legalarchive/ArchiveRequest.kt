@@ -1,4 +1,4 @@
-package no.nav.ehandel.kanal.legalarchive
+package no.nav.ehandel.kanal.services.legalarchive
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty

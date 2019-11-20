@@ -1,4 +1,4 @@
-package no.nav.ehandel.kanal
+package no.nav.ehandel.kanal.db
 
 import com.bettercloud.vault.SslConfig
 import com.bettercloud.vault.Vault
@@ -7,6 +7,7 @@ import com.bettercloud.vault.VaultException
 import java.io.File
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
+import no.nav.ehandel.kanal.common.models.ApplicationState
 
 private val logger = KotlinLogging.logger { }
 

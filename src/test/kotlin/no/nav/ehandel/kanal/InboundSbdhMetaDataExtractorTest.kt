@@ -3,10 +3,12 @@ package no.nav.ehandel.kanal
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_SENDER
-import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
-import no.nav.ehandel.kanal.CamelHeader.TRACE_ID
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
+import no.nav.ehandel.kanal.common.constants.CamelHeader.EHF_DOCUMENT_SENDER
+import no.nav.ehandel.kanal.common.constants.CamelHeader.EHF_DOCUMENT_TYPE
+import no.nav.ehandel.kanal.common.constants.CamelHeader.TRACE_ID
+import no.nav.ehandel.kanal.common.extensions.getHeader
+import no.nav.ehandel.kanal.helpers.getResource
 import org.amshove.kluent.AnyException
 import org.amshove.kluent.shouldBeTrue
 import org.amshove.kluent.shouldEqual

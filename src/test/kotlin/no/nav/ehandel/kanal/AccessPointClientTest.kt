@@ -24,8 +24,10 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
-import no.nav.ehandel.kanal.CamelHeader.TRACE_ID
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
+import no.nav.ehandel.kanal.common.constants.CamelHeader.TRACE_ID
+import no.nav.ehandel.kanal.helpers.getResource
+import no.nav.ehandel.kanal.helpers.shouldBeXmlEqualTo
 import org.amshove.kluent.shouldEqualTo
 import org.amshove.kluent.shouldThrow
 import org.apache.camel.Exchange

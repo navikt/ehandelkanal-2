@@ -1,10 +1,10 @@
-package no.nav.ehandel.kanal.legalarchive
+package no.nav.ehandel.kanal.services.legalarchive
 
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.LegalArchiveProps
 import no.nav.ehandel.kanal.ServiceUserProps
-import no.nav.ehandel.kanal.getBody
+import no.nav.ehandel.kanal.common.extensions.getBody
 import org.apache.camel.Exchange
 
 private val LOGGER = KotlinLogging.logger { }

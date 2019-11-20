@@ -1,4 +1,4 @@
-package no.nav.ehandel.kanal.legalarchive
+package no.nav.ehandel.kanal.services.legalarchive
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
@@ -12,8 +12,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import java.lang.Exception
 import kotlinx.coroutines.runBlocking
-import no.nav.ehandel.kanal.LegalArchiveException
-import no.nav.ehandel.kanal.objectMapper
+import no.nav.ehandel.kanal.common.LegalArchiveException
+import no.nav.ehandel.kanal.common.singletons.objectMapper
 
 class RestArchiver(private val username: String, private val password: String, private val url: String) {
     private val httpClient: HttpClient = HttpClient(Apache) {

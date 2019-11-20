@@ -1,4 +1,4 @@
-package no.nav.ehandel.kanal
+package no.nav.ehandel.kanal.common
 
 import java.lang.RuntimeException
 

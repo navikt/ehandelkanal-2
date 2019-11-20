@@ -28,8 +28,9 @@ import no.nav.ehandel.kanal.camel.routes.INBOUND_FTP_TEST_ROUTE
 import no.nav.ehandel.kanal.camel.routes.INBOUND_LOGGER_BEAN
 import no.nav.ehandel.kanal.camel.routes.INBOUND_SBDH_EXTRACTOR
 import no.nav.ehandel.kanal.camel.routes.INBOX_QUEUE
+import no.nav.ehandel.kanal.common.constants.CamelHeader
 import no.nav.ehandel.kanal.db.Database
-import no.nav.ehandel.kanal.legalarchive.LEGAL_ARCHIVE_CAMEL_HEADER
+import no.nav.ehandel.kanal.services.legalarchive.LEGAL_ARCHIVE_CAMEL_HEADER
 import org.apache.camel.builder.AdviceWithRouteBuilder
 import org.apache.camel.builder.NotifyBuilder
 import org.apache.camel.component.mock.MockEndpoint

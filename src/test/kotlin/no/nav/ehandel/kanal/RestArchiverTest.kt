@@ -8,8 +8,10 @@ import com.github.tomakehurst.wiremock.common.Slf4jNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.junit.WireMockRule
 import io.ktor.client.features.ClientRequestException
-import no.nav.ehandel.kanal.legalarchive.ArchiveRequest
-import no.nav.ehandel.kanal.legalarchive.RestArchiver
+import no.nav.ehandel.kanal.common.LegalArchiveException
+import no.nav.ehandel.kanal.common.singletons.objectMapper
+import no.nav.ehandel.kanal.services.legalarchive.ArchiveRequest
+import no.nav.ehandel.kanal.services.legalarchive.RestArchiver
 import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldThrow
 import org.amshove.kluent.withCause

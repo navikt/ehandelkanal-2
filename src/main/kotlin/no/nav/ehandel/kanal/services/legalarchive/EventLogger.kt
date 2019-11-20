@@ -1,4 +1,4 @@
-package no.nav.ehandel.kanal.legalarchive
+package no.nav.ehandel.kanal.services.legalarchive
 
 import mu.KotlinLogging
 import org.apache.camel.Exchange

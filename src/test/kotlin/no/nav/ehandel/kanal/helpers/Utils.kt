@@ -1,13 +1,11 @@
-package no.nav.ehandel.kanal
+package no.nav.ehandel.kanal.helpers
 
 import java.io.File
 import org.amshove.kluent.shouldBeEqualTo
 
-private class Utils
-
 inline fun <reified T> String.getResource(): T = when (T::class.java) {
-    String::class.java -> Utils::class.java.getResource(this).readText() as T
-    File::class.java -> File(Utils::class.java.getResource(this).file) as T
+    String::class.java -> object {}.javaClass.getResource(this).readText() as T
+    File::class.java -> File(object {}.javaClass.getResource(this).file) as T
     else -> throw Exception("Invalid return type")
 }
 

@@ -10,8 +10,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import no.nav.ehandel.kanal.getCorrelationId
-import no.nav.ehandel.kanal.url
+import no.nav.ehandel.kanal.common.extensions.url
+import no.nav.ehandel.kanal.common.functions.getCorrelationId
 
 private val logger = KotlinLogging.logger { }
 

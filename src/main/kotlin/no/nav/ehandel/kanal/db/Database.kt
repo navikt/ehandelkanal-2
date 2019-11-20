@@ -10,8 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.ehandel.kanal.DatabaseProps
-import no.nav.ehandel.kanal.Vault
-import no.nav.ehandel.kanal.Vault.suggestedRefreshIntervalInMillis
+import no.nav.ehandel.kanal.db.Vault.suggestedRefreshIntervalInMillis
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
