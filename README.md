@@ -1,7 +1,7 @@
 ehandelkanal-2
 ==============
 
-[![CircleCI](https://circleci.com/gh/navikt/ehandelkanal-2.svg?style=svg)](https://circleci.com/gh/navikt/ehandelkanal-2)
+[![Github Actions](https://github.com/navikt/ehandelkanal-2/workflows/Build,%20push,%20and%20deploy/badge.svg)](https://github.com/navikt/ehandelkanal-2/actions?query=workflow%3A%22Build%2C+push%2C+and+deploy%22)
 
 Simple application that handles incoming EHFs received from NAV's PEPPOL access point and routes them to internal systems.
 
