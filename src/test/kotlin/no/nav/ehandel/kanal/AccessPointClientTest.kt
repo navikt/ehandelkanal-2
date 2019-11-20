@@ -1,5 +1,6 @@
 package no.nav.ehandel.kanal
 
+import com.github.michaelbull.result.getErrorOrElse
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.BasicCredentials
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
@@ -19,17 +20,18 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule
 import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import com.nhaarman.mockitokotlin2.mock
-import io.ktor.client.features.ClientRequestException
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
 import no.nav.ehandel.kanal.common.constants.CamelHeader.TRACE_ID
+import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.helpers.getResource
 import no.nav.ehandel.kanal.helpers.shouldBeXmlEqualTo
+import no.nav.ehandel.kanal.services.outbound.OutboundRequest
+import org.amshove.kluent.`should equal`
 import org.amshove.kluent.shouldEqualTo
-import org.amshove.kluent.shouldThrow
 import org.apache.camel.Exchange
 import org.apache.camel.Message
 import org.junit.BeforeClass
@@ -121,6 +123,7 @@ class AccessPointClientTest {
         body shouldBeXmlEqualTo "/__files/inbox-message-read-ok.xml".getResource()
     }
 
+    // todo
     @Test
     fun `given a valid request, when sending to outbox it should succeed`() {
         val url = "/$MOCK_SERVER_PATH/outbox"
@@ -144,20 +147,22 @@ class AccessPointClientTest {
             httpStatusCode = HttpStatusCode.BadRequest,
             body = StubBody.WithContent("")
         )
-        val response = {
-            runBlocking {
-                vefaClient.sendToOutbox(
-                    payload = "test".toByteArray(),
-                    sender = "",
-                    receiver = "",
-                    documentId = "",
-                    processId = ""
-                )
-            }
+        val response = runBlocking {
+            val request = OutboundRequest(
+                payload = "test".toByteArray(),
+                sender = "",
+                receiver = "",
+                documentId = "",
+                processId = ""
+            )
+            vefaClient.sendToOutbox(request)
         }
-        response shouldThrow ClientRequestException::class
+        response
+            .getErrorOrElse { throw IllegalStateException("should return error") }
+            .`should equal`(ErrorMessage.AccessPoint.ClientRequestError)
     }
 
+    // todo
     @Test
     fun `given a valid msgNo, when attempting to mark an outbox message for transmission, it should succeed`() {
         val msgNo = 1
@@ -171,6 +176,7 @@ class AccessPointClientTest {
         )
     }
 
+    // todo
     @Test
     fun `given an invalid msgNo, when attempting to mark an outbox message for transmission, it should fail`() {
         val msgNo = 2

@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.integrasjon"
 version = "1.0.52-SNAPSHOT"
@@ -24,6 +25,7 @@ val flyway_version = "6.0.4"
 val h2_version = "1.4.200"
 val postgres_version = "42.2.8"
 val exposed_version = "0.17.7"
+val result_version = "1.1.3"
 val wiremock_version = "2.25.1"
 val mockito_kotlin_version = "2.2.0"
 val kluent_version = "1.56"
@@ -44,6 +46,7 @@ application {
 repositories {
     maven(url="https://dl.bintray.com/kotlin/ktor")
     maven(url="https://kotlin.bintray.com/kotlinx")
+    maven(url="https://dl.bintray.com/michaelbull/maven")
     mavenCentral()
     jcenter()
 }
@@ -84,6 +87,7 @@ dependencies {
     implementation("org.postgresql:postgresql:$postgres_version")
     implementation("com.h2database:h2:$h2_version")
     implementation("org.jetbrains.exposed:exposed:$exposed_version")
+    implementation("com.michael-bull.kotlin-result:kotlin-result:$result_version")
 
     testImplementation("org.apache.camel:camel-test:$camel_version")
     testImplementation("com.github.tomakehurst:wiremock:$wiremock_version")
@@ -109,5 +113,10 @@ tasks {
     withType<Wrapper> {
         gradleVersion = "5.5.1"
         distributionType = Wrapper.DistributionType.BIN
+    }
+    withType<KotlinCompile> {
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
     }
 }

@@ -56,7 +56,7 @@ object Report {
     }
 
     suspend fun getAllAsCsvFile(date: DateTime): ByteArray =
-        StringBuilder(CsvValues.csvHeader() + "\n")
+        StringBuilder(CsvValues.CSV_HEADER + "\n")
             .apply { getAll(date).forEach { value -> append(value.toString() + "\n") } }
             .toString()
             .toByteArray(Charsets.UTF_8)
@@ -98,13 +98,13 @@ data class CsvValues(
         .add(fakturaDato.formatDate())
         .toString()
 
-    fun logString() = csvHeader()
+    fun logString() = CSV_HEADER
         .split(",")
         .zip(this.toString().split(","))
         .toMap()
 
     companion object {
-        fun csvHeader() = "fileName,type,orgnummer,fakturanummer,navn,belop,valuta,mottattDato,fakturaDato"
+        const val CSV_HEADER = "fileName,type,orgnummer,fakturanummer,navn,belop,valuta,mottattDato,fakturaDato"
     }
 }
 

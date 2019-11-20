@@ -1,5 +1,10 @@
 package no.nav.ehandel.kanal.camel.processors
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
+import io.ktor.client.features.ClientRequestException
+import io.ktor.client.features.ServerResponseException
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
@@ -8,12 +13,19 @@ import io.ktor.client.request.post
 import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.content.PartData
 import io.ktor.http.headersOf
+import javax.xml.bind.DataBindingException
+import javax.xml.bind.JAXB
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import no.difi.vefasrest.model.OutboxPostResponseType
+import no.difi.vefasrest.model.QueuedMessagesSendResultType
 import no.nav.ehandel.kanal.AccessPointProps
+import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.common.singletons.httpClient
 import no.nav.ehandel.kanal.services.log.InboundLogger
+import no.nav.ehandel.kanal.services.outbound.OutboundRequest
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.camel.language.NamespacePrefix
@@ -89,37 +101,41 @@ object AccessPointClient : Processor {
         }
     }
 
-    suspend fun sendToOutbox(
-        payload: ByteArray,
-        sender: String,
-        receiver: String,
-        documentId: String,
-        processId: String
-    ): String {
-        LOGGER.info { "Sending new message to outbox" }
-        val response = httpClient.submitFormWithBinaryData<String>(formData = formData {
-            append("file", payload, headersOf(HttpHeaders.ContentType, "${ContentType.Application.Xml}"))
-            append("SenderID", sender, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-            append("RecipientID", receiver, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-            append("DocumentID", documentId, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-            append("ProcessID", processId, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-        }) {
-            url(AccessPointProps.outbox.url)
-            header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
-            header(HttpHeaders.Accept, ContentType.Application.Xml)
-        }
-        LOGGER.info { "Post response: $response" }
-        return response
-    }
+    suspend fun sendToOutbox(outboundRequest: OutboundRequest): Result<OutboxPostResponseType, ErrorMessage> =
+        runCatching {
+            LOGGER.info { "SendToOutbox - Sending new message to outbox" }
+            val response = httpClient.submitFormWithBinaryData<String>(formData = outboundRequest.toFormData()) {
+                url(AccessPointProps.outbox.url)
+                header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
+                header(HttpHeaders.Accept, ContentType.Application.Xml)
+            }
+            LOGGER.info { "SendToOutbox - Post response: $response" }
+            JAXB.unmarshal(response, OutboxPostResponseType::class.java)
+        }.fold(
+            onSuccess = { response -> Ok(response) },
+            onFailure = { e -> e.toErrorMessage() }
+        )
 
-    suspend fun transmitMessage(msgNo: String): String {
-        LOGGER.info { "Transmitting MsgNo $msgNo to external" }
-        return httpClient.get {
-            url("${AccessPointProps.transmit.url}/$msgNo")
-            header(AccessPointProps.transmit.header, AccessPointProps.transmit.apiKey)
-            header(HttpHeaders.Accept, ContentType.Application.Xml)
-        }
-    }
+    suspend fun transmitMessage(outboxPostResponseType: OutboxPostResponseType): Result<QueuedMessagesSendResultType, ErrorMessage> =
+        runCatching {
+            val msgNo = outboxPostResponseType.message.messageMetaData.msgNo
+            LOGGER.info { "Transmitting MsgNo $msgNo to external party" }
+            httpClient.get<String> {
+                url("${AccessPointProps.transmit.url}/$msgNo")
+                header(AccessPointProps.transmit.header, AccessPointProps.transmit.apiKey)
+                header(HttpHeaders.Accept, ContentType.Application.Xml)
+            }.let { response ->
+                JAXB.unmarshal(response, QueuedMessagesSendResultType::class.java)
+            }
+        }.fold(
+            onSuccess = { response ->
+                when {
+                    response.succeededCount != 1 -> Err(ErrorMessage.AccessPoint.TransmitError)
+                    else -> Ok(response)
+                }
+            },
+            onFailure = { e -> e.toErrorMessage() }
+        )
 
     // Used during resubmit to set original in body as the body to used when resubmitted
     override fun process(exchange: Exchange) {
@@ -152,4 +168,22 @@ object AccessPointClient : Processor {
         }
         return "$rootNamespace::$localName##$customizationId::$ublVersion"
     }
+}
+
+private inline fun <reified T> Throwable.toErrorMessage(): Result<T, ErrorMessage> =
+    Err(
+        error = when (this) {
+            is ClientRequestException -> ErrorMessage.AccessPoint.ClientRequestError
+            is ServerResponseException -> ErrorMessage.AccessPoint.ServerResponseError
+            is DataBindingException -> ErrorMessage.DataBindError
+            else -> ErrorMessage.InternalError
+        }
+    )
+
+private fun OutboundRequest.toFormData(): List<PartData> = formData {
+    append("file", payload, headersOf(HttpHeaders.ContentType, "${ContentType.Application.Xml}"))
+    append("SenderID", sender, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+    append("RecipientID", receiver, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+    append("DocumentID", documentId, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+    append("ProcessID", processId, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
 }

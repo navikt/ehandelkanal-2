@@ -44,6 +44,8 @@ import no.nav.ehandel.kanal.routes.notFoundHandler
 import no.nav.ehandel.kanal.routes.outbound
 import no.nav.ehandel.kanal.routes.report
 import no.nav.ehandel.kanal.services.log.InboundLogger
+import no.nav.ehandel.kanal.services.outbound.OutboundMessageService
+import no.nav.ehandel.kanal.services.sbdhgenerator.SbdhGeneratorService
 import org.apache.camel.CamelContext
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.SimpleRegistry
@@ -153,7 +155,7 @@ fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) = emb
         nais(readinessCheck = { applicationState.initialized }, livenessCheck = { applicationState.running })
         report()
         route("/api/v1") {
-            outbound()
+            outbound(outboundMessageService = OutboundMessageService(AccessPointClient, SbdhGeneratorService()))
         }
     }
 }
