@@ -110,7 +110,7 @@ object AccessPointClient : Processor {
                 header(HttpHeaders.Accept, ContentType.Application.Xml)
             }
             LOGGER.info { "SendToOutbox - Post response: $response" }
-            JAXB.unmarshal(response, OutboxPostResponseType::class.java)
+            JAXB.unmarshal(response.byteInputStream(), OutboxPostResponseType::class.java)
         }.fold(
             onSuccess = { response -> Ok(response) },
             onFailure = { e -> e.toErrorMessage() }
@@ -125,7 +125,7 @@ object AccessPointClient : Processor {
                 header(AccessPointProps.transmit.header, AccessPointProps.transmit.apiKey)
                 header(HttpHeaders.Accept, ContentType.Application.Xml)
             }.let { response ->
-                JAXB.unmarshal(response, QueuedMessagesSendResultType::class.java)
+                JAXB.unmarshal(response.byteInputStream(), QueuedMessagesSendResultType::class.java)
             }
         }.fold(
             onSuccess = { response ->
