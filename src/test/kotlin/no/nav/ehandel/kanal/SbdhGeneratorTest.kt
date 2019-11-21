@@ -30,7 +30,7 @@ class SbdhGeneratorTest {
         sbdhGeneratorService
             .generateSbdh<OrderType>(payload)
             .getOrElse { throw IllegalStateException("should not return error") }
-            .apply {
+            .run {
                 sender.identifier shouldEqual "9908::889640782"
                 receiver.identifier shouldEqual "9908::889640782"
                 process.identifier shouldEqual "urn:www.cenbii.eu:profile:bii28:ver2.0"

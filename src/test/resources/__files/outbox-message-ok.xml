@@ -1,0 +1,20 @@
+<outbox-post-response version="1.0">
+    <message>
+        <self>https://localhost:8000/vefa-srest/outbox/1</self>
+        <xml-document>https://localhost:8080/vefa-srest/messages/1/xml-document</xml-document>
+        <message-meta-data>
+            <msg-no>1</msg-no>
+            <direction>OUT</direction>
+            <received>2017-03-09T08:51:51.778+01:00</received>
+            <peppol-header>
+                <sender>9908:889640782</sender>
+                <receiver>9908:889640782</receiver>
+                <channel>PEPPOL</channel>
+                <document-type>Order</document-type>
+                <document-id>urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:www.cenbii.eu:transaction:biitrns001:ver2.0:extended:urn:www.peppol.eu:bis:peppol28a:ver1.0:extended:urn:www.difi.no:ehf:ordre:ver1.0::2.1</document-id>
+                <process-name>UNKNOWN</process-name>
+                <process-id>urn:www.cenbii.eu:profile:bii04:ver2.0</process-id>
+            </peppol-header>
+        </message-meta-data>
+    </message>
+</outbox-post-response>

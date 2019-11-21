@@ -8,7 +8,6 @@ sealed class ErrorMessage {
 
     sealed class AccessPoint : ErrorMessage() {
         object ServerResponseError : AccessPoint()
-        object ClientRequestError : AccessPoint()
         object TransmitError : AccessPoint()
     }
 

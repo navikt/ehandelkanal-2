@@ -4,7 +4,7 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import io.ktor.client.features.ClientRequestException
-import io.ktor.client.features.ServerResponseException
+import io.ktor.client.features.ResponseException
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
@@ -117,8 +117,6 @@ object AccessPointClient : Processor {
                     url(AccessPointProps.outbox.url)
                     header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
                     header(HttpHeaders.Accept, ContentType.Application.Xml)
-                }.also { response ->
-                    LOGGER.info { "SendToOutbox - Post response: $response" }
                 }
             }
             JAXB.unmarshal(response.byteInputStream(), OutboxPostResponseType::class.java)
@@ -128,12 +126,12 @@ object AccessPointClient : Processor {
         )
 
     suspend fun transmitMessage(
-        outboxPostResponseType: OutboxPostResponseType,
+        outboxResponse: OutboxPostResponseType,
         attempts: Int = 10
     ): Result<QueuedMessagesSendResultType, ErrorMessage> =
         runCatching {
-            val msgNo = outboxPostResponseType.message.messageMetaData.msgNo
-            LOGGER.info { "Transmitting MsgNo $msgNo to external party" }
+            val msgNo = outboxResponse.message.messageMetaData.msgNo
+            LOGGER.info { "Transmitting MsgNo '$msgNo' to external party" }
             retry(
                 callName = "Access Point - Transmit",
                 attempts = attempts,
@@ -193,8 +191,7 @@ object AccessPointClient : Processor {
 private inline fun <reified T> Throwable.toErrorMessage(): Result<T, ErrorMessage> =
     Err(
         error = when (this) {
-            is ClientRequestException -> ErrorMessage.AccessPoint.ClientRequestError
-            is ServerResponseException -> ErrorMessage.AccessPoint.ServerResponseError
+            is ResponseException -> ErrorMessage.AccessPoint.ServerResponseError
             is DataBindingException -> ErrorMessage.DataBindError
             else -> ErrorMessage.InternalError
         }

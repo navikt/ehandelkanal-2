@@ -1,6 +1,7 @@
 package no.nav.ehandel.kanal
 
 import com.github.michaelbull.result.getErrorOrElse
+import com.github.michaelbull.result.getOrElse
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.BasicCredentials
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
@@ -24,13 +25,18 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
+import no.difi.vefasrest.model.MessageMetaDataType
+import no.difi.vefasrest.model.MessageType
+import no.difi.vefasrest.model.OutboxPostResponseType
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
 import no.nav.ehandel.kanal.common.constants.CamelHeader.TRACE_ID
 import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.helpers.getResource
 import no.nav.ehandel.kanal.helpers.shouldBeXmlEqualTo
 import no.nav.ehandel.kanal.services.outbound.OutboundRequest
+import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should equal`
+import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldEqualTo
 import org.apache.camel.Exchange
 import org.apache.camel.Message
@@ -123,21 +129,35 @@ class AccessPointClientTest {
         body shouldBeXmlEqualTo "/__files/inbox-message-read-ok.xml".getResource()
     }
 
-    // todo
     @Test
-    fun `given a valid request, when sending to outbox it should succeed`() {
+    fun `given a valid request, when sending to outbox, it should succeed`() {
         val url = "/$MOCK_SERVER_PATH/outbox"
         wireMockRule.accessPointStub(
             url = url,
             method = HttpMethod.Post,
             apiKey = outboxApiKey,
             acceptHeaderValue = ContentType.Application.Xml,
-            body = StubBody.WithFile(path = "inbox-message-read-ok.xml")
+            body = StubBody.WithFile(path = "outbox-message-ok.xml")
         )
+        val response = runBlocking {
+            val request = OutboundRequest(
+                payload = "test".toByteArray(),
+                sender = "",
+                receiver = "",
+                documentId = "",
+                processId = ""
+            )
+            vefaClient.sendToOutbox(outboundRequest = request, attempts = 1)
+        }
+        response
+            .getOrElse { throw IllegalStateException("should return error") }
+            .run {
+                message.messageMetaData.msgNo.toInt() shouldEqual 1
+            }
     }
 
     @Test
-    fun `given an invalid request, when sending to outbox it should fail`() {
+    fun `given an invalid request, when sending to outbox, it should fail`() {
         val url = "/$MOCK_SERVER_PATH/outbox"
         wireMockRule.accessPointStub(
             url = url,
@@ -159,36 +179,91 @@ class AccessPointClientTest {
         }
         response
             .getErrorOrElse { throw IllegalStateException("should return error") }
-            .`should equal`(ErrorMessage.AccessPoint.ClientRequestError)
+            .`should equal`(ErrorMessage.AccessPoint.ServerResponseError)
     }
 
-    // todo
     @Test
     fun `given a valid msgNo, when attempting to mark an outbox message for transmission, it should succeed`() {
         val msgNo = 1
+        val outboxPostResponse = msgNo.mapToOutboxResponse()
         val url = "/$MOCK_SERVER_PATH/transmit/$msgNo"
         wireMockRule.accessPointStub(
             url = url,
-            method = HttpMethod.Post,
+            method = HttpMethod.Get,
             apiKey = transmitApiKey,
             acceptHeaderValue = ContentType.Application.Xml,
-            body = StubBody.WithContent("")
+            body = StubBody.WithFile("transmit-message-ok.xml")
         )
+        val response = runBlocking {
+            vefaClient.transmitMessage(outboxResponse = outboxPostResponse, attempts = 1)
+        }
+        response
+            .getOrElse { throw IllegalStateException("should not return error") }
+            .run {
+                succeededCount `should be equal to` 1
+            }
     }
 
-    // todo
     @Test
     fun `given an invalid msgNo, when attempting to mark an outbox message for transmission, it should fail`() {
         val msgNo = 2
+        val outboxPostResponse = msgNo.mapToOutboxResponse()
         val url = "/$MOCK_SERVER_PATH/transmit/$msgNo"
         wireMockRule.accessPointStub(
             url = url,
-            method = HttpMethod.Post,
+            method = HttpMethod.Get,
             apiKey = transmitApiKey,
             acceptHeaderValue = ContentType.Application.Xml,
             httpStatusCode = HttpStatusCode.BadRequest,
             body = StubBody.WithContent("")
         )
+        val response = runBlocking {
+            vefaClient.transmitMessage(outboxResponse = outboxPostResponse, attempts = 1)
+        }
+        response
+            .getErrorOrElse { throw IllegalStateException("should return error") }
+            .`should equal`(ErrorMessage.AccessPoint.ServerResponseError)
+    }
+
+    @Test
+    fun `given a valid msgNo, when attempting to mark an outbox message for transmission and it fails, it should return a failure message`() {
+        val msgNo = 3
+        val outboxPostResponse = msgNo.mapToOutboxResponse()
+        val url = "/$MOCK_SERVER_PATH/transmit/$msgNo"
+        wireMockRule.accessPointStub(
+            url = url,
+            method = HttpMethod.Get,
+            apiKey = transmitApiKey,
+            acceptHeaderValue = ContentType.Application.Xml,
+            body = StubBody.WithFile("transmit-message-failed.xml")
+        )
+        val response = runBlocking {
+            vefaClient.transmitMessage(outboxResponse = outboxPostResponse, attempts = 1)
+        }
+        response
+            .getErrorOrElse { throw IllegalStateException("should return error") }
+            .`should equal`(ErrorMessage.AccessPoint.TransmitError)
+    }
+
+    @Test
+    fun `given a valid msgNo, when attempting to mark an outbox message for transmission and the access point is unavailable, it should return a failure message`() {
+        val msgNo = 4
+        val outboxPostResponse = msgNo.mapToOutboxResponse()
+        val url = "/$MOCK_SERVER_PATH/transmit/$msgNo"
+        wireMockRule.accessPointStub(
+            url = url,
+            method = HttpMethod.Get,
+            apiKey = transmitApiKey,
+            acceptHeaderValue = ContentType.Application.Xml,
+            httpStatusCode = HttpStatusCode.InternalServerError,
+            body = StubBody.WithContent("")
+        )
+        val response = runBlocking {
+            vefaClient.transmitMessage(outboxResponse = outboxPostResponse, attempts = 1)
+        }
+        response
+            .getErrorOrElse { throw IllegalStateException("should return error") }
+            .`should equal`(ErrorMessage.AccessPoint.ServerResponseError)
     }
 
     private fun verifyRequest(request: RequestPatternBuilder, apiKey: String) {
@@ -211,6 +286,14 @@ class AccessPointClientTest {
             System.setProperty("vefasrest.inbox.url", MOCK_SERVER_URL + "inbox/")
             System.setProperty("vefasrest.messages.url", MOCK_SERVER_URL + "messages/")
             System.setProperty("vefasrest.transmit.url", MOCK_SERVER_URL + "transmit/")
+        }
+    }
+}
+
+private fun Int.mapToOutboxResponse() = OutboxPostResponseType().apply {
+    message = MessageType().apply {
+        messageMetaData = MessageMetaDataType().apply {
+            this.msgNo = this@mapToOutboxResponse.toString()
         }
     }
 }

@@ -44,7 +44,6 @@ private fun OutboundErrorResponse.toResponse() = when (this.errorMessage) {
         Pair(HttpStatusCode.InternalServerError, this)
 
     ErrorMessage.DataBindError,
-    ErrorMessage.AccessPoint.ClientRequestError,
     ErrorMessage.SbdhGenerator.CouldNotMapPayloadToSbdh,
     ErrorMessage.SbdhGenerator.CouldNotParseDocumentType ->
         Pair(HttpStatusCode.BadRequest, this)
