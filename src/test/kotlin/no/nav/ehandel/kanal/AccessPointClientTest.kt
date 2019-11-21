@@ -155,7 +155,7 @@ class AccessPointClientTest {
                 documentId = "",
                 processId = ""
             )
-            vefaClient.sendToOutbox(request)
+            vefaClient.sendToOutbox(outboundRequest = request, attempts = 1)
         }
         response
             .getErrorOrElse { throw IllegalStateException("should return error") }

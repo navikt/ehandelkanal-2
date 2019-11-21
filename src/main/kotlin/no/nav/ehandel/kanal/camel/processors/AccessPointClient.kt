@@ -22,6 +22,7 @@ import mu.KotlinLogging
 import no.difi.vefasrest.model.OutboxPostResponseType
 import no.difi.vefasrest.model.QueuedMessagesSendResultType
 import no.nav.ehandel.kanal.AccessPointProps
+import no.nav.ehandel.kanal.common.functions.retry
 import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.common.singletons.httpClient
 import no.nav.ehandel.kanal.services.log.InboundLogger
@@ -101,29 +102,48 @@ object AccessPointClient : Processor {
         }
     }
 
-    suspend fun sendToOutbox(outboundRequest: OutboundRequest): Result<OutboxPostResponseType, ErrorMessage> =
+    suspend fun sendToOutbox(
+        outboundRequest: OutboundRequest,
+        attempts: Int = 10
+    ): Result<OutboxPostResponseType, ErrorMessage> =
         runCatching {
-            LOGGER.info { "SendToOutbox - Sending new message to outbox" }
-            val response = httpClient.submitFormWithBinaryData<String>(formData = outboundRequest.toFormData()) {
-                url(AccessPointProps.outbox.url)
-                header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
-                header(HttpHeaders.Accept, ContentType.Application.Xml)
+            val response = retry(
+                callName = "Access Point - Outbound",
+                attempts = attempts,
+                illegalExceptions = *arrayOf(ClientRequestException::class)
+            ) {
+                LOGGER.info { "SendToOutbox - Sending new message to outbox" }
+                httpClient.submitFormWithBinaryData<String>(formData = outboundRequest.toFormData()) {
+                    url(AccessPointProps.outbox.url)
+                    header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
+                    header(HttpHeaders.Accept, ContentType.Application.Xml)
+                }.also { response ->
+                    LOGGER.info { "SendToOutbox - Post response: $response" }
+                }
             }
-            LOGGER.info { "SendToOutbox - Post response: $response" }
             JAXB.unmarshal(response.byteInputStream(), OutboxPostResponseType::class.java)
         }.fold(
             onSuccess = { response -> Ok(response) },
             onFailure = { e -> e.toErrorMessage() }
         )
 
-    suspend fun transmitMessage(outboxPostResponseType: OutboxPostResponseType): Result<QueuedMessagesSendResultType, ErrorMessage> =
+    suspend fun transmitMessage(
+        outboxPostResponseType: OutboxPostResponseType,
+        attempts: Int = 10
+    ): Result<QueuedMessagesSendResultType, ErrorMessage> =
         runCatching {
             val msgNo = outboxPostResponseType.message.messageMetaData.msgNo
             LOGGER.info { "Transmitting MsgNo $msgNo to external party" }
-            httpClient.get<String> {
-                url("${AccessPointProps.transmit.url}/$msgNo")
-                header(AccessPointProps.transmit.header, AccessPointProps.transmit.apiKey)
-                header(HttpHeaders.Accept, ContentType.Application.Xml)
+            retry(
+                callName = "Access Point - Transmit",
+                attempts = attempts,
+                illegalExceptions = *arrayOf(ClientRequestException::class)
+            ) {
+                httpClient.get<String> {
+                    url("${AccessPointProps.transmit.url}/$msgNo")
+                    header(AccessPointProps.transmit.header, AccessPointProps.transmit.apiKey)
+                    header(HttpHeaders.Accept, ContentType.Application.Xml)
+                }
             }.let { response ->
                 JAXB.unmarshal(response.byteInputStream(), QueuedMessagesSendResultType::class.java)
             }
