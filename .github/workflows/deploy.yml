@@ -73,7 +73,6 @@ jobs:
           CLUSTER: dev-fss
           RESOURCE: .nais/naiserator.yaml
           VARS: .nais/config-dev.yaml
-          PRINT_PAYLOAD: true
 
   deploy-prod:
     name: Deploy to NAIS prod
