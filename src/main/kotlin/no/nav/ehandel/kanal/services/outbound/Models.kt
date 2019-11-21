@@ -34,10 +34,12 @@ data class OutboundRequest(
     }
 }
 
+// todo
 data class OutboundResponse(
     val foo: String
 )
 
+// todo
 data class OutboundErrorResponse(
     val foo: String,
     val errorMessage: ErrorMessage

@@ -16,11 +16,12 @@ class OutboundMessageService(
         runCatching {
             sbdhGeneratorService
                 .generateSbdh<T>(xmlPayload)
-            // prepend SBDH to document, creating an SBD
-            // upload SBD to access point
-            // trigger transmit
-            // ?????????
-            // profit
+            // todo
+            //  - prepend SBDH to document, creating an SBD
+            //  - upload SBD to access point
+            //  - trigger transmit
+            //  - ?????????
+            //  - profit
         }.fold(
             onSuccess = {
                 Ok(OutboundResponse(foo = "bar"))
