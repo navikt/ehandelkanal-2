@@ -24,7 +24,14 @@ import com.nhaarman.mockitokotlin2.mock
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import java.util.Date
 import kotlinx.coroutines.runBlocking
+import no.difi.vefa.peppol.common.model.DocumentTypeIdentifier
+import no.difi.vefa.peppol.common.model.Header
+import no.difi.vefa.peppol.common.model.InstanceIdentifier
+import no.difi.vefa.peppol.common.model.InstanceType
+import no.difi.vefa.peppol.common.model.ParticipantIdentifier
+import no.difi.vefa.peppol.common.model.ProcessIdentifier
 import no.difi.vefasrest.model.MessageMetaDataType
 import no.difi.vefasrest.model.MessageType
 import no.difi.vefasrest.model.OutboxPostResponseType
@@ -33,7 +40,6 @@ import no.nav.ehandel.kanal.common.constants.CamelHeader.TRACE_ID
 import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.helpers.getResource
 import no.nav.ehandel.kanal.helpers.shouldBeXmlEqualTo
-import no.nav.ehandel.kanal.services.outbound.OutboundRequest
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should equal`
 import org.amshove.kluent.shouldEqual
@@ -140,14 +146,15 @@ class AccessPointClientTest {
             body = StubBody.WithFile(path = "outbox-message-ok.xml")
         )
         val response = runBlocking {
-            val request = OutboundRequest(
-                payload = "test".toByteArray(),
-                sender = "",
-                receiver = "",
-                documentId = "",
-                processId = ""
-            )
-            vefaClient.sendToOutbox(outboundRequest = request, attempts = 1)
+            val header = Header.newInstance()
+                .sender(ParticipantIdentifier.of("test"))
+                .receiver(ParticipantIdentifier.of("test"))
+                .process(ProcessIdentifier.of("test"))
+                .documentType(DocumentTypeIdentifier.of("test"))
+                .instanceType(InstanceType.of("test", "test", "test"))
+                .creationTimestamp(Date())
+                .identifier(InstanceIdentifier.of("test"))
+            vefaClient.sendToOutbox(payload = "test", header = header, attempts = 1)
         }
         response
             .getOrElse { throw IllegalStateException("should return error") }
@@ -168,14 +175,15 @@ class AccessPointClientTest {
             body = StubBody.WithContent("")
         )
         val response = runBlocking {
-            val request = OutboundRequest(
-                payload = "test".toByteArray(),
-                sender = "",
-                receiver = "",
-                documentId = "",
-                processId = ""
-            )
-            vefaClient.sendToOutbox(outboundRequest = request, attempts = 1)
+            val header = Header.newInstance()
+                .sender(ParticipantIdentifier.of("test"))
+                .receiver(ParticipantIdentifier.of("test"))
+                .process(ProcessIdentifier.of("test"))
+                .documentType(DocumentTypeIdentifier.of("test"))
+                .instanceType(InstanceType.of("test", "test", "test"))
+                .creationTimestamp(Date())
+                .identifier(InstanceIdentifier.of("test"))
+            vefaClient.sendToOutbox(payload = "test", header = header, attempts = 1)
         }
         response
             .getErrorOrElse { throw IllegalStateException("should return error") }

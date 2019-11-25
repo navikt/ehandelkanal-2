@@ -4,17 +4,21 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.andThen
+import java.io.ByteArrayOutputStream
 import javax.xml.bind.JAXB
 import mu.KotlinLogging
 import no.difi.commons.ubl21.jaxb.OrderType
 import no.difi.vefa.peppol.common.model.Header
+import no.difi.vefa.peppol.sbdh.SbdWriter
+import no.difi.vefa.peppol.sbdh.util.XMLStreamUtils
 import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.domain.documenttypes.order.mapToHeader
 
 private val logger = KotlinLogging.logger { }
 
-class SbdhGeneratorService {
-    internal inline fun <reified T> generateSbdh(rawXmlPayload: String): Result<Header, ErrorMessage> =
+class StandardBusinessDoumentProcessorService {
+
+    internal inline fun <reified T> generateStandardBusinessDocumentHeader(rawXmlPayload: String): Result<Header, ErrorMessage> =
         rawXmlPayload
             .parsePayload<T>()
             .andThen { payload -> payload.mapToSbdh() }
@@ -23,6 +27,22 @@ class SbdhGeneratorService {
         const val ISO6323_1_ACTOR_ID_CODE = "9908" // todo: handle other actors?
     }
 }
+
+internal fun Header.mapToStandardBusinessDocument(rawXmlPayload: String): Result<String, ErrorMessage> =
+    runCatching {
+        ByteArrayOutputStream().use { outputStream ->
+            SbdWriter.newInstance(outputStream, this).use { sbdWriter ->
+                XMLStreamUtils.copy(rawXmlPayload.byteInputStream(Charsets.UTF_8), sbdWriter.xmlWriter())
+            }
+            outputStream.toString(Charsets.UTF_8)
+        }
+    }.fold(
+        onSuccess = { Ok(it) },
+        onFailure = { e ->
+            logger.error(e) { "Could not prepend SBDH to payload" }
+            Err(ErrorMessage.SbdhGenerator.CouldNotPrependSbdh)
+        }
+    )
 
 private inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
     runCatching {

@@ -40,7 +40,8 @@ private suspend inline fun <reified T> ApplicationCall.handleOutboundRequest(out
 private fun OutboundErrorResponse.toResponse() = when (this.errorMessage) {
     ErrorMessage.InternalError,
     ErrorMessage.AccessPoint.TransmitError,
-    ErrorMessage.AccessPoint.ServerResponseError ->
+    ErrorMessage.AccessPoint.ServerResponseError,
+    ErrorMessage.SbdhGenerator.CouldNotPrependSbdh ->
         Pair(HttpStatusCode.InternalServerError, this)
 
     ErrorMessage.DataBindError,

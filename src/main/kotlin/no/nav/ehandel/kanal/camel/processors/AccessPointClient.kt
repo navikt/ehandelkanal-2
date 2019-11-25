@@ -19,6 +19,7 @@ import javax.xml.bind.DataBindingException
 import javax.xml.bind.JAXB
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import no.difi.vefa.peppol.common.model.Header
 import no.difi.vefasrest.model.OutboxPostResponseType
 import no.difi.vefasrest.model.QueuedMessagesSendResultType
 import no.nav.ehandel.kanal.AccessPointProps
@@ -26,7 +27,6 @@ import no.nav.ehandel.kanal.common.functions.retry
 import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.common.singletons.httpClient
 import no.nav.ehandel.kanal.services.log.InboundLogger
-import no.nav.ehandel.kanal.services.outbound.OutboundRequest
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.camel.language.NamespacePrefix
@@ -103,23 +103,26 @@ object AccessPointClient : Processor {
     }
 
     suspend fun sendToOutbox(
-        outboundRequest: OutboundRequest,
+        payload: String,
+        header: Header,
         attempts: Int = 10
     ): Result<OutboxPostResponseType, ErrorMessage> =
         runCatching {
-            val response = retry(
+            retry(
                 callName = "Access Point - Outbound",
                 attempts = attempts,
                 illegalExceptions = *arrayOf(ClientRequestException::class)
             ) {
                 LOGGER.info { "SendToOutbox - Sending new message to outbox" }
-                httpClient.submitFormWithBinaryData<String>(formData = outboundRequest.toFormData()) {
+                httpClient.submitFormWithBinaryData<String>(formData = mapToFormData(payload, header)) {
                     url(AccessPointProps.outbox.url)
                     header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
                     header(HttpHeaders.Accept, ContentType.Application.Xml)
                 }
+            }.let { response ->
+                LOGGER.debug { "SendToOutbox - Payload: '$response'" }
+                JAXB.unmarshal(response.byteInputStream(), OutboxPostResponseType::class.java)
             }
-            JAXB.unmarshal(response.byteInputStream(), OutboxPostResponseType::class.java)
         }.fold(
             onSuccess = { response -> Ok(response) },
             onFailure = { e -> e.toErrorMessage() }
@@ -143,6 +146,7 @@ object AccessPointClient : Processor {
                     header(HttpHeaders.Accept, ContentType.Application.Xml)
                 }
             }.let { response ->
+                LOGGER.debug { "SendToOutbox - Payload: '$response'" }
                 JAXB.unmarshal(response.byteInputStream(), QueuedMessagesSendResultType::class.java)
             }
         }.fold(
@@ -197,10 +201,10 @@ private inline fun <reified T> Throwable.toErrorMessage(): Result<T, ErrorMessag
         }
     )
 
-private fun OutboundRequest.toFormData(): List<PartData> = formData {
+private fun mapToFormData(payload: String, header: Header): List<PartData> = formData {
     append("file", payload, headersOf(HttpHeaders.ContentType, "${ContentType.Application.Xml}"))
-    append("SenderID", sender, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-    append("RecipientID", receiver, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-    append("DocumentID", documentId, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-    append("ProcessID", processId, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+    append("SenderID", header.sender.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+    append("RecipientID", header.receiver.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+    append("DocumentID", header.identifier.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+    append("ProcessID", header.process.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
 }

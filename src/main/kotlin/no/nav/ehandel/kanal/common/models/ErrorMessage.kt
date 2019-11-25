@@ -4,6 +4,7 @@ sealed class ErrorMessage {
     sealed class SbdhGenerator : ErrorMessage() {
         object CouldNotParseDocumentType : SbdhGenerator()
         object CouldNotMapPayloadToSbdh : SbdhGenerator()
+        object CouldNotPrependSbdh : SbdhGenerator()
     }
 
     sealed class AccessPoint : ErrorMessage() {

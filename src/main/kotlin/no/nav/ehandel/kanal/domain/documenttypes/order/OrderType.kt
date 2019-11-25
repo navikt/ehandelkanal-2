@@ -9,7 +9,7 @@ import no.difi.vefa.peppol.common.model.InstanceType
 import no.difi.vefa.peppol.common.model.ParticipantIdentifier
 import no.difi.vefa.peppol.common.model.ProcessIdentifier
 import no.nav.ehandel.kanal.common.functions.getCorrelationId
-import no.nav.ehandel.kanal.services.sbdhgenerator.SbdhGeneratorService.Companion.ISO6323_1_ACTOR_ID_CODE
+import no.nav.ehandel.kanal.services.sbdhgenerator.StandardBusinessDoumentProcessorService.Companion.ISO6323_1_ACTOR_ID_CODE
 
 private const val DOCUMENT_TYPE_STANDARD = "urn:oasis:names:specification:ubl:schema:xsd:Order-2"
 private const val DOCUMENT_TYPE = "Order"
