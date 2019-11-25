@@ -125,7 +125,10 @@ object AccessPointClient : Processor {
             }
         }.fold(
             onSuccess = { response -> Ok(response) },
-            onFailure = { e -> e.toErrorMessage() }
+            onFailure = { e ->
+                LOGGER.error(e) { "SendToOutbox - Failed to send payload to outbox" }
+                e.toErrorMessage()
+            }
         )
 
     suspend fun transmitMessage(
@@ -146,7 +149,7 @@ object AccessPointClient : Processor {
                     header(HttpHeaders.Accept, ContentType.Application.Xml)
                 }
             }.let { response ->
-                LOGGER.debug { "SendToOutbox - Payload: '$response'" }
+                LOGGER.debug { "Transmit - Payload: '$response'" }
                 JAXB.unmarshal(response.byteInputStream(), QueuedMessagesSendResultType::class.java)
             }
         }.fold(
@@ -156,7 +159,10 @@ object AccessPointClient : Processor {
                     else -> Ok(response)
                 }
             },
-            onFailure = { e -> e.toErrorMessage() }
+            onFailure = { e ->
+                LOGGER.error(e) { "Transmit - failed to trigger transmit" }
+                e.toErrorMessage()
+            }
         )
 
     // Used during resubmit to set original in body as the body to used when resubmitted
