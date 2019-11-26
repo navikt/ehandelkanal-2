@@ -9,7 +9,7 @@ class OutboundIT {
     }
 
     @Test // todo
-    fun `given avalid payload and the access point is unavailable, it should return failure`() {
+    fun `given a valid payload and the access point is unavailable, it should return failure`() {
     }
 
     @Test // todo

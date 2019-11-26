@@ -1,17 +1,43 @@
 package no.nav.ehandel.kanal.common.models
 
 sealed class ErrorMessage {
-    sealed class SbdhGenerator : ErrorMessage() {
-        object CouldNotParseDocumentType : SbdhGenerator()
-        object CouldNotMapPayloadToSbdh : SbdhGenerator()
-        object CouldNotPrependSbdh : SbdhGenerator()
+    sealed class StandardBusinessDocument : ErrorMessage() {
+        object CouldNotParseDocumentType : StandardBusinessDocument() {
+            override fun toString(): String = this.javaClass.simpleName
+        }
+
+        object CouldNotPrependStandardBusinessDocument : StandardBusinessDocument() {
+            override fun toString(): String = this.javaClass.simpleName
+        }
+
+        object InvalidSchemeIdForParticipant : StandardBusinessDocument() {
+            override fun toString(): String = this.javaClass.simpleName
+        }
+
+        object InvalidDocumentType : StandardBusinessDocument() {
+            override fun toString(): String = this.javaClass.simpleName
+        }
+
+        object MissingRequiredValuesFromDocument : StandardBusinessDocument() {
+            override fun toString(): String = this.javaClass.simpleName
+        }
     }
 
     sealed class AccessPoint : ErrorMessage() {
-        object ServerResponseError : AccessPoint()
-        object TransmitError : AccessPoint()
+        object ServerResponseError : AccessPoint() {
+            override fun toString(): String = this.javaClass.simpleName
+        }
+
+        object TransmitError : AccessPoint() {
+            override fun toString(): String = this.javaClass.simpleName
+        }
     }
 
-    object InternalError : ErrorMessage()
-    object DataBindError : ErrorMessage()
+    object InternalError : ErrorMessage() {
+        override fun toString(): String = this.javaClass.simpleName
+    }
+
+    object DataBindError : ErrorMessage() {
+        override fun toString(): String = this.javaClass.simpleName
+    }
 }

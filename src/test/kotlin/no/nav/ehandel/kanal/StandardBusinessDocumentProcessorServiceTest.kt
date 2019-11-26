@@ -1,17 +1,18 @@
 package no.nav.ehandel.kanal
 
-import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.getErrorOrElse
 import com.github.michaelbull.result.getOrElse
+import no.difi.commons.ubl21.jaxb.InvoiceType
 import no.difi.commons.ubl21.jaxb.OrderType
+import no.difi.vefa.peppol.common.model.Header
 import no.nav.ehandel.kanal.common.constants.MDC_CALL_ID
 import no.nav.ehandel.kanal.common.functions.randomUuid
 import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.helpers.getResource
 import no.nav.ehandel.kanal.services.sbdhgenerator.StandardBusinessDoumentProcessorService
-import no.nav.ehandel.kanal.services.sbdhgenerator.mapToStandardBusinessDocument
 import org.amshove.kluent.`should equal`
 import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldNotBeEmpty
 import org.junit.Before
 import org.junit.Test
 import org.slf4j.MDC
@@ -27,12 +28,11 @@ class StandardBusinessDocumentProcessorServiceTest {
     }
 
     @Test
-    fun `given a valid Order payload, should generate valid SBDH`() {
-        val payload: String = "/outbound/outbound-valid-order-no-sbdh.xml".getResource()
-        sbdProcessorService
-            .generateStandardBusinessDocumentHeader<OrderType>(payload)
-            .getOrElse { throw IllegalStateException("should not return error") }
-            .run {
+    fun `given a valid document, should generate valid SBD`() {
+        sbdProcessorService.runPositiveTest<OrderType>(
+            "/outbound/outbound-valid-order-no-sbdh.xml"
+        ) { (header, document) ->
+            with(header) {
                 sender.identifier shouldEqual "9908::889640782"
                 receiver.identifier shouldEqual "9908::889640782"
                 process.identifier shouldEqual "urn:www.cenbii.eu:profile:bii28:ver2.0"
@@ -44,37 +44,78 @@ class StandardBusinessDocumentProcessorServiceTest {
                 }
                 identifier.identifier shouldEqual callId
             }
+            document.shouldNotBeEmpty()
+        }
+    }
+
+    @Test
+    fun `given a valid document with v3 scheme ID, should return a valid SBD`() {
+        sbdProcessorService.runPositiveTest<OrderType>(
+            "/outbound/outbound-valid-order-schemeid-v3-no-sbdh.xml"
+        ) { (header, document) ->
+            with(header) {
+                sender.identifier shouldEqual "0192::889640782"
+                receiver.identifier shouldEqual "0192::889640782"
+                process.identifier shouldEqual "urn:www.cenbii.eu:profile:bii28:ver2.0"
+                documentType.identifier shouldEqual "urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:www.cenbii.eu:transaction:biitrns001:ver2.0:extended:urn:www.peppol.eu:bis:peppol28a:ver1.0:extended:urn:www.difi.no:ehf:ordre:ver1.0::2.1"
+                with(instanceType) {
+                    standard shouldEqual "urn:oasis:names:specification:ubl:schema:xsd:Order-2"
+                    type shouldEqual "Order"
+                    version shouldEqual "2.1"
+                }
+                identifier.identifier shouldEqual callId
+            }
+            document.shouldNotBeEmpty()
+        }
     }
 
     @Test
     fun `given an invalid payload, should return parse error message`() {
-        val payload = """{ "payload": "I can't believe it's not XML""}"""
-        sbdProcessorService
-            .generateStandardBusinessDocumentHeader<OrderType>(payload)
-            .getErrorOrElse { throw IllegalStateException("should return error") }
-            .`should equal`(ErrorMessage.SbdhGenerator.CouldNotParseDocumentType)
+        sbdProcessorService.runNegativeTest<OrderType>(
+            payloadPath = "/outbound/outbound-invalid-payload.json",
+            expectedErrorMessage = ErrorMessage.StandardBusinessDocument.CouldNotParseDocumentType
+        )
     }
 
     @Test
     fun `given a non-matching document type, should return invalid document message`() {
-        val payload: String = "/outbound/outbound-valid-invoice-no-sbdh.xml".getResource()
-        sbdProcessorService
-            .generateStandardBusinessDocumentHeader<OrderType>(payload)
-            .getErrorOrElse { throw IllegalStateException("should return error") }
-            .`should equal`(ErrorMessage.SbdhGenerator.CouldNotMapPayloadToSbdh)
+        sbdProcessorService.runNegativeTest<InvoiceType>(
+            payloadPath = "/outbound/outbound-valid-invoice-no-sbdh.xml",
+            expectedErrorMessage = ErrorMessage.StandardBusinessDocument.InvalidDocumentType
+        )
     }
 
     @Test
-    fun `given a valid document and header, should return valid SBD`() {
-        val payload: String = "/outbound/outbound-valid-order-no-sbdh.xml".getResource()
-        sbdProcessorService
-            .generateStandardBusinessDocumentHeader<OrderType>(payload)
-            .andThen { header -> header.mapToStandardBusinessDocument(payload) }
+    fun `given an invalid document with missing required values, should return error message`() {
+        sbdProcessorService.runNegativeTest<OrderType>(
+            payloadPath = "/outbound/outbound-invalid-order-missing-required-values-no-sbdh.xml",
+            expectedErrorMessage = ErrorMessage.StandardBusinessDocument.MissingRequiredValuesFromDocument
+        )
+    }
+
+    @Test
+    fun `given a document with an invalid scheme ID, should return error message`() {
+        sbdProcessorService.runNegativeTest<OrderType>(
+            payloadPath = "/outbound/outbound-invalid-order-invalid-schemeid-no-sbdh.xml",
+            expectedErrorMessage = ErrorMessage.StandardBusinessDocument.InvalidSchemeIdForParticipant
+        )
+    }
+
+    private inline fun <reified T> StandardBusinessDoumentProcessorService.runPositiveTest(
+        payloadPath: String,
+        validate: (Pair<Header, String>) -> Unit
+    ) {
+        this.generateStandardBusinessDocument<T>(payloadPath.getResource())
             .getOrElse { throw IllegalStateException("should not return error") }
-            .run {
-            }
-            .also {
-                println(it)
-            }
+            .run { validate(this) }
+    }
+
+    private inline fun <reified T> StandardBusinessDoumentProcessorService.runNegativeTest(
+        payloadPath: String,
+        expectedErrorMessage: ErrorMessage
+    ) {
+        this.generateStandardBusinessDocument<T>(payloadPath.getResource())
+            .getErrorOrElse { throw IllegalStateException("should return error") }
+            .`should equal`(expectedErrorMessage)
     }
 }

@@ -28,12 +28,8 @@ private suspend inline fun <reified T> ApplicationCall.handleOutboundRequest(out
         .let { payload -> outboundMessageService.processOutboundMessage<T>(payload) }
         .mapError(OutboundErrorResponse::toResponse)
         .mapBoth(
-            success = { response ->
-                respond(HttpStatusCode.OK, response)
-            },
-            failure = { (status, response) ->
-                respond(status, response)
-            }
+            success = { response -> respond(HttpStatusCode.OK, response) },
+            failure = { (status, response) -> respond(status, response) }
         )
 }
 
@@ -41,11 +37,13 @@ private fun OutboundErrorResponse.toResponse() = when (this.errorMessage) {
     ErrorMessage.InternalError,
     ErrorMessage.AccessPoint.TransmitError,
     ErrorMessage.AccessPoint.ServerResponseError,
-    ErrorMessage.SbdhGenerator.CouldNotPrependSbdh ->
+    ErrorMessage.StandardBusinessDocument.CouldNotPrependStandardBusinessDocument ->
         Pair(HttpStatusCode.InternalServerError, this)
 
     ErrorMessage.DataBindError,
-    ErrorMessage.SbdhGenerator.CouldNotMapPayloadToSbdh,
-    ErrorMessage.SbdhGenerator.CouldNotParseDocumentType ->
+    ErrorMessage.StandardBusinessDocument.CouldNotParseDocumentType,
+    ErrorMessage.StandardBusinessDocument.InvalidSchemeIdForParticipant,
+    ErrorMessage.StandardBusinessDocument.InvalidDocumentType,
+    ErrorMessage.StandardBusinessDocument.MissingRequiredValuesFromDocument ->
         Pair(HttpStatusCode.BadRequest, this)
 }

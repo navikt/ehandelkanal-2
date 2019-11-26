@@ -9,7 +9,6 @@ import java.io.StringWriter
 import javax.xml.bind.JAXB
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
 import no.nav.ehandel.kanal.services.sbdhgenerator.StandardBusinessDoumentProcessorService
-import no.nav.ehandel.kanal.services.sbdhgenerator.mapToStandardBusinessDocument
 
 class OutboundMessageService(
     private val accessPointClient: AccessPointClient,
@@ -18,15 +17,9 @@ class OutboundMessageService(
 
     internal suspend inline fun <reified T> processOutboundMessage(xmlPayload: String): Result<OutboundResponse, OutboundErrorResponse> =
         standardBusinessDoumentProcessorService
-            .generateStandardBusinessDocumentHeader<T>(xmlPayload)
-            .andThen { header ->
-                header
-                    .mapToStandardBusinessDocument(xmlPayload)
-                    .andThen { standardBusinessDocument ->
-                        accessPointClient.sendToOutbox(payload = standardBusinessDocument, header = header)
-                    }
-            }
-            .andThen() { outboxPostResponse -> accessPointClient.transmitMessage(outboxPostResponse) }
+            .generateStandardBusinessDocument<T>(xmlPayload)
+            .andThen { (header, document) -> accessPointClient.sendToOutbox(payload = document, header = header) }
+            .andThen { outboxPostResponse -> accessPointClient.transmitMessage(outboxPostResponse) }
             .mapBoth(
                 success = { response ->
                     Ok(OutboundResponse(foo = response.mapJaxbObjectToString()))
