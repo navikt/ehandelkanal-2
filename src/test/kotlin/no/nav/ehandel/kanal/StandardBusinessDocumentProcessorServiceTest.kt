@@ -33,8 +33,8 @@ class StandardBusinessDocumentProcessorServiceTest {
             "/outbound/outbound-valid-order-no-sbdh.xml"
         ) { (header, document) ->
             with(header) {
-                sender.identifier shouldEqual "9908::889640782"
-                receiver.identifier shouldEqual "9908::889640782"
+                sender.identifier shouldEqual "9908:889640782"
+                receiver.identifier shouldEqual "9908:889640782"
                 process.identifier shouldEqual "urn:www.cenbii.eu:profile:bii28:ver2.0"
                 documentType.identifier shouldEqual "urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:www.cenbii.eu:transaction:biitrns001:ver2.0:extended:urn:www.peppol.eu:bis:peppol28a:ver1.0:extended:urn:www.difi.no:ehf:ordre:ver1.0::2.1"
                 with(instanceType) {
@@ -54,8 +54,8 @@ class StandardBusinessDocumentProcessorServiceTest {
             "/outbound/outbound-valid-order-schemeid-v3-no-sbdh.xml"
         ) { (header, document) ->
             with(header) {
-                sender.identifier shouldEqual "0192::889640782"
-                receiver.identifier shouldEqual "0192::889640782"
+                sender.identifier shouldEqual "0192:889640782"
+                receiver.identifier shouldEqual "0192:889640782"
                 process.identifier shouldEqual "urn:www.cenbii.eu:profile:bii28:ver2.0"
                 documentType.identifier shouldEqual "urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:www.cenbii.eu:transaction:biitrns001:ver2.0:extended:urn:www.peppol.eu:bis:peppol28a:ver1.0:extended:urn:www.difi.no:ehf:ordre:ver1.0::2.1"
                 with(instanceType) {

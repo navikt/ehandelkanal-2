@@ -32,10 +32,10 @@ internal fun OrderType.mapToHeader(): Result<Header, ErrorMessage> {
             .getOrElse { return Err(it) }
         Header.newInstance()
             .sender(
-                ParticipantIdentifier.of("$senderSchemeId::${this.buyerCustomerParty.party.endpointID.value}")
+                ParticipantIdentifier.of("$senderSchemeId:${this.buyerCustomerParty.party.endpointID.value}")
             )
             .receiver(
-                ParticipantIdentifier.of("$receiverSchemeId::${this.sellerSupplierParty.party.endpointID.value}")
+                ParticipantIdentifier.of("$receiverSchemeId:${this.sellerSupplierParty.party.endpointID.value}")
             )
             .process(ProcessIdentifier.of(this.profileID.value))
             .documentType(
