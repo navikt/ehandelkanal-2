@@ -11,8 +11,8 @@ import no.difi.vefa.peppol.common.model.ProcessIdentifier
 import no.nav.ehandel.kanal.common.functions.getCorrelationId
 import no.nav.ehandel.kanal.services.sbdhgenerator.StandardBusinessDoumentProcessorService.Companion.ISO6323_1_ACTOR_ID_CODE
 
-private const val DOCUMENT_TYPE_STANDARD = "urn:oasis:names:specification:ubl:schema:xsd:Order-2"
-private const val DOCUMENT_TYPE = "Order"
+private const val PEPPOL_ROOT_NAMESPACE = "urn:oasis:names:specification:ubl:schema:xsd:Order-2"
+private const val PEPPOL_LOCAL_NAME = "Order"
 
 internal fun OrderType.mapToHeader(): Header = Header.newInstance()
     .sender(ParticipantIdentifier.of("$ISO6323_1_ACTOR_ID_CODE::${this.buyerCustomerParty.party.endpointID.value}"))
@@ -20,9 +20,9 @@ internal fun OrderType.mapToHeader(): Header = Header.newInstance()
     .process(ProcessIdentifier.of(this.profileID.value))
     .documentType(
         DocumentTypeIdentifier.of(
-            "$DOCUMENT_TYPE_STANDARD::$DOCUMENT_TYPE##${this.customizationID.value}::${this.ublVersionID.value}"
+            "$PEPPOL_ROOT_NAMESPACE::$PEPPOL_LOCAL_NAME##${this.customizationID.value}::${this.ublVersionID.value}"
         )
     )
-    .instanceType(InstanceType.of(DOCUMENT_TYPE_STANDARD, DOCUMENT_TYPE, this.ublVersionID.value))
+    .instanceType(InstanceType.of(PEPPOL_ROOT_NAMESPACE, PEPPOL_LOCAL_NAME, this.ublVersionID.value))
     .creationTimestamp(Date())
     .identifier(InstanceIdentifier.of(getCorrelationId()))

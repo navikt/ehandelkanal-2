@@ -211,6 +211,10 @@ private fun mapToFormData(payload: String, header: Header): List<PartData> = for
     append("file", payload, headersOf(HttpHeaders.ContentType, "${ContentType.Application.Xml}"))
     append("SenderID", header.sender.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
     append("RecipientID", header.receiver.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-    append("DocumentID", header.identifier.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
+    append(
+        "DocumentID",
+        header.documentType.identifier,
+        headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}")
+    )
     append("ProcessID", header.process.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
 }
