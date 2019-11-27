@@ -9,7 +9,7 @@ import no.nav.ehandel.kanal.common.constants.MDC_CALL_ID
 import no.nav.ehandel.kanal.common.functions.randomUuid
 import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.helpers.getResource
-import no.nav.ehandel.kanal.services.sbdhgenerator.StandardBusinessDoumentProcessorService
+import no.nav.ehandel.kanal.services.sbd.StandardBusinessDocumentGenerator
 import org.amshove.kluent.`should equal`
 import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldNotBeEmpty
@@ -17,9 +17,9 @@ import org.junit.Before
 import org.junit.Test
 import org.slf4j.MDC
 
-class StandardBusinessDocumentProcessorServiceTest {
+class StandardBusinessDocumentGeneratorTest {
 
-    private val sbdProcessorService = StandardBusinessDoumentProcessorService()
+    private val sbdGenerator = StandardBusinessDocumentGenerator()
     private val callId = randomUuid()
 
     @Before
@@ -29,7 +29,7 @@ class StandardBusinessDocumentProcessorServiceTest {
 
     @Test
     fun `given a valid document, should generate valid SBD`() {
-        sbdProcessorService.runPositiveTest<OrderType>(
+        sbdGenerator.runPositiveTest<OrderType>(
             "/outbound/outbound-valid-order-no-sbdh.xml"
         ) { (header, document) ->
             with(header) {
@@ -50,7 +50,7 @@ class StandardBusinessDocumentProcessorServiceTest {
 
     @Test
     fun `given a valid document with v3 scheme ID, should return a valid SBD`() {
-        sbdProcessorService.runPositiveTest<OrderType>(
+        sbdGenerator.runPositiveTest<OrderType>(
             "/outbound/outbound-valid-order-schemeid-v3-no-sbdh.xml"
         ) { (header, document) ->
             with(header) {
@@ -71,7 +71,7 @@ class StandardBusinessDocumentProcessorServiceTest {
 
     @Test
     fun `given an invalid payload, should return parse error message`() {
-        sbdProcessorService.runNegativeTest<OrderType>(
+        sbdGenerator.runNegativeTest<OrderType>(
             payloadPath = "/outbound/outbound-invalid-payload.json",
             expectedErrorMessage = ErrorMessage.StandardBusinessDocument.CouldNotParseDocumentType
         )
@@ -79,7 +79,7 @@ class StandardBusinessDocumentProcessorServiceTest {
 
     @Test
     fun `given a non-matching document type, should return invalid document message`() {
-        sbdProcessorService.runNegativeTest<InvoiceType>(
+        sbdGenerator.runNegativeTest<InvoiceType>(
             payloadPath = "/outbound/outbound-valid-invoice-no-sbdh.xml",
             expectedErrorMessage = ErrorMessage.StandardBusinessDocument.InvalidDocumentType
         )
@@ -87,7 +87,7 @@ class StandardBusinessDocumentProcessorServiceTest {
 
     @Test
     fun `given an invalid document with missing required values, should return error message`() {
-        sbdProcessorService.runNegativeTest<OrderType>(
+        sbdGenerator.runNegativeTest<OrderType>(
             payloadPath = "/outbound/outbound-invalid-order-missing-required-values-no-sbdh.xml",
             expectedErrorMessage = ErrorMessage.StandardBusinessDocument.MissingRequiredValuesFromDocument
         )
@@ -95,13 +95,13 @@ class StandardBusinessDocumentProcessorServiceTest {
 
     @Test
     fun `given a document with an invalid scheme ID, should return error message`() {
-        sbdProcessorService.runNegativeTest<OrderType>(
+        sbdGenerator.runNegativeTest<OrderType>(
             payloadPath = "/outbound/outbound-invalid-order-invalid-schemeid-no-sbdh.xml",
             expectedErrorMessage = ErrorMessage.StandardBusinessDocument.InvalidSchemeIdForParticipant
         )
     }
 
-    private inline fun <reified T> StandardBusinessDoumentProcessorService.runPositiveTest(
+    private inline fun <reified T> StandardBusinessDocumentGenerator.runPositiveTest(
         payloadPath: String,
         validate: (Pair<Header, String>) -> Unit
     ) {
@@ -110,7 +110,7 @@ class StandardBusinessDocumentProcessorServiceTest {
             .run { validate(this) }
     }
 
-    private inline fun <reified T> StandardBusinessDoumentProcessorService.runNegativeTest(
+    private inline fun <reified T> StandardBusinessDocumentGenerator.runNegativeTest(
         payloadPath: String,
         expectedErrorMessage: ErrorMessage
     ) {

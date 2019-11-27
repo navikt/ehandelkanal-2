@@ -1,4 +1,4 @@
-package no.nav.ehandel.kanal.routes
+package no.nav.ehandel.kanal.services.outbound
 
 import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.mapError
@@ -12,8 +12,6 @@ import io.ktor.routing.post
 import io.ktor.routing.route
 import no.difi.commons.ubl21.jaxb.OrderType
 import no.nav.ehandel.kanal.common.models.ErrorMessage
-import no.nav.ehandel.kanal.services.outbound.OutboundErrorResponse
-import no.nav.ehandel.kanal.services.outbound.OutboundMessageService
 
 fun Route.outbound(outboundMessageService: OutboundMessageService) {
     route("/outbound") {

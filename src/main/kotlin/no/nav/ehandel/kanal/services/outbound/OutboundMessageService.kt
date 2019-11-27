@@ -8,15 +8,15 @@ import com.github.michaelbull.result.mapBoth
 import java.io.StringWriter
 import javax.xml.bind.JAXB
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
-import no.nav.ehandel.kanal.services.sbdhgenerator.StandardBusinessDoumentProcessorService
+import no.nav.ehandel.kanal.services.sbd.StandardBusinessDocumentGenerator
 
 class OutboundMessageService(
     private val accessPointClient: AccessPointClient,
-    private val standardBusinessDoumentProcessorService: StandardBusinessDoumentProcessorService
+    private val standardBusinessDocumentGenerator: StandardBusinessDocumentGenerator
 ) {
 
     internal suspend inline fun <reified T> processOutboundMessage(xmlPayload: String): Result<OutboundResponse, OutboundErrorResponse> =
-        standardBusinessDoumentProcessorService
+        standardBusinessDocumentGenerator
             .generateStandardBusinessDocument<T>(xmlPayload)
             .andThen { (header, document) -> accessPointClient.sendToOutbox(payload = document, header = header) }
             .andThen { outboxPostResponse -> accessPointClient.transmitMessage(outboxPostResponse) }

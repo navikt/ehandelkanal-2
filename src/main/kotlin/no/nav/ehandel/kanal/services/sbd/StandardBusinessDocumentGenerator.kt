@@ -1,4 +1,4 @@
-package no.nav.ehandel.kanal.services.sbdhgenerator
+package no.nav.ehandel.kanal.services.sbd
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
@@ -16,7 +16,7 @@ import no.nav.ehandel.kanal.domain.documenttypes.order.mapToHeader
 
 private val logger = KotlinLogging.logger { }
 
-class StandardBusinessDoumentProcessorService {
+class StandardBusinessDocumentGenerator {
 
     /**
      * returns a tuple consisting of the generated standard business document header as well as the string representation
@@ -38,7 +38,7 @@ private fun Header.mapToStandardBusinessDocument(rawXmlPayload: String): Result<
             outputStream.toString(Charsets.UTF_8)
         }
     }.fold(
-        onSuccess = { Ok(Pair(this, it)) },
+        onSuccess = { standardBusinessDocument -> Ok(Pair(this, standardBusinessDocument)) },
         onFailure = { e ->
             logger.error(e) { "Could not prepend SBDH to payload" }
             Err(ErrorMessage.StandardBusinessDocument.CouldNotPrependStandardBusinessDocument)
@@ -49,7 +49,7 @@ private inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
     runCatching {
         JAXB.unmarshal(this.byteInputStream(), T::class.java)
     }.fold(
-        onSuccess = { Ok(it) },
+        onSuccess = { unmarshalledPayload -> Ok(unmarshalledPayload) },
         onFailure = { e ->
             logger.error(e) { "Could not unmarshal document payload" }
             Err(ErrorMessage.StandardBusinessDocument.CouldNotParseDocumentType)

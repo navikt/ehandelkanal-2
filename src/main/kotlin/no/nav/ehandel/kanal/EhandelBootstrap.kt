@@ -41,11 +41,11 @@ import no.nav.ehandel.kanal.db.Vault
 import no.nav.ehandel.kanal.routes.exceptionHandler
 import no.nav.ehandel.kanal.routes.nais
 import no.nav.ehandel.kanal.routes.notFoundHandler
-import no.nav.ehandel.kanal.routes.outbound
 import no.nav.ehandel.kanal.routes.report
 import no.nav.ehandel.kanal.services.log.InboundLogger
 import no.nav.ehandel.kanal.services.outbound.OutboundMessageService
-import no.nav.ehandel.kanal.services.sbdhgenerator.StandardBusinessDoumentProcessorService
+import no.nav.ehandel.kanal.services.outbound.outbound
+import no.nav.ehandel.kanal.services.sbd.StandardBusinessDocumentGenerator
 import org.apache.camel.CamelContext
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.SimpleRegistry
@@ -155,7 +155,7 @@ fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) = emb
         nais(readinessCheck = { applicationState.initialized }, livenessCheck = { applicationState.running })
         report()
         route("/api/v1") {
-            outbound(outboundMessageService = OutboundMessageService(AccessPointClient, StandardBusinessDoumentProcessorService()))
+            outbound(outboundMessageService = OutboundMessageService(AccessPointClient, StandardBusinessDocumentGenerator()))
         }
     }
 }
