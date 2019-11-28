@@ -1,5 +1,6 @@
 package no.nav.ehandel.kanal
 
+import io.ktor.application.Application
 import io.ktor.application.install
 import io.ktor.features.CallId
 import io.ktor.features.CallLogging
@@ -133,7 +134,15 @@ fun configureCamelContext(registry: Registry) = DefaultCamelContext(registry).ap
     name = appName
 }
 
-fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) = embeddedServer(Netty, port) {
+fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) =
+    embeddedServer(Netty, port, module = { main(applicationState) })
+
+fun Application.main(
+    applicationState: ApplicationState = ApplicationState(running = true, initialized = true),
+    outboundMessageService: OutboundMessageService = OutboundMessageService(
+        AccessPointClient, StandardBusinessDocumentGenerator()
+    )
+) {
     install(StatusPages) {
         notFoundHandler()
         exceptionHandler()
@@ -155,7 +164,7 @@ fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) = emb
         nais(readinessCheck = { applicationState.initialized }, livenessCheck = { applicationState.running })
         report()
         route("/api/v1") {
-            outbound(outboundMessageService = OutboundMessageService(AccessPointClient, StandardBusinessDocumentGenerator()))
+            outbound(outboundMessageService = outboundMessageService)
         }
     }
 }

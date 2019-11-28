@@ -20,10 +20,11 @@ import com.github.tomakehurst.wiremock.http.ContentTypeHeader
 import com.github.tomakehurst.wiremock.junit.WireMockRule
 import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import com.nhaarman.mockitokotlin2.mock
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.mockk.every
+import io.mockk.mockk
 import java.util.Date
 import kotlinx.coroutines.runBlocking
 import no.difi.vefa.peppol.common.model.DocumentTypeIdentifier
@@ -65,11 +66,11 @@ private const val MOCK_SERVER_URL = "http://localhost:$MOCK_PORT/$MOCK_SERVER_PA
 
 class AccessPointClientTest {
 
-    private val message: Message = mock {
-        on { getHeader(TRACE_ID) }.thenReturn("1337")
+    private val messageMock: Message = mockk(relaxed = true) {
+        every { getHeader(TRACE_ID) } returns "1337"
     }
-    private val exchange: Exchange = mock {
-        onGeneric { getIn() }.thenReturn(message)
+    private val exchange: Exchange = mockk(relaxed = true) {
+        every { getIn() } returns messageMock
     }
 
     private val vefaClient = AccessPointClient

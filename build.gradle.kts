@@ -27,7 +27,7 @@ val postgres_version = "42.2.8"
 val exposed_version = "0.17.7"
 val result_version = "1.1.3"
 val wiremock_version = "2.25.1"
-val mockito_kotlin_version = "2.2.0"
+val mockk_version = "1.9"
 val kluent_version = "1.56"
 
 plugins {
@@ -91,9 +91,12 @@ dependencies {
 
     testImplementation("org.apache.camel:camel-test:$camel_version")
     testImplementation("com.github.tomakehurst:wiremock:$wiremock_version")
-    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:$mockito_kotlin_version")
+    testImplementation("io.mockk:mockk:$mockk_version")
+    testImplementation("io.ktor:ktor-server-test-host:$ktor_version") {
+        exclude(group = "org.eclipse.jetty") // conflicts with WireMock
+    }
     testImplementation("org.amshove.kluent:kluent:$kluent_version") {
-        exclude(group = "com.nhaarman", module = "mockito-kotlin-kt")
+        exclude(group = "com.nhaarman.mockitokotlin2")
     }
     testCompileOnly("junit:junit:4.12")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.5.1")

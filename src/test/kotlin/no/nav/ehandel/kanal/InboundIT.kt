@@ -15,10 +15,10 @@ import com.github.tomakehurst.wiremock.common.Slf4jNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.http.ContentTypeHeader
 import com.github.tomakehurst.wiremock.junit.WireMockRule
-import com.nhaarman.mockitokotlin2.mock
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.server.engine.ApplicationEngine
+import io.mockk.mockk
 import java.util.concurrent.TimeUnit
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
 import no.nav.ehandel.kanal.camel.routes.ACCESS_POINT_CLIENT
@@ -48,7 +48,7 @@ private const val inboxMessagesUrl = "/vefasrest/inbox/"
 private const val inboxReadUrl = "/vefasrest/inbox/1/read"
 private const val inboxMessageXmlDocUrl = "/vefasrest/messages/1/xml-document"
 
-private val server: ApplicationEngine = mock()
+private val server: ApplicationEngine = mockk(relaxed = true)
 private val camelContext = configureCamelContext(defaultRegistry()).apply {
     routeDefinitions[0].adviceWith(this, object : AdviceWithRouteBuilder() {
         override fun configure() {
