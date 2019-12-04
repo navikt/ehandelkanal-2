@@ -5,9 +5,9 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.mapBoth
-import java.io.StringWriter
-import javax.xml.bind.JAXB
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
+import no.nav.ehandel.kanal.common.functions.getCorrelationId
+import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.services.sbd.StandardBusinessDocumentGenerator
 
 class OutboundMessageService(
@@ -21,11 +21,17 @@ class OutboundMessageService(
             .andThen { (header, document) -> accessPointClient.sendToOutbox(payload = document, header = header) }
             .andThen { outboxPostResponse -> accessPointClient.transmitMessage(outboxPostResponse) }
             .mapBoth(
-                success = { response ->
-                    Ok(OutboundResponse(foo = response.mapJaxbObjectToString()))
+                success = {
+                    Ok(
+                        OutboundResponse(
+                            correlationId = getCorrelationId(),
+                            status = Status.SUCCESS,
+                            message = "Message successfully sent"
+                        )
+                    )
                 },
                 failure = { errorMessage ->
-                    Err(OutboundErrorResponse(foo = "bar", errorMessage = errorMessage))
+                    Err(errorMessage.mapToOutboundErrorResponse())
                 }
             )
 
@@ -34,7 +40,24 @@ class OutboundMessageService(
     //  - report entries?
 }
 
-private fun Any.mapJaxbObjectToString(): String = StringWriter().use { sw ->
-    JAXB.marshal(this, sw)
-    sw.toString()
+private fun ErrorMessage.mapToOutboundErrorResponse(): OutboundErrorResponse {
+    val status = when (this) {
+        ErrorMessage.InternalError,
+        ErrorMessage.AccessPoint.TransmitError,
+        ErrorMessage.AccessPoint.ServerResponseError,
+        ErrorMessage.StandardBusinessDocument.FailedToPrependStandardBusinessDocumentHeader ->
+            Status.FAILED
+
+        ErrorMessage.AccessPoint.DataBindError,
+        ErrorMessage.StandardBusinessDocument.FailedToParseDocumentType,
+        ErrorMessage.StandardBusinessDocument.InvalidSchemeIdForParticipant,
+        ErrorMessage.StandardBusinessDocument.InvalidDocumentType,
+        ErrorMessage.StandardBusinessDocument.MissingRequiredValuesFromDocument ->
+            Status.BAD_REQUEST
+    }
+    return OutboundErrorResponse(
+        correlationId = getCorrelationId(),
+        status = status,
+        message = this.toString()
+    )
 }

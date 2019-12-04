@@ -202,7 +202,7 @@ private inline fun <reified T> Throwable.toErrorMessage(): Result<T, ErrorMessag
     Err(
         error = when (this) {
             is ResponseException -> ErrorMessage.AccessPoint.ServerResponseError
-            is DataBindingException -> ErrorMessage.DataBindError
+            is DataBindingException -> ErrorMessage.AccessPoint.DataBindError
             else -> ErrorMessage.InternalError
         }
     )

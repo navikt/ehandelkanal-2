@@ -10,13 +10,16 @@ import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.post
 import io.ktor.routing.route
+import no.difi.commons.ubl21.jaxb.InvoiceType
 import no.difi.commons.ubl21.jaxb.OrderType
-import no.nav.ehandel.kanal.common.models.ErrorMessage
 
 fun Route.outbound(outboundMessageService: OutboundMessageService) {
     route("/outbound") {
         post("/order") {
             call.handleOutboundRequest<OrderType>(outboundMessageService)
+        }
+        post("/invoice") {
+            call.handleOutboundRequest<InvoiceType>(outboundMessageService)
         }
     }
 }
@@ -31,17 +34,8 @@ private suspend inline fun <reified T> ApplicationCall.handleOutboundRequest(out
         )
 }
 
-private fun OutboundErrorResponse.toResponse() = when (this.errorMessage) {
-    ErrorMessage.InternalError,
-    ErrorMessage.AccessPoint.TransmitError,
-    ErrorMessage.AccessPoint.ServerResponseError,
-    ErrorMessage.StandardBusinessDocument.CouldNotPrependStandardBusinessDocument ->
-        Pair(HttpStatusCode.InternalServerError, this)
-
-    ErrorMessage.DataBindError,
-    ErrorMessage.StandardBusinessDocument.CouldNotParseDocumentType,
-    ErrorMessage.StandardBusinessDocument.InvalidSchemeIdForParticipant,
-    ErrorMessage.StandardBusinessDocument.InvalidDocumentType,
-    ErrorMessage.StandardBusinessDocument.MissingRequiredValuesFromDocument ->
-        Pair(HttpStatusCode.BadRequest, this)
+private fun OutboundErrorResponse.toResponse() = when (this.status) {
+    Status.FAILED -> Pair(HttpStatusCode.InternalServerError, this)
+    Status.BAD_REQUEST -> Pair(HttpStatusCode.BadRequest, this)
+    Status.SUCCESS -> Pair(HttpStatusCode.OK, this)
 }

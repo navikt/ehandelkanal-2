@@ -2,7 +2,7 @@ package no.nav.ehandel.kanal
 
 import com.github.michaelbull.result.getErrorOrElse
 import com.github.michaelbull.result.getOrElse
-import no.difi.commons.ubl21.jaxb.InvoiceType
+import no.difi.commons.ubl21.jaxb.ForecastType
 import no.difi.commons.ubl21.jaxb.OrderType
 import no.difi.vefa.peppol.common.model.Header
 import no.nav.ehandel.kanal.common.constants.MDC_CALL_ID
@@ -73,13 +73,13 @@ class StandardBusinessDocumentGeneratorTest {
     fun `given an invalid payload, should return parse error message`() {
         sbdGenerator.runNegativeTest<OrderType>(
             payloadPath = "/outbound/outbound-invalid-payload.json",
-            expectedErrorMessage = ErrorMessage.StandardBusinessDocument.CouldNotParseDocumentType
+            expectedErrorMessage = ErrorMessage.StandardBusinessDocument.FailedToParseDocumentType
         )
     }
 
     @Test
-    fun `given a non-matching document type, should return invalid document message`() {
-        sbdGenerator.runNegativeTest<InvoiceType>(
+    fun `given an unhandled document type, should return invalid document message`() {
+        sbdGenerator.runNegativeTest<ForecastType>(
             payloadPath = "/outbound/outbound-valid-invoice-no-sbdh.xml",
             expectedErrorMessage = ErrorMessage.StandardBusinessDocument.InvalidDocumentType
         )

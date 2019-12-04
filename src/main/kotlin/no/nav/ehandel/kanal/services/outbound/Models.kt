@@ -1,14 +1,23 @@
 package no.nav.ehandel.kanal.services.outbound
 
-import no.nav.ehandel.kanal.common.models.ErrorMessage
+internal interface IOutboundResponse {
+    val correlationId: String
+    val status: Status
+    val message: String
+}
 
-// todo
-data class OutboundResponse(
-    val foo: String
-)
+internal enum class Status {
+    SUCCESS, FAILED, BAD_REQUEST
+}
 
-// todo
-data class OutboundErrorResponse(
-    val foo: String,
-    val errorMessage: ErrorMessage
-)
+internal data class OutboundResponse(
+    override val correlationId: String,
+    override val status: Status,
+    override val message: String
+) : IOutboundResponse
+
+internal data class OutboundErrorResponse(
+    override val correlationId: String,
+    override val status: Status,
+    override val message: String
+) : IOutboundResponse

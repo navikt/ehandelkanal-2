@@ -1,4 +1,4 @@
-package no.nav.ehandel.kanal.domain.documenttypes.order
+package no.nav.ehandel.kanal.domain.documenttypes.invoice
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
@@ -6,7 +6,7 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrElse
 import java.util.Date
 import mu.KotlinLogging
-import no.difi.commons.ubl21.jaxb.OrderType
+import no.difi.commons.ubl21.jaxb.InvoiceType
 import no.difi.vefa.peppol.common.model.DocumentTypeIdentifier
 import no.difi.vefa.peppol.common.model.Header
 import no.difi.vefa.peppol.common.model.InstanceIdentifier
@@ -19,23 +19,23 @@ import no.nav.ehandel.kanal.domain.peppol.iso6523.v2.Code
 
 private val logger = KotlinLogging.logger { }
 
-private const val PEPPOL_ROOT_NAMESPACE = "urn:oasis:names:specification:ubl:schema:xsd:Order-2"
-private const val PEPPOL_LOCAL_NAME = "Order"
+private const val PEPPOL_ROOT_NAMESPACE = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+private const val PEPPOL_LOCAL_NAME = "Invoice"
 
-internal fun OrderType.mapToHeader(): Result<Header, ErrorMessage> {
+internal fun InvoiceType.mapToHeader(): Result<Header, ErrorMessage> {
     return runCatching {
         val senderSchemeId: String = Code
-            .findCodeForSchemeId(this.buyerCustomerParty.party.endpointID.schemeID)
+            .findCodeForSchemeId(this.accountingSupplierParty.party.endpointID.schemeID)
             .getOrElse { return Err(it) }
         val receiverSchemeId: String = Code
-            .findCodeForSchemeId(this.sellerSupplierParty.party.endpointID.schemeID)
+            .findCodeForSchemeId(this.accountingCustomerParty.party.endpointID.schemeID)
             .getOrElse { return Err(it) }
         Header.newInstance()
             .sender(
-                ParticipantIdentifier.of("$senderSchemeId:${this.buyerCustomerParty.party.endpointID.value}")
+                ParticipantIdentifier.of("$senderSchemeId:${this.accountingSupplierParty.party.endpointID.value}")
             )
             .receiver(
-                ParticipantIdentifier.of("$receiverSchemeId:${this.sellerSupplierParty.party.endpointID.value}")
+                ParticipantIdentifier.of("$receiverSchemeId:${this.accountingCustomerParty.party.endpointID.value}")
             )
             .process(ProcessIdentifier.of(this.profileID.value))
             .documentType(
@@ -49,7 +49,7 @@ internal fun OrderType.mapToHeader(): Result<Header, ErrorMessage> {
     }.fold(
         onSuccess = { header -> Ok(header) },
         onFailure = { e ->
-            logger.error(e) { "Could not generate SBDH for order document" }
+            logger.error(e) { "Could not generate SBDH for invoice document" }
             Err(ErrorMessage.StandardBusinessDocument.MissingRequiredValuesFromDocument)
         }
     )

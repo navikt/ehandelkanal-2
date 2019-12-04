@@ -1,142 +1,113 @@
-<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
-         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
-         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="EHF-faktura_NO.xslt"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ccts="urn:un:unece:uncefact:documentation:2" xmlns:qdt="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2" xmlns:udt="urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2">
     <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
-    <cbc:CustomizationID>urn:www.cenbii.eu:transaction:biitrns010:ver2.0:extended:urn:www.peppol.eu:bis:peppol5a:ver2.0:extended:urn:www.difi.no:ehf:faktura:ver2.0</cbc:CustomizationID>
-    <cbc:ProfileID>urn:www.cenbii.eu:profile:bii05:ver2.0</cbc:ProfileID>
-    <cbc:ID>400484274</cbc:ID>
-    <cbc:IssueDate>2018-06-11</cbc:IssueDate>
-    <cbc:InvoiceTypeCode listID="UNCL1001" listAgencyID="6">380</cbc:InvoiceTypeCode>
-    <cbc:Note>ATD0331</cbc:Note>
-    <cbc:DocumentCurrencyCode listID="ISO4217" listAgencyID="6">NOK</cbc:DocumentCurrencyCode>
-    <cac:OrderReference>
-        <cbc:ID>NO-676027-OKS</cbc:ID>
-    </cac:OrderReference>
-    <cac:AdditionalDocumentReference>
-        <cbc:ID>Kontraktsavdelingen</cbc:ID>
-    </cac:AdditionalDocumentReference>
-    <cac:AdditionalDocumentReference>
-        <cbc:ID>ATD0331</cbc:ID>
-    </cac:AdditionalDocumentReference>
+    <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0</cbc:CustomizationID>
+    <cbc:ProfileID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</cbc:ProfileID>
+    <cbc:ID>OTF-21007100</cbc:ID>
+    <cbc:IssueDate>2019-10-21</cbc:IssueDate>
+    <cbc:DueDate>2019-11-20</cbc:DueDate>
+    <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
+    <cbc:Note>Tolkeoppdrag Nordahl Grieg v.g.skole 26.08 til 30.09.19. Sjå vedlagt samleskjema.	</cbc:Note>
+    <cbc:DocumentCurrencyCode>NOK</cbc:DocumentCurrencyCode>
+    <cbc:BuyerReference>22436</cbc:BuyerReference>
     <cac:AccountingSupplierParty>
         <cac:Party>
-            <cbc:EndpointID schemeID="NO:ORGNR">810418052</cbc:EndpointID>
+            <cbc:EndpointID schemeID="0192">889640782</cbc:EndpointID>
+            <cac:PartyIdentification>
+                <cbc:ID schemeID="0192">889640782</cbc:ID>
+            </cac:PartyIdentification>
             <cac:PartyName>
-                <cbc:Name>Bedrift Norge AS</cbc:Name>
+                <cbc:Name>NAV</cbc:Name>
             </cac:PartyName>
             <cac:PostalAddress>
-                <cbc:StreetName>Gateveien 1</cbc:StreetName>
-                <cbc:CityName>01234 OSLO</cbc:CityName>
-                <cbc:PostalZone>Postboks</cbc:PostalZone>
+                <cbc:StreetName>v/NAV Økonomitjenester</cbc:StreetName>
+                <cbc:AdditionalStreetName>Sognefjordvegen 56</cbc:AdditionalStreetName>
+                <cbc:CityName>Leikanger</cbc:CityName>
+                <cbc:PostalZone>6863</cbc:PostalZone>
                 <cac:Country>
-                    <cbc:IdentificationCode listID="ISO3166-1:Alpha2" listAgencyID="6">NO</cbc:IdentificationCode>
+                    <cbc:IdentificationCode listAgencyID="6">NO</cbc:IdentificationCode>
                 </cac:Country>
             </cac:PostalAddress>
             <cac:PartyTaxScheme>
-                <cbc:CompanyID schemeID="NO:VAT" schemeAgencyID="82">810418052MVA</cbc:CompanyID>
+                <cbc:CompanyID>NO889640782MVA</cbc:CompanyID>
                 <cac:TaxScheme>
-                    <cbc:ID>VAT</cbc:ID>
+                    <cbc:ID schemeID="UNCL5305">VAT</cbc:ID>
+                </cac:TaxScheme>
+            </cac:PartyTaxScheme>
+            <cac:PartyTaxScheme>
+                <cbc:CompanyID>Foretaksregisteret</cbc:CompanyID>
+                <cac:TaxScheme>
+                    <cbc:ID>TAX</cbc:ID>
                 </cac:TaxScheme>
             </cac:PartyTaxScheme>
             <cac:PartyLegalEntity>
-                <cbc:RegistrationName>Bedrift Norge AS</cbc:RegistrationName>
-                <cbc:CompanyID schemeID="NO:ORGNR" schemeName="Foretaksregisteret" schemeAgencyID="82">810418052</cbc:CompanyID>
+                <cbc:RegistrationName>NAV Juridisk Enhet</cbc:RegistrationName>
+                <cbc:CompanyID>889640782</cbc:CompanyID>
             </cac:PartyLegalEntity>
             <cac:Contact>
-                <cbc:ID>Kontraktsavdelingen</cbc:ID>
+                <cbc:Name>NAV HMS Hordaland, AGB4712</cbc:Name>
             </cac:Contact>
-            <cac:Person>
-                <cbc:FamilyName>Kontraktsavdelingen</cbc:FamilyName>
-            </cac:Person>
         </cac:Party>
     </cac:AccountingSupplierParty>
     <cac:AccountingCustomerParty>
         <cac:Party>
-            <cbc:EndpointID schemeID="NO:ORGNR">889640782</cbc:EndpointID>
+            <cbc:EndpointID schemeID="0192">938626367</cbc:EndpointID>
             <cac:PartyIdentification>
-                <cbc:ID schemeID="ZZZ">NO 974652269</cbc:ID>
+                <cbc:ID schemeID="0192">938626367</cbc:ID>
             </cac:PartyIdentification>
             <cac:PartyName>
-                <cbc:Name>NAV OSLO C/O NAV ØKONOMITJENESTER</cbc:Name>
+                <cbc:Name>HORDALAND FYLKESKOMMUNE</cbc:Name>
             </cac:PartyName>
             <cac:PostalAddress>
-                <cbc:StreetName>SOGNEFJORDVEIEN 56</cbc:StreetName>
-                <cbc:CityName>6863  LEIKANGER</cbc:CityName>
-                <cbc:PostalZone>6863  LEI</cbc:PostalZone>
+                <cbc:StreetName>FAKTURAMOTTAK</cbc:StreetName>
+                <cbc:AdditionalStreetName>POSTBOKS 7910</cbc:AdditionalStreetName>
+                <cbc:CityName>BERGEN</cbc:CityName>
+                <cbc:PostalZone>5020</cbc:PostalZone>
                 <cac:Country>
-                    <cbc:IdentificationCode listID="ISO3166-1:Alpha2" listAgencyID="6">NO</cbc:IdentificationCode>
+                    <cbc:IdentificationCode listAgencyID="6">NO</cbc:IdentificationCode>
                 </cac:Country>
             </cac:PostalAddress>
             <cac:PartyTaxScheme>
-                <cbc:CompanyID schemeID="NO:VAT" schemeAgencyID="82">810418052MVA</cbc:CompanyID>
+                <cbc:CompanyID>NO938626367MVA</cbc:CompanyID>
                 <cac:TaxScheme>
                     <cbc:ID>VAT</cbc:ID>
                 </cac:TaxScheme>
             </cac:PartyTaxScheme>
             <cac:PartyLegalEntity>
-                <cbc:RegistrationName>NAV OSLO C/O NAV ØKONOMITJENESTER</cbc:RegistrationName>
-                <cbc:CompanyID schemeID="NO:ORGNR">889640782</cbc:CompanyID>
+                <cbc:RegistrationName>HORDALAND FYLKESKOMMUNE</cbc:RegistrationName>
+                <cbc:CompanyID schemeID="0192">938626367</cbc:CompanyID>
             </cac:PartyLegalEntity>
-            <cac:Contact>
-                <cbc:ID>ATD0331</cbc:ID>
-            </cac:Contact>
-            <cac:Person>
-                <cbc:FamilyName>ATD0331</cbc:FamilyName>
-            </cac:Person>
         </cac:Party>
     </cac:AccountingCustomerParty>
-    <cac:Delivery>
-        <cbc:ActualDeliveryDate>2018-06-11</cbc:ActualDeliveryDate>
-        <cac:DeliveryLocation>
-            <cac:Address>
-                <cbc:StreetName>SOGNEFJORDVEIEN 56</cbc:StreetName>
-                <cbc:CityName>6863  LEIKANGER</cbc:CityName>
-                <cbc:PostalZone>6863  LEI</cbc:PostalZone>
-                <cac:Country>
-                    <cbc:IdentificationCode listID="ISO3166-1:Alpha2" listAgencyID="6">NO</cbc:IdentificationCode>
-                </cac:Country>
-            </cac:Address>
-        </cac:DeliveryLocation>
-    </cac:Delivery>
     <cac:PaymentMeans>
-        <cbc:PaymentMeansCode listID="UNCL4461">31</cbc:PaymentMeansCode>
-        <cbc:PaymentDueDate>2018-07-11</cbc:PaymentDueDate>
-        <cbc:PaymentChannelCode>BBAN</cbc:PaymentChannelCode>
-        <cbc:PaymentID>4004842748</cbc:PaymentID>
+        <cbc:PaymentMeansCode>31</cbc:PaymentMeansCode>
+        <cbc:PaymentID>18057531210070999</cbc:PaymentID>
         <cac:PayeeFinancialAccount>
-            <cbc:ID schemeID="BBAN">97600524465</cbc:ID>
-            <cac:FinancialInstitutionBranch>
-                <cac:FinancialInstitution>
-                    <cbc:ID>DABANO22</cbc:ID>
-                </cac:FinancialInstitution>
-            </cac:FinancialInstitutionBranch>
+            <cbc:ID>00000000000</cbc:ID>
         </cac:PayeeFinancialAccount>
     </cac:PaymentMeans>
     <cac:PaymentMeans>
-        <cbc:PaymentMeansCode listID="UNCL4461">31</cbc:PaymentMeansCode>
-        <cbc:PaymentDueDate>2018-07-11</cbc:PaymentDueDate>
-        <cbc:PaymentChannelCode>IBAN</cbc:PaymentChannelCode>
-        <cbc:PaymentID>4004842748</cbc:PaymentID>
+        <cbc:PaymentMeansCode>31</cbc:PaymentMeansCode>
+        <cbc:PaymentID>18057531210070999</cbc:PaymentID>
         <cac:PayeeFinancialAccount>
-            <cbc:ID schemeID="IBAN">NO7397600524465</cbc:ID>
+            <cbc:ID>NO2563450530923</cbc:ID>
             <cac:FinancialInstitutionBranch>
-                <cac:FinancialInstitution>
-                    <cbc:ID schemeID="BIC">DABANO22</cbc:ID>
-                </cac:FinancialInstitution>
+                <cbc:ID>NDEANOKK</cbc:ID>
             </cac:FinancialInstitutionBranch>
         </cac:PayeeFinancialAccount>
     </cac:PaymentMeans>
     <cac:PaymentTerms>
-        <cbc:Note>Netto pr 30 dager</cbc:Note>
+        <cbc:Note>Netto pr. 30 dager</cbc:Note>
     </cac:PaymentTerms>
     <cac:TaxTotal>
-        <cbc:TaxAmount currencyID="NOK">1209.72</cbc:TaxAmount>
+        <cbc:TaxAmount currencyID="NOK">0.00</cbc:TaxAmount>
         <cac:TaxSubtotal>
-            <cbc:TaxableAmount currencyID="NOK">4838.89</cbc:TaxableAmount>
-            <cbc:TaxAmount currencyID="NOK">1209.72</cbc:TaxAmount>
+            <cbc:TaxableAmount currencyID="NOK">2361.59</cbc:TaxableAmount>
+            <cbc:TaxAmount currencyID="NOK">0.00</cbc:TaxAmount>
             <cac:TaxCategory>
-                <cbc:ID schemeID="UNCL5305">S</cbc:ID>
-                <cbc:Percent>25.00</cbc:Percent>
+                <cbc:ID>Z</cbc:ID>
+                <cbc:Percent>0</cbc:Percent>
                 <cac:TaxScheme>
                     <cbc:ID>VAT</cbc:ID>
                 </cac:TaxScheme>
@@ -144,34 +115,109 @@
         </cac:TaxSubtotal>
     </cac:TaxTotal>
     <cac:LegalMonetaryTotal>
-        <cbc:LineExtensionAmount currencyID="NOK">4838.89</cbc:LineExtensionAmount>
-        <cbc:TaxExclusiveAmount currencyID="NOK">4838.89</cbc:TaxExclusiveAmount>
-        <cbc:TaxInclusiveAmount currencyID="NOK">6048.61</cbc:TaxInclusiveAmount>
-        <cbc:PayableAmount currencyID="NOK">6048.61</cbc:PayableAmount>
+        <cbc:LineExtensionAmount currencyID="NOK">2361.59</cbc:LineExtensionAmount>
+        <cbc:TaxExclusiveAmount currencyID="NOK">2361.59</cbc:TaxExclusiveAmount>
+        <cbc:TaxInclusiveAmount currencyID="NOK">2361.59</cbc:TaxInclusiveAmount>
+        <cbc:PayableAmount currencyID="NOK">2361.59</cbc:PayableAmount>
     </cac:LegalMonetaryTotal>
     <cac:InvoiceLine>
         <cbc:ID>1</cbc:ID>
-        <cbc:InvoicedQuantity unitCode="EA" unitCodeListID="UNECERec20">1.00</cbc:InvoicedQuantity>
-        <cbc:LineExtensionAmount currencyID="NOK">613.71</cbc:LineExtensionAmount>
+        <cbc:InvoicedQuantity unitCode="EA">4.00</cbc:InvoicedQuantity>
+        <cbc:LineExtensionAmount currencyID="NOK">1200.00</cbc:LineExtensionAmount>
         <cac:OrderLineReference>
-            <cbc:LineID>ATD0331</cbc:LineID>
+            <cbc:LineID>##</cbc:LineID>
         </cac:OrderLineReference>
         <cac:Item>
-            <cbc:Description>iR ADV C5235i MODEL</cbc:Description>
-            <cbc:Name>Forsendelseskostnader tonerleveranse</cbc:Name>
+            <cbc:Description>Dagssats</cbc:Description>
+            <cbc:Name>Tolk - salg av tjenester DRIFT</cbc:Name>
             <cac:SellersItemIdentification>
-                <cbc:ID>400484274</cbc:ID>
+                <cbc:ID>D323TD</cbc:ID>
             </cac:SellersItemIdentification>
             <cac:ClassifiedTaxCategory>
-                <cbc:ID schemeID="UNCL5305">S</cbc:ID>
-                <cbc:Percent>25.00</cbc:Percent>
+                <cbc:ID>Z</cbc:ID>
+                <cbc:Percent>0</cbc:Percent>
                 <cac:TaxScheme>
                     <cbc:ID>VAT</cbc:ID>
                 </cac:TaxScheme>
             </cac:ClassifiedTaxCategory>
         </cac:Item>
         <cac:Price>
-            <cbc:PriceAmount currencyID="NOK">613.71</cbc:PriceAmount>
+            <cbc:PriceAmount currencyID="NOK">300.00</cbc:PriceAmount>
+        </cac:Price>
+    </cac:InvoiceLine>
+    <cac:InvoiceLine>
+        <cbc:ID>2</cbc:ID>
+        <cbc:InvoicedQuantity unitCode="EA">5.00</cbc:InvoicedQuantity>
+        <cbc:LineExtensionAmount currencyID="NOK">900.00</cbc:LineExtensionAmount>
+        <cac:OrderLineReference>
+            <cbc:LineID>##</cbc:LineID>
+        </cac:OrderLineReference>
+        <cac:Item>
+            <cbc:Description>Reisesats</cbc:Description>
+            <cbc:Name>Tolk - salg av tjenester DRIFT</cbc:Name>
+            <cac:SellersItemIdentification>
+                <cbc:ID>D323TD</cbc:ID>
+            </cac:SellersItemIdentification>
+            <cac:ClassifiedTaxCategory>
+                <cbc:ID>Z</cbc:ID>
+                <cbc:Percent>0</cbc:Percent>
+                <cac:TaxScheme>
+                    <cbc:ID>VAT</cbc:ID>
+                </cac:TaxScheme>
+            </cac:ClassifiedTaxCategory>
+        </cac:Item>
+        <cac:Price>
+            <cbc:PriceAmount currencyID="NOK">180.00</cbc:PriceAmount>
+        </cac:Price>
+    </cac:InvoiceLine>
+    <cac:InvoiceLine>
+        <cbc:ID>3</cbc:ID>
+        <cbc:InvoicedQuantity unitCode="EA">53.00</cbc:InvoicedQuantity>
+        <cbc:LineExtensionAmount currencyID="NOK">213.59</cbc:LineExtensionAmount>
+        <cac:OrderLineReference>
+            <cbc:LineID>##</cbc:LineID>
+        </cac:OrderLineReference>
+        <cac:Item>
+            <cbc:Description>Km</cbc:Description>
+            <cbc:Name>Tolk - salg av tjenester DRIFT</cbc:Name>
+            <cac:SellersItemIdentification>
+                <cbc:ID>D323TD</cbc:ID>
+            </cac:SellersItemIdentification>
+            <cac:ClassifiedTaxCategory>
+                <cbc:ID>Z</cbc:ID>
+                <cbc:Percent>0</cbc:Percent>
+                <cac:TaxScheme>
+                    <cbc:ID>VAT</cbc:ID>
+                </cac:TaxScheme>
+            </cac:ClassifiedTaxCategory>
+        </cac:Item>
+        <cac:Price>
+            <cbc:PriceAmount currencyID="NOK">4.03</cbc:PriceAmount>
+        </cac:Price>
+    </cac:InvoiceLine>
+    <cac:InvoiceLine>
+        <cbc:ID>4</cbc:ID>
+        <cbc:InvoicedQuantity unitCode="EA">1.00</cbc:InvoicedQuantity>
+        <cbc:LineExtensionAmount currencyID="NOK">48.00</cbc:LineExtensionAmount>
+        <cac:OrderLineReference>
+            <cbc:LineID>##</cbc:LineID>
+        </cac:OrderLineReference>
+        <cac:Item>
+            <cbc:Description>Bom/buss/annet</cbc:Description>
+            <cbc:Name>Tolk - salg av tjenester DRIFT</cbc:Name>
+            <cac:SellersItemIdentification>
+                <cbc:ID>D323TD</cbc:ID>
+            </cac:SellersItemIdentification>
+            <cac:ClassifiedTaxCategory>
+                <cbc:ID>Z</cbc:ID>
+                <cbc:Percent>0</cbc:Percent>
+                <cac:TaxScheme>
+                    <cbc:ID>VAT</cbc:ID>
+                </cac:TaxScheme>
+            </cac:ClassifiedTaxCategory>
+        </cac:Item>
+        <cac:Price>
+            <cbc:PriceAmount currencyID="NOK">48.00</cbc:PriceAmount>
         </cac:Price>
     </cac:InvoiceLine>
 </Invoice>

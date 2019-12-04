@@ -7,11 +7,13 @@ import com.github.michaelbull.result.andThen
 import java.io.ByteArrayOutputStream
 import javax.xml.bind.JAXB
 import mu.KotlinLogging
+import no.difi.commons.ubl21.jaxb.InvoiceType
 import no.difi.commons.ubl21.jaxb.OrderType
 import no.difi.vefa.peppol.common.model.Header
 import no.difi.vefa.peppol.sbdh.SbdWriter
 import no.difi.vefa.peppol.sbdh.util.XMLStreamUtils
 import no.nav.ehandel.kanal.common.models.ErrorMessage
+import no.nav.ehandel.kanal.domain.documenttypes.invoice.mapToHeader
 import no.nav.ehandel.kanal.domain.documenttypes.order.mapToHeader
 
 private val logger = KotlinLogging.logger { }
@@ -41,7 +43,7 @@ private fun Header.mapToStandardBusinessDocument(rawXmlPayload: String): Result<
         onSuccess = { standardBusinessDocument -> Ok(Pair(this, standardBusinessDocument)) },
         onFailure = { e ->
             logger.error(e) { "Could not prepend SBDH to payload" }
-            Err(ErrorMessage.StandardBusinessDocument.CouldNotPrependStandardBusinessDocument)
+            Err(ErrorMessage.StandardBusinessDocument.FailedToPrependStandardBusinessDocumentHeader)
         }
     )
 
@@ -52,13 +54,14 @@ private inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
         onSuccess = { unmarshalledPayload -> Ok(unmarshalledPayload) },
         onFailure = { e ->
             logger.error(e) { "Could not unmarshal document payload" }
-            Err(ErrorMessage.StandardBusinessDocument.CouldNotParseDocumentType)
+            Err(ErrorMessage.StandardBusinessDocument.FailedToParseDocumentType)
         }
     )
 
 private inline fun <reified T> T.mapToSbdh(): Result<Header, ErrorMessage> =
     when (this) {
         is OrderType -> this.mapToHeader()
+        is InvoiceType -> this.mapToHeader()
         else -> {
             logger.error { "Received invalid DocumentType: '${T::class.simpleName}'" }
             Err(ErrorMessage.StandardBusinessDocument.InvalidDocumentType)
