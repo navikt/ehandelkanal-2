@@ -3,6 +3,14 @@ package no.nav.ehandel.kanal
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
+import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.stubFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.common.Slf4jNotifier
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
+import com.github.tomakehurst.wiremock.http.ContentTypeHeader
+import com.github.tomakehurst.wiremock.junit.WireMockRule
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -28,10 +36,13 @@ import no.nav.ehandel.kanal.services.outbound.Status
 import no.nav.ehandel.kanal.services.sbd.StandardBusinessDocumentGenerator
 import org.amshove.kluent.`should be`
 import org.junit.Before
+import org.junit.BeforeClass
+import org.junit.ClassRule
 import org.junit.Test
 
 private const val URI_ORDER = "/api/v1/outbound/order"
 private const val URI_INVOICE = "/api/v1/outbound/invoice"
+private const val MOCK_PORT = 20001
 
 class OutboundIT {
 
@@ -141,6 +152,28 @@ class OutboundIT {
             with(objectMapper.readValue<T>(this.response.content!!)) {
                 assertions(this)
             }
+        }
+    }
+
+    companion object {
+        @ClassRule
+        @JvmField
+        val outboundWireMockRule =
+            WireMockRule(WireMockConfiguration.wireMockConfig().port(MOCK_PORT).notifier(Slf4jNotifier(true)))
+
+        @BeforeClass
+        @JvmStatic
+        fun setupClass() {
+            System.setProperty("sts.well-known.url", "http://localhost:$MOCK_PORT")
+            stubFor(
+                get(urlEqualTo("/"))
+                    .willReturn(
+                        aResponse()
+                            .withStatus(200)
+                            .withHeader(ContentTypeHeader.KEY, "application/json; charset=utf-8")
+                            .withBodyFile("sts-rest-well-known.json")
+                    )
+            )
         }
     }
 }

@@ -84,7 +84,7 @@ class InboundIT {
     @After
     fun tearDown() {
         verifyAccessPointRequests()
-        wireMockRule.resetRequests()
+        inboundWireMockRule.resetRequests()
         camelContext.stop()
         DeleteDbFiles.execute("./", "integrationtestdb", true)
     }
@@ -274,7 +274,7 @@ class InboundIT {
     companion object {
         @ClassRule
         @JvmField
-        val wireMockRule = WireMockRule(wireMockConfig().port(20000).notifier(Slf4jNotifier(true)))
+        val inboundWireMockRule = WireMockRule(wireMockConfig().port(20000).notifier(Slf4jNotifier(true)))
 
         @BeforeClass
         @JvmStatic

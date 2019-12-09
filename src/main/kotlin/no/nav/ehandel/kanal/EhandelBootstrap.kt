@@ -2,6 +2,9 @@ package no.nav.ehandel.kanal
 
 import io.ktor.application.Application
 import io.ktor.application.install
+import io.ktor.auth.Authentication
+import io.ktor.auth.authenticate
+import io.ktor.auth.jwt.jwt
 import io.ktor.features.CallId
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
@@ -36,6 +39,7 @@ import no.nav.ehandel.kanal.common.constants.MDC_CALL_ID
 import no.nav.ehandel.kanal.common.functions.randomUuid
 import no.nav.ehandel.kanal.common.functions.retry
 import no.nav.ehandel.kanal.common.models.ApplicationState
+import no.nav.ehandel.kanal.common.models.JwtConfig
 import no.nav.ehandel.kanal.common.singletons.objectMapper
 import no.nav.ehandel.kanal.db.Database
 import no.nav.ehandel.kanal.db.Vault
@@ -160,11 +164,22 @@ fun Application.main(
     install(ContentNegotiation) {
         register(ContentType.Application.Json, JacksonConverter(objectMapper))
     }
+    install(Authentication) {
+        jwt {
+            val jwtConfig = JwtConfig(SecurityTokenServiceProps)
+            skipWhen { appProfileLocal }
+            realm = jwtConfig.realm
+            verifier(jwtConfig.jwkProvider, jwtConfig.openIdConfig.issuer)
+            validate { credentials -> jwtConfig.validate(credentials) }
+        }
+    }
     routing {
         nais(readinessCheck = { applicationState.initialized }, livenessCheck = { applicationState.running })
         report()
-        route("/api/v1") {
-            outbound(outboundMessageService = outboundMessageService)
+        authenticate {
+            route("/api/v1") {
+                outbound(outboundMessageService = outboundMessageService)
+            }
         }
     }
 }
