@@ -7,7 +7,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.testing.TestApplicationCall
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
@@ -58,18 +57,19 @@ class OutboundIT {
     @Test
     fun `given a valid order payload and access point is available, should return success`() =
         runTestRequestWIthPayload<OutboundResponse>(
-            bodyPath = "/outbound/outbound-valid-order-no-sbdh.xml",
-            uri = URI_ORDER,
-            expectedResponseStatus = Status.SUCCESS
-        )
+            bodyPath = "/outbound/outbound-valid-order-no-sbdh.xml"
+        ) { response ->
+            response.status `should be` Status.SUCCESS
+        }
 
     @Test
     fun `given a valid invoice payload and access point is available, should return success`() =
         runTestRequestWIthPayload<OutboundResponse>(
             bodyPath = "/outbound/outbound-valid-invoice-no-sbdh.xml",
-            uri = URI_INVOICE,
-            expectedResponseStatus = Status.SUCCESS
-        )
+            uri = URI_INVOICE
+        ) { response ->
+            response.status `should be` Status.SUCCESS
+        }
 
     @Test
     fun `given a valid payload and the access point is unavailable, it should return failure`() {
@@ -78,61 +78,60 @@ class OutboundIT {
         } returns Err(ErrorMessage.AccessPoint.ServerResponseError)
         runTestRequestWIthPayload<OutboundErrorResponse>(
             bodyPath = "/outbound/outbound-valid-order-no-sbdh.xml",
-            uri = URI_ORDER,
-            expectedHttpStatusCode = HttpStatusCode.InternalServerError,
-            expectedResponseStatus = Status.FAILED
-        )
+            expectedHttpStatusCode = HttpStatusCode.InternalServerError
+        ) { response ->
+            response.status `should be` Status.FAILED
+        }
     }
 
     @Test
     fun `given an invalid payload, it should return failure`() =
         runTestRequestWIthPayload<OutboundErrorResponse>(
             bodyPath = "/outbound/outbound-invalid-payload.json",
-            uri = URI_ORDER,
-            expectedHttpStatusCode = HttpStatusCode.BadRequest,
-            expectedResponseStatus = Status.BAD_REQUEST
-        )
+            expectedHttpStatusCode = HttpStatusCode.BadRequest
+        ) { response ->
+            response.status `should be` Status.BAD_REQUEST
+        }
 
     @Test
     fun `given an invalid payload with invalid schemeid, it should return failure`() =
         runTestRequestWIthPayload<OutboundErrorResponse>(
             bodyPath = "/outbound/outbound-invalid-order-invalid-schemeid-no-sbdh.xml",
-            uri = URI_ORDER,
-            expectedHttpStatusCode = HttpStatusCode.BadRequest,
-            expectedResponseStatus = Status.BAD_REQUEST
-        )
+            expectedHttpStatusCode = HttpStatusCode.BadRequest
+        ) { response ->
+            response.status `should be` Status.BAD_REQUEST
+        }
 
     @Test
     fun `given an invalid payload with missing required values, it should return failure`() =
         runTestRequestWIthPayload<OutboundErrorResponse>(
             bodyPath = "/outbound/outbound-invalid-order-missing-required-values-no-sbdh.xml",
-            uri = URI_ORDER,
-            expectedHttpStatusCode = HttpStatusCode.BadRequest,
-            expectedResponseStatus = Status.BAD_REQUEST
-        )
+            expectedHttpStatusCode = HttpStatusCode.BadRequest
+        ) { response ->
+            response.status `should be` Status.BAD_REQUEST
+        }
 
     @Test // TODO
     fun `given successful processing of a message, it should insert entry into report`() =
         runTestRequestWIthPayload<OutboundResponse>(
-            bodyPath = "/outbound/outbound-valid-order-no-sbdh.xml",
-            uri = URI_ORDER,
-            expectedResponseStatus = Status.SUCCESS
-        )
+            bodyPath = "/outbound/outbound-valid-order-no-sbdh.xml"
+        ) { response ->
+            response.status `should be` Status.SUCCESS
+        }
 
     @Test // TODO
     fun `given failed processing of a message, it should not insert entry into report`() =
         runTestRequestWIthPayload<OutboundResponse>(
-            bodyPath = "/outbound/outbound-valid-order-no-sbdh.xml",
-            uri = URI_ORDER,
-            expectedResponseStatus = Status.SUCCESS
-        )
+            bodyPath = "/outbound/outbound-valid-order-no-sbdh.xml"
+        ) { response ->
+            response.status `should be` Status.SUCCESS
+        }
 
     private inline fun <reified T : IOutboundResponse> runTestRequestWIthPayload(
         bodyPath: String,
-        uri: String,
-        expectedResponseStatus: Status,
+        uri: String = URI_ORDER,
         expectedHttpStatusCode: HttpStatusCode = HttpStatusCode.OK,
-        noinline assertions: ((TestApplicationCall) -> Unit)? = null
+        noinline assertions: (T) -> Unit
     ): Unit = withTestApplication(moduleFunction = { main(outboundMessageService = outboundMessageService) }) {
         handleRequest(HttpMethod.Post, uri) {
             addHeader(HttpHeaders.ContentType, ContentType.Application.Xml.toString())
@@ -140,9 +139,6 @@ class OutboundIT {
         }.run {
             this.response.status()!! `should be` expectedHttpStatusCode
             with(objectMapper.readValue<T>(this.response.content!!)) {
-                status `should be` expectedResponseStatus
-            }
-            if (assertions != null) {
                 assertions(this)
             }
         }
