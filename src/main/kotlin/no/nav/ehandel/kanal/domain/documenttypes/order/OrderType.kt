@@ -15,6 +15,7 @@ import no.difi.vefa.peppol.common.model.ParticipantIdentifier
 import no.difi.vefa.peppol.common.model.ProcessIdentifier
 import no.nav.ehandel.kanal.common.functions.getCorrelationId
 import no.nav.ehandel.kanal.common.models.ErrorMessage
+import no.nav.ehandel.kanal.domain.documenttypes.DOCUMENT_TYPE_VERSION
 import no.nav.ehandel.kanal.domain.peppol.iso6523.v2.Code
 
 private val logger = KotlinLogging.logger { }
@@ -40,10 +41,10 @@ internal fun OrderType.mapToHeader(): Result<Header, ErrorMessage> {
             .process(ProcessIdentifier.of(this.profileID.value))
             .documentType(
                 DocumentTypeIdentifier.of(
-                    "$PEPPOL_ROOT_NAMESPACE::$PEPPOL_LOCAL_NAME##${this.customizationID.value}::${this.ublVersionID.value}"
+                    "$PEPPOL_ROOT_NAMESPACE::$PEPPOL_LOCAL_NAME##${this.customizationID.value}::$DOCUMENT_TYPE_VERSION"
                 )
             )
-            .instanceType(InstanceType.of(PEPPOL_ROOT_NAMESPACE, PEPPOL_LOCAL_NAME, this.ublVersionID.value))
+            .instanceType(InstanceType.of(PEPPOL_ROOT_NAMESPACE, PEPPOL_LOCAL_NAME, DOCUMENT_TYPE_VERSION))
             .creationTimestamp(Date())
             .identifier(InstanceIdentifier.of(getCorrelationId()))
     }.fold(
