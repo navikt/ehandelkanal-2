@@ -1,4 +1,4 @@
-package no.nav.ehandel.kanal.common.models
+package no.nav.ehandel.kanal
 
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
@@ -15,7 +15,6 @@ import java.net.URL
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import no.nav.ehandel.kanal.SecurityTokenServiceProps
 import no.nav.ehandel.kanal.common.singletons.objectMapper
 
 private val logger = KotlinLogging.logger { }
@@ -44,9 +43,11 @@ class JwtConfig(private val stsProps: SecurityTokenServiceProps) {
     fun validate(credentials: JWTCredential): JWTPrincipal? =
         try {
             requireNotNull(credentials.payload.audience) { "Auth: Missing audience in token" }
-            require(stsProps.acceptedAudiences.any { allowedAudience ->
-                credentials.payload.audience.contains(allowedAudience)
-            }) { "Auth: Valid audience not found in claims" }
+            require(credentials.payload.audience.any { audience ->
+                stsProps.acceptedAudiences.contains(audience)
+            }) {
+                "Auth: Valid audience not found in claims"
+            }
             logger.debug {
                 "Auth: Resource requested by '${credentials.payload.audience.joinToString()}'"
             }

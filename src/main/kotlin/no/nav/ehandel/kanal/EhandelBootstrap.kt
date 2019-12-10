@@ -39,7 +39,6 @@ import no.nav.ehandel.kanal.common.constants.MDC_CALL_ID
 import no.nav.ehandel.kanal.common.functions.randomUuid
 import no.nav.ehandel.kanal.common.functions.retry
 import no.nav.ehandel.kanal.common.models.ApplicationState
-import no.nav.ehandel.kanal.common.models.JwtConfig
 import no.nav.ehandel.kanal.common.singletons.objectMapper
 import no.nav.ehandel.kanal.db.Database
 import no.nav.ehandel.kanal.db.Vault
