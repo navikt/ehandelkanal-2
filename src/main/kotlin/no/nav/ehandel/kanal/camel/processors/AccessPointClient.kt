@@ -80,7 +80,7 @@ object AccessPointClient : Processor {
         return try {
             payload.decodeToString(throwOnInvalidSequence = true)
         } catch (e: Throwable) {
-            LOGGER.error(e) { "Could not parse downloaded payload as UTF-8, attempting to parse as ISO 8859-1" }
+            LOGGER.info(e) { "Could not parse downloaded payload as UTF-8, attempting to parse as ISO 8859-1" }
             payload.toString(Charsets.ISO_8859_1)
                 .also { LOGGER.info { "Successfully parsed downloaded payload as ISO 8859-1" } }
         }
