@@ -2,22 +2,22 @@ package no.nav.ehandel.kanal.camel.routes
 
 import kotlin.system.exitProcess
 import mu.KotlinLogging
-import no.nav.ehandel.kanal.CamelHeader
-import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.EbasysProps
 import no.nav.ehandel.kanal.FileAreaProps
-import no.nav.ehandel.kanal.InvalidDocumentException
-import no.nav.ehandel.kanal.LegalArchiveException
 import no.nav.ehandel.kanal.Metrics.exhaustedDeliveriesErrorHandler
 import no.nav.ehandel.kanal.Metrics.exhaustedDeliveriesLegalarchive
 import no.nav.ehandel.kanal.Metrics.messageSize
 import no.nav.ehandel.kanal.Metrics.messagesFailed
 import no.nav.ehandel.kanal.Metrics.messagesSuccessful
 import no.nav.ehandel.kanal.QueueProps
-import no.nav.ehandel.kanal.RouteId
 import no.nav.ehandel.kanal.catalogueSizeLimit
-import no.nav.ehandel.kanal.getHeader
-import no.nav.ehandel.kanal.humanReadableByteCount
+import no.nav.ehandel.kanal.common.InvalidDocumentException
+import no.nav.ehandel.kanal.common.LegalArchiveException
+import no.nav.ehandel.kanal.common.constants.CamelHeader
+import no.nav.ehandel.kanal.common.constants.CamelHeader.EHF_DOCUMENT_TYPE
+import no.nav.ehandel.kanal.common.extensions.getHeader
+import no.nav.ehandel.kanal.common.extensions.humanReadableByteCount
+import no.nav.ehandel.kanal.common.models.RouteId
 import org.apache.camel.Exchange
 import org.apache.camel.builder.PredicateBuilder
 import org.apache.camel.builder.RouteBuilder
@@ -32,7 +32,8 @@ private const val LEGAL_ARCHIVE_SIZE_LIMIT: Long = 20_000_000L
 
 val INBOUND_CATALOGUE = RouteId("catalogue", "direct:catalogue")
 val INBOUND_EHF = RouteId("inboundEhf", "direct:inbound")
-val INBOUND_EHF_ERROR = RouteId("inboundEhfError", "direct:inboundEhfError")
+val INBOUND_EHF_ERROR =
+    RouteId("inboundEhfError", "direct:inboundEhfError")
 
 private val ebasysInbound = "${EbasysProps.url}?username=${EbasysProps.username}&password=${EbasysProps.password}" +
     "&binary=true&throwExceptionOnConnectFailed=true&tempFileName=\$simple{file:name}.inprogress&passiveMode=true"

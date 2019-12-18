@@ -7,6 +7,7 @@ import com.natpryce.konfig.Key
 import com.natpryce.konfig.intType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import io.ktor.client.request.get
 import java.io.File
 
 private const val VAULT_APPLICATION_PROPERTIES_PATH = "/var/run/secrets/nais.io/vault/application.properties"
@@ -24,6 +25,7 @@ val config = if (System.getenv("APP_PROFILE") == "remote") {
 
 object AccessPointProps {
     data class Properties(val url: String, val apiKey: String, val header: String)
+
     val inbox = Properties(
         url = config[Key("vefasrest.inbox.url", stringType)].removeSuffix("/"),
         apiKey = config[Key("vefasrest.inbox.apikey", stringType)],
@@ -90,6 +92,14 @@ object ServiceUserProps {
 
 object QueueProps {
     val inName = config[Key("mq.queue.in.name", stringType)]
+}
+
+object SecurityTokenServiceProps {
+    val wellKnownUrl: String = config.getOrElse(
+        Key("sts.well-known.url", stringType),
+        "http://security-token-service.default.svc.nais.local/rest/v1/sts/.well-known/openid-configuration"
+    )
+    val acceptedAudiences: List<String> = config[Key("sts.jwt.accepted.audiences", stringType)].split(",")
 }
 
 val catalogueSizeLimit = config[Key("catalogue.mqsizelimit", intType)]

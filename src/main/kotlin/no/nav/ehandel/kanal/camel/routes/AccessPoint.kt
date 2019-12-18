@@ -3,11 +3,11 @@ package no.nav.ehandel.kanal.camel.routes
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
-import no.nav.ehandel.kanal.CamelHeader
 import no.nav.ehandel.kanal.Metrics.messagesReceivedTotal
-import no.nav.ehandel.kanal.RouteId
-import no.nav.ehandel.kanal.getBody
-import no.nav.ehandel.kanal.getHeader
+import no.nav.ehandel.kanal.common.constants.CamelHeader
+import no.nav.ehandel.kanal.common.extensions.getBody
+import no.nav.ehandel.kanal.common.extensions.getHeader
+import no.nav.ehandel.kanal.common.models.RouteId
 import org.apache.camel.LoggingLevel
 import org.apache.camel.builder.RouteBuilder
 import org.slf4j.MDC
@@ -18,8 +18,10 @@ private val threadPool = Executors.newFixedThreadPool(6)
 const val ACCESS_POINT_CLIENT = "bean:accessPointClient"
 
 val INBOX_QUEUE = RouteId("inboxQueue", "direct:inboxQueue")
-val INBOX_POLLER = RouteId("inboxPoller", "timer://inboxpoller?period=10s")
-val ACCESS_POINT_READ = RouteId("accessPointRead", "direct:accessPointRead")
+val INBOX_POLLER =
+    RouteId("inboxPoller", "timer://inboxpoller?period=10s")
+val ACCESS_POINT_READ =
+    RouteId("accessPointRead", "direct:accessPointRead")
 
 fun AtomicBoolean.logAndSet(newValue: Boolean) {
     if (newValue) LOGGER.debug { "Enable inbox poller" }

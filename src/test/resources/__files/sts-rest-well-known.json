@@ -1,0 +1,9 @@
+{
+  "issuer": "http://security-token-service.local",
+  "token_endpoint": "http://security-token-service.local/rest/v1/sts/token",
+  "exchange_token_endpoint": "http://security-token-service.local/rest/v1/sts/token/exchange",
+  "jwks_uri": "http://security-token-service.local/rest/v1/sts/jwks",
+  "subject_types_supported": [
+    "public"
+  ]
+}

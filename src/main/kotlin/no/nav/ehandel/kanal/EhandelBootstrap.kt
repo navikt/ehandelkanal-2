@@ -1,6 +1,10 @@
 package no.nav.ehandel.kanal
 
+import io.ktor.application.Application
 import io.ktor.application.install
+import io.ktor.auth.Authentication
+import io.ktor.auth.authenticate
+import io.ktor.auth.jwt.jwt
 import io.ktor.features.CallId
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
@@ -10,6 +14,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.jackson.JacksonConverter
 import io.ktor.request.path
+import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
@@ -30,12 +35,21 @@ import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
 import no.nav.ehandel.kanal.camel.routes.AccessPoint
 import no.nav.ehandel.kanal.camel.routes.Inbound
 import no.nav.ehandel.kanal.camel.routes.logAndSet
+import no.nav.ehandel.kanal.common.constants.MDC_CALL_ID
+import no.nav.ehandel.kanal.common.functions.randomUuid
+import no.nav.ehandel.kanal.common.functions.retry
+import no.nav.ehandel.kanal.common.models.ApplicationState
+import no.nav.ehandel.kanal.common.singletons.objectMapper
 import no.nav.ehandel.kanal.db.Database
-import no.nav.ehandel.kanal.log.InboundLogger
+import no.nav.ehandel.kanal.db.Vault
 import no.nav.ehandel.kanal.routes.exceptionHandler
 import no.nav.ehandel.kanal.routes.nais
 import no.nav.ehandel.kanal.routes.notFoundHandler
 import no.nav.ehandel.kanal.routes.report
+import no.nav.ehandel.kanal.services.log.InboundLogger
+import no.nav.ehandel.kanal.services.outbound.OutboundMessageService
+import no.nav.ehandel.kanal.services.outbound.outbound
+import no.nav.ehandel.kanal.services.sbd.StandardBusinessDocumentGenerator
 import org.apache.camel.CamelContext
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.SimpleRegistry
@@ -123,7 +137,15 @@ fun configureCamelContext(registry: Registry) = DefaultCamelContext(registry).ap
     name = appName
 }
 
-fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) = embeddedServer(Netty, port) {
+fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) =
+    embeddedServer(Netty, port, module = { main(applicationState) })
+
+fun Application.main(
+    applicationState: ApplicationState = ApplicationState(running = true, initialized = true),
+    outboundMessageService: OutboundMessageService = OutboundMessageService(
+        AccessPointClient, StandardBusinessDocumentGenerator()
+    )
+) {
     install(StatusPages) {
         notFoundHandler()
         exceptionHandler()
@@ -141,9 +163,23 @@ fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) = emb
     install(ContentNegotiation) {
         register(ContentType.Application.Json, JacksonConverter(objectMapper))
     }
+    install(Authentication) {
+        jwt {
+            val jwtConfig = JwtConfig(SecurityTokenServiceProps)
+            skipWhen { appProfileLocal }
+            realm = jwtConfig.realm
+            verifier(jwtConfig.jwkProvider, jwtConfig.openIdConfig.issuer)
+            validate { credentials -> jwtConfig.validate(credentials) }
+        }
+    }
     routing {
         nais(readinessCheck = { applicationState.initialized }, livenessCheck = { applicationState.running })
         report()
+        authenticate {
+            route("/api/v1") {
+                outbound(outboundMessageService = outboundMessageService)
+            }
+        }
     }
 }
 
@@ -156,7 +192,11 @@ private fun CoroutineScope.launchBackgroundTask(
 ) {
     launch(backgroundTaskContext) {
         try {
-            retry(callName = callName, attempts = attempts, maxDelay = maxDelay) {
+            retry(
+                callName = callName,
+                attempts = attempts,
+                maxDelay = maxDelay
+            ) {
                 block()
             }
         } catch (e: Throwable) {

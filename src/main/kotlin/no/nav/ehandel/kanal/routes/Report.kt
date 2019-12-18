@@ -18,8 +18,8 @@ import kotlinx.html.head
 import kotlinx.html.li
 import kotlinx.html.title
 import kotlinx.html.ul
-import no.nav.ehandel.kanal.formatDate
-import no.nav.ehandel.kanal.report.Report
+import no.nav.ehandel.kanal.common.extensions.formatDate
+import no.nav.ehandel.kanal.services.report.Report
 import org.joda.time.DateTime
 
 fun Routing.report() {

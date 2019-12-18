@@ -1,6 +1,9 @@
 package no.nav.ehandel.kanal
 
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
+import no.nav.ehandel.kanal.common.extensions.getBody
+import no.nav.ehandel.kanal.helpers.getResource
+import no.nav.ehandel.kanal.helpers.shouldBeXmlEqualTo
 import org.apache.camel.EndpointInject
 import org.apache.camel.Produce
 import org.apache.camel.ProducerTemplate
@@ -21,10 +24,10 @@ class InboundSbdhRemoverTest : CamelTestSupport() {
     @Test
     fun `valid file should have SBDH removed`() {
         result.expectedMessageCount(1)
-        val input: String = "/inbound-catalogue-ok.xml".getResource()
+        val input: String = "/inbound/inbound-catalogue-ok.xml".getResource()
         producer.sendBody(input)
         val exchange = result.assertExchangeReceived(0)
-        exchange.getBody<String>() shouldBeXmlEqualTo "/inbound-catalogue-ok-sbdh-removed.xml".getResource()
+        exchange.getBody<String>() shouldBeXmlEqualTo "/inbound/inbound-catalogue-ok-sbdh-removed.xml".getResource()
         result.assertIsSatisfied()
     }
 

@@ -11,12 +11,12 @@ import javax.xml.stream.XMLStreamWriter
 import mu.KotlinLogging
 import no.difi.vefa.peppol.common.model.Header
 import no.difi.vefa.peppol.sbdh.SbdReader
-import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_SENDER
-import no.nav.ehandel.kanal.CamelHeader.EHF_DOCUMENT_TYPE
 import no.nav.ehandel.kanal.Metrics.messagesReceived
-import no.nav.ehandel.kanal.getBody
-import no.nav.ehandel.kanal.getHeader
-import no.nav.ehandel.kanal.log.InboundLogger
+import no.nav.ehandel.kanal.common.constants.CamelHeader.EHF_DOCUMENT_SENDER
+import no.nav.ehandel.kanal.common.constants.CamelHeader.EHF_DOCUMENT_TYPE
+import no.nav.ehandel.kanal.common.extensions.getBody
+import no.nav.ehandel.kanal.common.extensions.getHeader
+import no.nav.ehandel.kanal.services.log.InboundLogger
 import org.apache.camel.Exchange
 import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.Processor

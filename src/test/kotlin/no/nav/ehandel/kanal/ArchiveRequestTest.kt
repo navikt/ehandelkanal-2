@@ -3,7 +3,7 @@ package no.nav.ehandel.kanal
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.charset.Charset
 import java.util.Base64
-import no.nav.ehandel.kanal.legalarchive.ArchiveRequest
+import no.nav.ehandel.kanal.services.legalarchive.ArchiveRequest
 import org.amshove.kluent.shouldEqual
 import org.junit.Test
 
