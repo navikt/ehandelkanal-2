@@ -25,7 +25,7 @@ val flyway_version = "6.0.4"
 val h2_version = "1.4.200"
 val postgres_version = "42.2.8"
 val exposed_version = "0.17.7"
-val result_version = "1.1.3"
+val result_version = "1.1.6"
 val wiremock_version = "2.25.1"
 val mockk_version = "1.9"
 val kluent_version = "1.56"
@@ -44,9 +44,6 @@ application {
 }
 
 repositories {
-    maven(url="https://dl.bintray.com/kotlin/ktor")
-    maven(url="https://kotlin.bintray.com/kotlinx")
-    maven(url="https://dl.bintray.com/michaelbull/maven")
     mavenCentral()
     jcenter()
 }

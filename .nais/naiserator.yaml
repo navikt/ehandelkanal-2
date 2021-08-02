@@ -2,7 +2,7 @@ apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
   name: ehandelkanal-2
-  namespace: default
+  namespace: integrasjon
   labels:
     team: integrasjon
 spec:
@@ -24,8 +24,6 @@ spec:
   prometheus:
     enabled: true
     path: /internal/prometheus
-  istio:
-    enabled: false
   {{#if ingresses}}
   ingresses:
     {{#each ingresses}}
