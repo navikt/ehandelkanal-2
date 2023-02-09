@@ -2,9 +2,9 @@ apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
   name: ehandelkanal-2
-  namespace: integrasjon
+  namespace: team-oebs
   labels:
-    team: integrasjon
+    team: team-oebs
 spec:
   image: {{ image }}
   replicas:
