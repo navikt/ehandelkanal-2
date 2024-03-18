@@ -1,5 +1,5 @@
-image: "repo.adeo.no:5443/team-oebs/ehandelkanal-2"
-team: team-oebs
+image: "repo.adeo.no:5443/integrasjon/ehandelkanal-2"
+team: integrasjon
 replicas:
   min: 1
   max: 1
