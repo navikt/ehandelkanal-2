@@ -5,6 +5,13 @@ on: [push, pull_request, workflow_dispatch]
 env:
   IMAGE: docker.pkg.github.com/${{ github.repository }}/ehandelkanal-2:${{ github.sha }}
 
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+  packages: write
+  security-events: write
+
 jobs:
   test:
     name: Run tests
