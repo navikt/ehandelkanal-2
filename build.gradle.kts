@@ -10,7 +10,6 @@ buildscript {
     }
     dependencies {
         classpath("org.jmailen.kotlinter:org.jmailen.kotlinter.gradle.plugin:2.1.2")
-        classpath("https://plugins.gradle.org/m2/:me.cassiano:ktlint-html-reporter:0.2.1")
     }
 }
 
