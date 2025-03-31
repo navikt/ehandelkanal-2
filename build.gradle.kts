@@ -42,12 +42,12 @@ plugins {
 application {
     mainClassName = "no.nav.ehandel.kanal.EhandelBootstrapKt"
 }
-/*
+
 repositories {
-    mavenCentral()
+    //(mavenCentral()
     jcenter()
 }
-*/
+
 dependencies {
     compile(kotlin("stdlib"))
     implementation("io.ktor:ktor-server-netty:$ktor_version")
