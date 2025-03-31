@@ -1,17 +1,3 @@
-buildscript {
-    repositories {
-        mavenCentral()                  // Look in Maven Central
-        maven("https://plugins.gradle.org/m2/")  // Gradle Plugin Portal
-    }
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.50")
-        classpath("org.jmailen.kotlinter:gradle:2.1.2")
-        classpath("com.github.ben-manes:gradle-versions-plugin:0.27.0")
-        classpath("org.flywaydb:flyway-gradle-plugin:6.0.8")
-        classpath("com.github.johnrengelman:shadow:5.1.0")
-    }
-}
-
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -56,12 +42,12 @@ plugins {
 application {
     mainClassName = "no.nav.ehandel.kanal.EhandelBootstrapKt"
 }
-
+/*
 repositories {
     mavenCentral()
     jcenter()
 }
-
+*/
 dependencies {
     compile(kotlin("stdlib"))
     implementation("io.ktor:ktor-server-netty:$ktor_version")
