@@ -6,10 +6,11 @@ buildscript {
         mavenCentral()
         jcenter()
         maven("https://plugins.gradle.org/m2/")
+        maven("https://jitpack.io")
     }
     dependencies {
         classpath("org.jmailen.kotlinter:org.jmailen.kotlinter.gradle.plugin:2.1.2")
-        classpath("org.jmailen.kotlinter:me.cassiano:ktlint-html-reporter:0.2.1")
+        classpath("https://plugins.gradle.org/m2/:me.cassiano:ktlint-html-reporter:0.2.1")
     }
 }
 
@@ -58,6 +59,8 @@ application {
 repositories {
     mavenCentral()
     jcenter()
+    maven("https://plugins.gradle.org/m2/")
+    maven("https://jitpack.io")
 }
 
 dependencies {
