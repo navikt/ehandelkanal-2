@@ -1,6 +1,17 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar;
-import org.gradle.kotlin.dsl.repositories
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+buildscript {
+    repositories {
+        mavenCentral()
+        jCenter()
+        maven("https://plugins.gradle.org/m2/")
+    }
+    dependencies {
+        classpath("org.jmailen.kotlinter:org.jmailen.kotlinter.gradle.plugin:2.1.2")
+        classpath("org.jmailen.kotlinter:me.cassiano:ktlint-html-reporter:0.2.1")
+    }
+}
 
 group = "no.nav.integrasjon"
 version = "1.0.52-SNAPSHOT"
@@ -46,7 +57,7 @@ application {
 
 repositories {
     mavenCentral()
-    jcenter()
+    jCenter()
 }
 
 dependencies {
