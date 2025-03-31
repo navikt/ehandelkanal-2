@@ -1,3 +1,17 @@
+buildscript {
+    repositories {
+        mavenCentral()                  // Look in Maven Central
+        maven("https://plugins.gradle.org/m2/")  // Gradle Plugin Portal
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.50")
+        classpath("org.jmailen.kotlinter:gradle:2.1.2")
+        classpath("com.github.ben-manes:gradle-versions-plugin:0.27.0")
+        classpath("org.flywaydb:flyway-gradle-plugin:6.0.8")
+        classpath("com.github.johnrengelman:shadow:5.1.0")
+    }
+}
+
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -87,7 +101,6 @@ dependencies {
     implementation("com.h2database:h2:$h2_version")
     implementation("org.jetbrains.exposed:exposed:$exposed_version")
     implementation("com.michael-bull.kotlin-result:kotlin-result:$result_version")
-    implementation("me.cassiano:ktlint-html-reporter:0.2.1")
 
     testImplementation("org.apache.camel:camel-test:$camel_version")
     testImplementation("com.github.tomakehurst:wiremock:$wiremock_version")
@@ -114,7 +127,7 @@ tasks {
         testLogging.events("passed", "skipped", "failed")
     }
     withType<Wrapper> {
-        gradleVersion = "8.5"
+        gradleVersion = "5.5.1"
         distributionType = Wrapper.DistributionType.BIN
     }
     withType<KotlinCompile> {
