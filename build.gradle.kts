@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 buildscript {
     repositories {
         mavenCentral()
-        jCenter()
+        jcenter()
         maven("https://plugins.gradle.org/m2/")
     }
     dependencies {
@@ -57,7 +57,7 @@ application {
 
 repositories {
     mavenCentral()
-    jCenter()
+    jcenter()
 }
 
 dependencies {
