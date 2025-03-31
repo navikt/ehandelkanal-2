@@ -87,6 +87,7 @@ dependencies {
     implementation("com.h2database:h2:$h2_version")
     implementation("org.jetbrains.exposed:exposed:$exposed_version")
     implementation("com.michael-bull.kotlin-result:kotlin-result:$result_version")
+    implementation("me.cassiano:ktlint-html-reporter:0.2.1")
 
     testImplementation("org.apache.camel:camel-test:$camel_version")
     testImplementation("com.github.tomakehurst:wiremock:$wiremock_version")
