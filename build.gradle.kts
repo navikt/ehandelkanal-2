@@ -114,7 +114,7 @@ tasks {
         testLogging.events("passed", "skipped", "failed")
     }
     withType<Wrapper> {
-        gradleVersion = "5.5.1"
+        gradleVersion = "8.5"
         distributionType = Wrapper.DistributionType.BIN
     }
     withType<KotlinCompile> {
