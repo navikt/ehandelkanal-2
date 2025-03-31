@@ -37,7 +37,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-wrapper-
       - name: Build and run tests
-        run: ./gradlew clean build
+        run: ./gradlew clean build --refresh-dependencies
 
   build:
     name: Build and push Docker image via GAR
