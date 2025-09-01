@@ -28,7 +28,7 @@ val exposed_version = "0.41.1"
 val result_version = "1.1.6"
 val wiremock_version = "2.25.1"
 val mockk_version = "1.9"
-val kluent_version = "1.56"
+val kluent_version = "1.73"
 
 plugins {
     application
@@ -129,4 +129,7 @@ tasks {
             jvmTarget = "11"
         }
     }
+    named("distZip")  { dependsOn("shadowJar") }
+    named("distTar")  { dependsOn("shadowJar") }
+    named("startScripts") { dependsOn("shadowJar") }
 }
