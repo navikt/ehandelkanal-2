@@ -33,7 +33,7 @@ val kluent_version = "1.56"
 plugins {
     application
     kotlin("jvm") version "1.3.50"
-    id("org.jmailen.kotlinter") version "2.1.2"
+    // id("org.jmailen.kotlinter") version "2.1.2"
     id("com.github.ben-manes.versions") version "0.27.0"
     id("org.flywaydb.flyway") version "6.0.8"
     id("com.github.johnrengelman.shadow") version "5.1.0"
@@ -45,7 +45,7 @@ application {
 
 repositories {
     mavenCentral()
-    jcenter()
+    // jcenter() EOL
 }
 
 dependencies {
