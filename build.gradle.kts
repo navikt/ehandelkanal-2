@@ -132,4 +132,7 @@ tasks {
     named("distZip")  { dependsOn("shadowJar") }
     named("distTar")  { dependsOn("shadowJar") }
     named("startScripts") { dependsOn("shadowJar") }
+    named("startShadowScripts") { dependsOn("jar") }
+    named("shadowDistZip")      { dependsOn("jar") }
+    named("shadowDistTar")      { dependsOn("jar") }
 }
