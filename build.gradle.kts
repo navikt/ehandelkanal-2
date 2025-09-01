@@ -39,6 +39,15 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
+kotlinter {
+    ignoreFailures = true
+    disabledRules = arrayOf(
+        "standard:multiline-expression-wrapping",
+        "standard:chain-method-continuation",
+        "standard:argument-list-wrapping"
+    )
+}
+
 application {
     mainClassName = "no.nav.ehandel.kanal.EhandelBootstrapKt"
 }
