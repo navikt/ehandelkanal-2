@@ -10,7 +10,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import io.ktor.client.features.ResponseException
 import io.ktor.client.call.receive
 import kotlinx.coroutines.withTimeoutOrNull
 import no.nav.ehandel.kanal.common.extensions.url
