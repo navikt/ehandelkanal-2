@@ -13,7 +13,7 @@ val difi_peppol_sbdh_version = "1.1.3"
 val kotlin_logging_version = "1.7.6"
 val jaxb_api_version = "2.4.0-b180830.0359"
 val jaxb_runtime_version = "2.4.0-b180830.0438"
-val ktor_version = "1.2.5"
+val ktor_version = "1.6.8"
 val logstash_version = "6.2"
 val logback_version = "1.2.3"
 val prometheus_version = "0.8.0"
@@ -24,7 +24,7 @@ val vault_driver_version = "3.1.0"
 val flyway_version = "6.0.4"
 val h2_version = "1.4.200"
 val postgres_version = "42.2.8"
-val exposed_version = "0.17.7"
+val exposed_version = "0.41.1"
 val result_version = "1.1.6"
 val wiremock_version = "2.25.1"
 val mockk_version = "1.9"
@@ -32,11 +32,11 @@ val kluent_version = "1.56"
 
 plugins {
     application
-    kotlin("jvm") version "1.3.50"
-    // id("org.jmailen.kotlinter") version "2.1.2"
-    id("com.github.ben-manes.versions") version "0.27.0"
+    kotlin("jvm") version "1.6.21"
+    id("org.jmailen.kotlinter") version "2.1.2"
+    id("com.github.ben-manes.versions") version "0.51.0"
     id("org.flywaydb.flyway") version "6.0.8"
-    id("com.github.johnrengelman.shadow") version "5.1.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 application {
@@ -45,7 +45,6 @@ application {
 
 repositories {
     mavenCentral()
-    // jcenter() EOL
 }
 
 dependencies {
@@ -85,7 +84,9 @@ dependencies {
     implementation("org.flywaydb:flyway-core:$flyway_version")
     implementation("org.postgresql:postgresql:$postgres_version")
     implementation("com.h2database:h2:$h2_version")
-    implementation("org.jetbrains.exposed:exposed:$exposed_version")
+    implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
     implementation("com.michael-bull.kotlin-result:kotlin-result:$result_version")
 
     testImplementation("org.apache.camel:camel-test:$camel_version")
@@ -106,19 +107,19 @@ tasks {
         println(project.version)
     }
     withType<ShadowJar> {
-        classifier = ""
+        archiveClassifier.set("")
     }
     withType<Test> {
         useJUnitPlatform()
         testLogging.events("passed", "skipped", "failed")
     }
     withType<Wrapper> {
-        gradleVersion = "5.5.1"
+        gradleVersion = "7.6.4"
         distributionType = Wrapper.DistributionType.BIN
     }
     withType<KotlinCompile> {
         kotlinOptions {
-            jvmTarget = "1.8"
+            jvmTarget = "11"
         }
     }
 }
