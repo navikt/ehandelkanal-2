@@ -33,7 +33,7 @@ val kluent_version = "1.56"
 plugins {
     application
     kotlin("jvm") version "1.6.21"
-    id("org.jmailen.kotlinter") version "2.1.2"
+    id("org.jmailen.kotlinter") version "5.2.0"
     id("com.github.ben-manes.versions") version "0.51.0"
     id("org.flywaydb.flyway") version "6.0.8"
     id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -48,7 +48,7 @@ repositories {
 }
 
 dependencies {
-    compile(kotlin("stdlib"))
+    implementation(kotlin("stdlib"))
     implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("io.ktor:ktor-html-builder:$ktor_version")
     implementation("io.ktor:ktor-jackson:$ktor_version")
