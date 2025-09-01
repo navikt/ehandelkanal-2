@@ -23,7 +23,7 @@ fun StatusPages.Configuration.exceptionHandler() {
         call.logErrorAndRespond(cause, HttpStatusCode.BadRequest) { "Invalid input" }
     }
     exception<ResponseException> { cause ->
-        val body = withTimeoutOrNull(1_000) { // optional safety
+        val body = withTimeoutOrNull(1_000) { 
             cause.response.readText()
         }
         logger.error(cause) { body ?: "External service responded with HTTP ${cause.response.status}" }
