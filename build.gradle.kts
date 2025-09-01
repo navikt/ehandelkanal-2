@@ -88,7 +88,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
     implementation("com.michael-bull.kotlin-result:kotlin-result:$result_version")
-
+    implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
     testImplementation("org.apache.camel:camel-test:$camel_version")
     testImplementation("com.github.tomakehurst:wiremock:$wiremock_version")
     testImplementation("io.mockk:mockk:$mockk_version")
