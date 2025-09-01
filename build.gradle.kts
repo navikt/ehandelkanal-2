@@ -40,12 +40,9 @@ plugins {
 }
 
 kotlinter {
-    ignoreFailures = true
-    disabledRules = arrayOf(
-        "standard:multiline-expression-wrapping",
-        "standard:chain-method-continuation",
-        "standard:argument-list-wrapping"
-    )
+    ignoreLintFailures = true       
+    ignoreFormatFailures = true     
+    reporters = arrayOf("plain")    
 }
 
 application {
