@@ -12,6 +12,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import io.ktor.client.features.ResponseException
 import io.ktor.client.call.receive
+import kotlinx.coroutines.withTimeoutOrNull
 import no.nav.ehandel.kanal.common.extensions.url
 import no.nav.ehandel.kanal.common.functions.getCorrelationId
 
