@@ -99,7 +99,8 @@ fun main() = runBlocking {
             AccessPoint.readyToProcess.logAndSet(false)
             camelContext.stop()
             applicationState.fail()
-            server.stop(5, 10, TimeUnit.SECONDS)
+            // server.stop(5, 10, TimeUnit.SECONDS)
+            server.stop(5000, 10_000)
         })
 
         applicationState.initialized = true
