@@ -23,7 +23,7 @@ jobs:
           java-version: '11'
           cache: gradle
       - name: Build and run tests
-        run: ./gradlew --warning-mode all clean build --info --stacktrace
+        run: ./gradlew --warning-mode all clean build
 
   build:
     name: Build and push image (NAIS)
