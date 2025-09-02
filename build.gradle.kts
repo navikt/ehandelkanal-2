@@ -42,11 +42,11 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
-kotlinter {
-    ignoreLintFailures = true       
-    ignoreFormatFailures = true     
-    reporters = arrayOf("plain")    
-}
+// kotlinter {
+//     ignoreLintFailures = true       
+//     ignoreFormatFailures = true     
+//     reporters = arrayOf("plain")    
+// }
 
 application {
     mainClassName = "no.nav.ehandel.kanal.EhandelBootstrapKt"
