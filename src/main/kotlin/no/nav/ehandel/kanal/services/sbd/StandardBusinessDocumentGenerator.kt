@@ -24,6 +24,7 @@ class StandardBusinessDocumentGenerator {
      * returns a tuple consisting of the generated standard business document header as well as the string representation
      * of the generated standard business document with the header and provided payload contained
      */
+    @PublishedApi
     internal inline fun <reified T> generateStandardBusinessDocument(rawXmlPayload: String): Result<Pair<Header, String>, ErrorMessage> =
         rawXmlPayload
             .parsePayload<T>()
