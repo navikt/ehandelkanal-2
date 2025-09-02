@@ -110,7 +110,8 @@ dependencies {
     testImplementation("org.amshove.kluent:kluent:$kluent_version") {
         exclude(group = "com.nhaarman.mockitokotlin2")
     }
-    testCompileOnly("junit:junit:4.12")
+    //testCompileOnly("junit:junit:4.12")
+    testImplementation("junit:junit:4.13.2")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.5.1")
 }
 
