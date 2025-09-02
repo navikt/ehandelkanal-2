@@ -48,7 +48,7 @@ private fun Header.mapToStandardBusinessDocument(rawXmlPayload: String): Result<
         }
     )
 @PublishedApi
-private inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
+internal inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
     runCatching {
         JAXB.unmarshal(this.byteInputStream(), T::class.java)
     }.fold(
@@ -59,7 +59,7 @@ private inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
         }
     )
 @PublishedApi
-private inline fun <reified T> T.mapToSbdh(): Result<Header, ErrorMessage> =
+internal inline fun <reified T> T.mapToSbdh(): Result<Header, ErrorMessage> =
     when (this) {
         is OrderType -> this.mapToHeader()
         is InvoiceType -> this.mapToHeader()
