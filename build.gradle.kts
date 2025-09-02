@@ -30,6 +30,9 @@ val wiremock_version = "2.25.1"
 val mockk_version = "1.9"
 val kluent_version = "1.73"
 
+
+
+
 plugins {
     application
     kotlin("jvm") version "1.9.24"
@@ -119,7 +122,7 @@ tasks {
     withType<Test> {
         useJUnitPlatform()
         testLogging.events("passed", "skipped", "failed")
-        exclude("**/StandardBusinessDocumentGeneratorTest.*")
+        
     }
     withType<Wrapper> {
         gradleVersion = "7.6.4"
@@ -129,6 +132,9 @@ tasks {
         kotlinOptions {
             jvmTarget = "11"
         }
+        if (name == "compileTestKotlin") {
+        kotlinOptions.freeCompilerArgs += listOf("-Xuse-old-backend")
+    }
     }
     named("distZip")  { dependsOn("shadowJar") }
     named("distTar")  { dependsOn("shadowJar") }
