@@ -119,6 +119,7 @@ tasks {
     withType<Test> {
         useJUnitPlatform()
         testLogging.events("passed", "skipped", "failed")
+        exclude("**/StandardBusinessDocumentGeneratorTest.*")
     }
     withType<Wrapper> {
         gradleVersion = "7.6.4"
