@@ -16,6 +16,7 @@ import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.domain.documenttypes.invoice.mapToHeader
 import no.nav.ehandel.kanal.domain.documenttypes.order.mapToHeader
 
+@PublishedApi
 internal val logger = KotlinLogging.logger { }
 
 class StandardBusinessDocumentGenerator {
@@ -31,7 +32,7 @@ class StandardBusinessDocumentGenerator {
             .andThen { payload -> payload.mapToSbdh() }
             .andThen { header -> header.mapToStandardBusinessDocument(rawXmlPayload) }
 }
-
+@PublishedApi
 internal fun Header.mapToStandardBusinessDocument(rawXmlPayload: String): Result<Pair<Header, String>, ErrorMessage> =
     runCatching {
         ByteArrayOutputStream().use { outputStream ->
