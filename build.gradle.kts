@@ -168,7 +168,7 @@ tasks {
 //         }
 //     }))
 // }
-}
+//}
     withType<Wrapper> {
         gradleVersion = "7.6.4"
         distributionType = Wrapper.DistributionType.BIN
