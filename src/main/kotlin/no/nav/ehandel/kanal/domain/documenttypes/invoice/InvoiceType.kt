@@ -22,7 +22,7 @@ private val logger = KotlinLogging.logger { }
 
 private const val PEPPOL_ROOT_NAMESPACE = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
 private const val PEPPOL_LOCAL_NAME = "Invoice"
-
+@PublishedApi
 internal fun InvoiceType.mapToHeader(): Result<Header, ErrorMessage> {
     return runCatching {
         val senderSchemeId: String = Code
