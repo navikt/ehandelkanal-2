@@ -22,8 +22,6 @@ jobs:
           distribution: temurin
           java-version: '11'
           cache: gradle
-      - name: Nuke test DB
-        run: rm -f integrationtestdb.*
       - name: Build and run tests
         run: ./gradlew --warning-mode all clean build
 
