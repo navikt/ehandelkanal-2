@@ -122,40 +122,52 @@ tasks {
     withType<ShadowJar> {
         archiveClassifier.set("")
     }
-withType<Test> {
-    useJUnitPlatform()
-
-    testLogging {
-        events = setOf(
-            TestLogEvent.PASSED,
-            TestLogEvent.SKIPPED,
-            TestLogEvent.FAILED,
-            TestLogEvent.STANDARD_OUT,
-            TestLogEvent.STANDARD_ERROR
-        )
-        exceptionFormat = TestExceptionFormat.FULL
-        showExceptions = true
-        showCauses = true
-        showStackTraces = true
-    }
-
-    reports {
-        junitXml.required.set(true)
-        html.required.set(true)
-    }
-
-    // nice summary at end of test run
-    afterSuite(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
-        if (desc.parent == null) {
-            println(
-                "\nResults: ${result.resultType} " +
-                "(${result.successfulTestCount} passed, " +
-                "${result.failedTestCount} failed, " +
-                "${result.skippedTestCount} skipped)"
-            )
-            println("Report HTML: ${reports.html.outputLocation.get().asFile.absolutePath}/index.html")
+    withType<Test> {
+        testLogging {
+            events("passed", "skipped", "failed", "standardOut", "standardError")
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showStackTraces = true
+            showCauses = true
+            showExceptions = true
         }
-    }))
+        include("**/*Test.class")
+        include("**/*IT.class")
+    }
+// withType<Test> {
+//     useJUnitPlatform()
+//
+//     testLogging {
+//         events = setOf(
+//             TestLogEvent.PASSED,
+//             TestLogEvent.SKIPPED,
+//             TestLogEvent.FAILED,
+//             TestLogEvent.STANDARD_OUT,
+//             TestLogEvent.STANDARD_ERROR
+//         )
+//         exceptionFormat = TestExceptionFormat.FULL
+//         showExceptions = true
+//         showCauses = true
+//         showStackTraces = true
+//     }
+//
+//     reports {
+//         junitXml.required.set(true)
+//         html.required.set(true)
+//     }
+//
+//     // nice summary at end of test run
+//     afterSuite(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
+//         if (desc.parent == null) {
+//             println(
+//                 "\nResults: ${result.resultType} " +
+//                 "(${result.successfulTestCount} passed, " +
+//                 "${result.failedTestCount} failed, " +
+//                 "${result.skippedTestCount} skipped)"
+//             )
+//             println("Report HTML: ${reports.html.outputLocation.get().asFile.absolutePath}/index.html")
+//         }
+//     }))
+// }
 }
     withType<Wrapper> {
         gradleVersion = "7.6.4"
