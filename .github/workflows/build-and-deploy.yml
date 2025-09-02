@@ -1,93 +1,84 @@
-name: Build, push, and deploy to NAIS
+name: Build, push, and deploy
 
-on:
-  push:
-    branches:
-      - 'dev/**'
-      - 'main'
-  pull_request:
-  workflow_dispatch:
+on: [push, pull_request, workflow_dispatch]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
-  actions: read
   contents: read
   id-token: write
-  packages: write
-  security-events: write
+  actions: read
 
 jobs:
   test:
     name: Run tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: '11.x'
-      - uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-cache-${{ hashFiles('build.gradle.kts') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-cache-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-wrapper-
+          distribution: temurin
+          java-version: '11'
+          cache: gradle
       - name: Build and run tests
-        run: ./gradlew clean build
+        run: ./gradlew --warning-mode all clean build
 
   build:
-    name: Build and push Docker image via GAR
+    name: Build and push image (NAIS)
     needs: test
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      actions: read
+    outputs:
+      image: ${{ steps.docker.outputs.image }}
+      telemetry: ${{ steps.docker.outputs.telemetry }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          fetch-depth: 0  # Full history is needed for what-changed analysis
-      - name: Determine what to do
-        id: changed-files
-        uses: nais/what-changed@main
-        with:
-          files: .nais/naiserator.yaml  # Monitor your deployment resource file(s)
-      - name: Build and push image and SBOM to OCI registry
-        if: steps.changed-files.outputs.changed != 'only-inputs'
+          distribution: temurin
+          java-version: '11'
+          cache: gradle
+      - name: Build JAR (skip tests)
+        run: ./gradlew clean build shadowJar -x test
+      - name: Build & push (to NAIS registry)
+        id: docker
         uses: nais/docker-build-push@v0
-        id: docker-build-push
         with:
-          team: team-oebs  # Replace with your team identifier
+          team: team-oebs
+          cache_from: type=gha
+          cache_to: type=gha,mode=max
 
   deploy-dev:
     name: Deploy to NAIS dev
-    if: startsWith(github.ref, 'refs/heads/dev/')
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Deploy to NAIS dev
-        uses: nais/deploy/actions/deploy@v2
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-fss
           RESOURCE: .nais/naiserator.yaml
           VARS: .nais/config-dev.yaml
-          WORKLOAD_IMAGE: ${{ steps.docker-build-push.outputs.image }}
-          TELEMETRY: ${{ steps.docker-build-push.outputs.telemetry }}
+          WORKLOAD_IMAGE: ${{ needs.build.outputs.image }}
+          TELEMETRY: ${{ needs.build.outputs.telemetry }}
 
   deploy-prod:
     name: Deploy to NAIS prod
     needs: deploy-dev
-    if: github.ref == 'refs/heads/master'
+    if: github.ref_name == 'master'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Deploy to NAIS prod
-        uses: nais/deploy/actions/deploy@v2
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: prod-fss
           RESOURCE: .nais/naiserator.yaml
           VARS: .nais/config-prod.yaml
-          WORKLOAD_IMAGE: ${{ steps.docker-build-push.outputs.image }}
-          TELEMETRY: ${{ steps.docker-build-push.outputs.telemetry }}
+          WORKLOAD_IMAGE: ${{ needs.build.outputs.image }}
+          TELEMETRY: ${{ needs.build.outputs.telemetry }}

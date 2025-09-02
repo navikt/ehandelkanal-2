@@ -5,6 +5,7 @@ target/
 /*.db
 *.jks
 *.jts
+.vscode/
 
 # Gradle
 out/

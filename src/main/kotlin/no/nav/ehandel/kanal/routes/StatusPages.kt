@@ -4,12 +4,12 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.client.features.ResponseException
-import io.ktor.client.response.readText
+import io.ktor.client.statement.readText
 import io.ktor.features.StatusPages
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
-import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import kotlinx.coroutines.withTimeoutOrNull
 import no.nav.ehandel.kanal.common.extensions.url
 import no.nav.ehandel.kanal.common.functions.getCorrelationId
 
@@ -23,9 +23,10 @@ fun StatusPages.Configuration.exceptionHandler() {
         call.logErrorAndRespond(cause, HttpStatusCode.BadRequest) { "Invalid input" }
     }
     exception<ResponseException> { cause ->
-        logger.error(cause) {
-            runBlocking { cause.response.readText() }
+        val body = withTimeoutOrNull(1_000) { 
+            cause.response.readText()
         }
+        logger.error(cause) { body ?: "External service responded with HTTP ${cause.response.status}" }
         call.logErrorAndRespond(cause) { "An external service responded with a HTTP error" }
     }
 }
