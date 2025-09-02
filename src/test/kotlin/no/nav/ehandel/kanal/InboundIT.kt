@@ -56,6 +56,7 @@ private val camelContext = configureCamelContext(defaultRegistry()).apply {
             mockEndpoints("^(?!(jms|ftp)).*")
         }
     })
+    getRouteDefinition("inboxPoller").autoStartup(false)
     removeRouteDefinition(getRouteDefinition(INBOUND_FTP_TEST_ROUTE))
 }
 
@@ -75,10 +76,11 @@ class InboundIT {
         accessPointClient, inboxQueue, inboundRoute,
         ebasys, ebasysUnknownFiles, inboundMq, fileAreaCatalogue
     )
+    private var camelStarted = false
 
     @Before
     fun setUp() {
-        camelContext.start()
+        if (!inboundWireMockRule.isRunning) inboundWireMockRule.start()
     }
 
     @After
@@ -86,6 +88,7 @@ class InboundIT {
         verifyAccessPointRequests()
         inboundWireMockRule.resetRequests()
         camelContext.stop()
+        camelStarted = false
         DeleteDbFiles.execute("./", "integrationtestdb", true)
     }
 
@@ -221,6 +224,14 @@ class InboundIT {
         }
     }
 
+    private fun ensureCamelStarted() {
+        if (!camelStarted) {
+            camelContext.start()
+            camelContext.startRoute("inboxPoller")
+            camelStarted = true
+        }
+    }
+
     private fun setUpInboundValidExpectations() {
         setUpAccessPointExpectations()
         inboundSbdhMetaDataExtractor.expectedMessageCount(1) // Expect that XSLT is performed (EHF extracted)
@@ -246,6 +257,7 @@ class InboundIT {
                         .withBodyFile(messageFileName)
                 )
         )
+        ensureCamelStarted()
     }
 
     private fun verifyAccessPointRequests() {

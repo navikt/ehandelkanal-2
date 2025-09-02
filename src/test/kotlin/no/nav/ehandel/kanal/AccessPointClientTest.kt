@@ -42,9 +42,7 @@ import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.helpers.getResource
 import no.nav.ehandel.kanal.helpers.shouldBeXmlEqualTo
 import org.amshove.kluent.`should be equal to`
-import org.amshove.kluent.`should equal`
-import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldEqualTo
+import org.amshove.kluent.shouldBeEqualTo
 import org.apache.camel.Exchange
 import org.apache.camel.Message
 import org.junit.BeforeClass
@@ -87,7 +85,7 @@ class AccessPointClientTest {
         )
         val count = vefaClient.getInboxCount()
         verifyRequest(getRequestedFor(urlEqualTo(url)), inboxApiKey)
-        count shouldEqualTo 10
+        count shouldBeEqualTo 10
     }
 
     @Test
@@ -160,7 +158,7 @@ class AccessPointClientTest {
         response
             .getOrElse { throw IllegalStateException("should return error") }
             .run {
-                message.messageMetaData.msgNo.toInt() shouldEqual 1
+                message.messageMetaData.msgNo.toInt() shouldBeEqualTo 1
             }
     }
 
@@ -188,7 +186,7 @@ class AccessPointClientTest {
         }
         response
             .getErrorOrElse { throw IllegalStateException("should return error") }
-            .`should equal`(ErrorMessage.AccessPoint.ServerResponseError)
+            .`should be equal to`(ErrorMessage.AccessPoint.ServerResponseError)
     }
 
     @Test
@@ -231,7 +229,7 @@ class AccessPointClientTest {
         }
         response
             .getErrorOrElse { throw IllegalStateException("should return error") }
-            .`should equal`(ErrorMessage.AccessPoint.ServerResponseError)
+            .`should be equal to`(ErrorMessage.AccessPoint.ServerResponseError)
     }
 
     @Test
@@ -251,7 +249,7 @@ class AccessPointClientTest {
         }
         response
             .getErrorOrElse { throw IllegalStateException("should return error") }
-            .`should equal`(ErrorMessage.AccessPoint.TransmitError)
+            .`should be equal to`(ErrorMessage.AccessPoint.TransmitError)
     }
 
     @Test
@@ -272,7 +270,7 @@ class AccessPointClientTest {
         }
         response
             .getErrorOrElse { throw IllegalStateException("should return error") }
-            .`should equal`(ErrorMessage.AccessPoint.ServerResponseError)
+            .`should be equal to`(ErrorMessage.AccessPoint.ServerResponseError)
     }
 
     private fun verifyRequest(request: RequestPatternBuilder, apiKey: String) {

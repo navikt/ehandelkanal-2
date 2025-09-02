@@ -130,6 +130,7 @@ tasks {
             showCauses = true
             showExceptions = true
         }
+        systemProperty("db.url", "jdbc:h2:./integrationtestdb;MODE=PostgreSQL")
         include("**/*Test.class")
         include("**/*IT.class")
     }

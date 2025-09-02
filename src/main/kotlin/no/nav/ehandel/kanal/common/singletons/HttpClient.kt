@@ -3,6 +3,7 @@ package no.nav.ehandel.kanal.common.singletons
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.features.auth.Auth
+import io.ktor.client.features.auth.providers.BasicAuthCredentials
 import io.ktor.client.features.auth.providers.basic
 import no.nav.ehandel.kanal.ServiceUserProps
 
@@ -15,9 +16,13 @@ val httpClient: HttpClient =
         }
         install(Auth) {
             basic {
-                username = ServiceUserProps.username
-                password = ServiceUserProps.password
-                sendWithoutRequest = true
+                credentials {
+                    BasicAuthCredentials(
+                        username = ServiceUserProps.username,
+                        password = ServiceUserProps.password
+                    )
+                }
+                sendWithoutRequest { true }
             }
         }
     }

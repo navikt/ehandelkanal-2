@@ -36,7 +36,7 @@ data class RenewCredentialsTaskData(
 enum class Role {
     ADMIN, USER, READONLY;
 
-    override fun toString() = name.toLowerCase()
+    override fun toString() = name.lowercase()
 }
 
 object Database {

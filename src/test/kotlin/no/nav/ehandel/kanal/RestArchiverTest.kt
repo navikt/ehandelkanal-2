@@ -12,7 +12,7 @@ import no.nav.ehandel.kanal.common.LegalArchiveException
 import no.nav.ehandel.kanal.common.singletons.objectMapper
 import no.nav.ehandel.kanal.services.legalarchive.ArchiveRequest
 import no.nav.ehandel.kanal.services.legalarchive.RestArchiver
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldThrow
 import org.amshove.kluent.withCause
 import org.junit.BeforeClass
@@ -41,7 +41,7 @@ class RestArchiverTest {
                 .withBasicAuth(BasicCredentials(username, password))
                 .withRequestBody(WireMock.equalToJson(objectMapper.writeValueAsString(request)))
         )
-        archiveId shouldEqual "1"
+        archiveId shouldBeEqualTo "1"
     }
 
     @Test
