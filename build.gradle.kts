@@ -1,5 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 group = "no.nav.integrasjon"
 version = "1.0.52-SNAPSHOT"
@@ -119,27 +121,41 @@ tasks {
     withType<ShadowJar> {
         archiveClassifier.set("")
     }
-    withType<Test> {
-        useJUnitPlatform()
-        testLogging.events("passed", "skipped", "failed", "StandardOut", "standardError")
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        showCauses = true
-        showExceptions = true
-        showStackTraces = true
+withType<Test> {
+    useJUnitPlatform()
 
-        afterSuite(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
-            if (desc.parent == null) {
-                println(
-                    "\nResults: ${result.resultType} " +
-                    "(${result.successfulTestCount} passed, " +
-                    "${result.failedTestCount} failed, " +
-                    "${result.skippedTestCount} skipped)"
-                )
-                println("Report HTML: ${reports.html.outputLocation.get().asFile.absolutePath}/index.html")
-            }
-        }))
-        
+    testLogging {
+        events = setOf(
+            TestLogEvent.PASSED,
+            TestLogEvent.SKIPPED,
+            TestLogEvent.FAILED,
+            TestLogEvent.STANDARD_OUT,
+            TestLogEvent.STANDARD_ERROR
+        )
+        exceptionFormat = TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
     }
+
+    reports {
+        junitXml.required.set(true)
+        html.required.set(true)
+    }
+
+    // nice summary at end of test run
+    afterSuite(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
+        if (desc.parent == null) {
+            println(
+                "\nResults: ${result.resultType} " +
+                "(${result.successfulTestCount} passed, " +
+                "${result.failedTestCount} failed, " +
+                "${result.skippedTestCount} skipped)"
+            )
+            println("Report HTML: ${reports.html.outputLocation.get().asFile.absolutePath}/index.html")
+        }
+    }))
+}
     withType<Wrapper> {
         gradleVersion = "7.6.4"
         distributionType = Wrapper.DistributionType.BIN
