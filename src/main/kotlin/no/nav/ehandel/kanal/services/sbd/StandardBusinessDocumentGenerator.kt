@@ -47,7 +47,7 @@ private fun Header.mapToStandardBusinessDocument(rawXmlPayload: String): Result<
             Err(ErrorMessage.StandardBusinessDocument.FailedToPrependStandardBusinessDocumentHeader)
         }
     )
-
+@PublishedApi
 private inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
     runCatching {
         JAXB.unmarshal(this.byteInputStream(), T::class.java)
@@ -58,7 +58,7 @@ private inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
             Err(ErrorMessage.StandardBusinessDocument.FailedToParseDocumentType)
         }
     )
-
+@PublishedApi
 private inline fun <reified T> T.mapToSbdh(): Result<Header, ErrorMessage> =
     when (this) {
         is OrderType -> this.mapToHeader()
