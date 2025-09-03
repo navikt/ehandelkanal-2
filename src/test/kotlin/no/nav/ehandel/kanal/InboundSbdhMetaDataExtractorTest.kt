@@ -11,7 +11,7 @@ import no.nav.ehandel.kanal.common.extensions.getHeader
 import no.nav.ehandel.kanal.helpers.getResource
 import org.amshove.kluent.AnyException
 import org.amshove.kluent.shouldBeTrue
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotContain
 import org.amshove.kluent.shouldNotThrow
 import org.apache.camel.Exchange
@@ -41,10 +41,10 @@ class InboundSbdhMetaDataExtractorTest {
         val exchange = document.createExchangeWithBody()
         InboundSbdhMetaDataExtractor.process(exchange)
 
-        exchange.getHeader<String>(EHF_DOCUMENT_SENDER) shouldEqual sender.substringAfter(":")
-        exchange.getHeader<String>(EHF_DOCUMENT_TYPE) shouldEqual declaredDocumentType
-        exchange.getHeader<String>(EHF_DOCUMENT_TYPE) shouldEqual actualDocumentType
-        exchange.getHeader<String>(FILE_NAME) shouldEqual "${creationDateAndTime.formattedTimestamp()}-$documentId.xml"
+        exchange.getHeader<String>(EHF_DOCUMENT_SENDER) shouldBeEqualTo sender.substringAfter(":")
+        exchange.getHeader<String>(EHF_DOCUMENT_TYPE) shouldBeEqualTo declaredDocumentType
+        exchange.getHeader<String>(EHF_DOCUMENT_TYPE) shouldBeEqualTo actualDocumentType
+        exchange.getHeader<String>(FILE_NAME) shouldBeEqualTo "${creationDateAndTime.formattedTimestamp()}-$documentId.xml"
         exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
     }
 
@@ -65,9 +65,9 @@ class InboundSbdhMetaDataExtractorTest {
         val exchange = document.createExchangeWithBody()
         InboundSbdhMetaDataExtractor.process(exchange)
 
-        exchange.getHeader<String>(EHF_DOCUMENT_SENDER) shouldEqual sender.substringAfter(":")
-        exchange.getHeader<String>(EHF_DOCUMENT_TYPE) shouldEqual "Unknown"
-        exchange.getHeader<String>(FILE_NAME) shouldEqual "${creationDateAndTime.formattedTimestamp()}-$documentId.xml"
+        exchange.getHeader<String>(EHF_DOCUMENT_SENDER) shouldBeEqualTo sender.substringAfter(":")
+        exchange.getHeader<String>(EHF_DOCUMENT_TYPE) shouldBeEqualTo "Unknown"
+        exchange.getHeader<String>(FILE_NAME) shouldBeEqualTo "${creationDateAndTime.formattedTimestamp()}-$documentId.xml"
         exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
     }
 

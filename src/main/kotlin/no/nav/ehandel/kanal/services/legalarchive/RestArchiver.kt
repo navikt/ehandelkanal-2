@@ -3,6 +3,7 @@ package no.nav.ehandel.kanal.services.legalarchive
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.features.auth.Auth
+import io.ktor.client.features.auth.providers.BasicAuthCredentials
 import io.ktor.client.features.auth.providers.basic
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
@@ -27,9 +28,13 @@ class RestArchiver(private val username: String, private val password: String, p
         }
         install(Auth) {
             basic {
-                username = this@RestArchiver.username
-                password = this@RestArchiver.password
-                sendWithoutRequest = true
+                credentials {
+                    BasicAuthCredentials(
+                        username = this@RestArchiver.username,
+                        password = this@RestArchiver.password
+                    )
+                }
+                sendWithoutRequest { true }
             }
         }
     }

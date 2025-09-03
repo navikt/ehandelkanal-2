@@ -10,8 +10,8 @@ import no.nav.ehandel.kanal.common.functions.randomUuid
 import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.helpers.getResource
 import no.nav.ehandel.kanal.services.sbd.StandardBusinessDocumentGenerator
-import org.amshove.kluent.`should equal`
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.`should be equal to`
+import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeEmpty
 import org.junit.Before
 import org.junit.Test
@@ -33,16 +33,16 @@ class StandardBusinessDocumentGeneratorTest {
             "/outbound/outbound-valid-order-no-sbdh.xml"
         ) { (header, document) ->
             with(header) {
-                sender.identifier shouldEqual "9908:889640782"
-                receiver.identifier shouldEqual "9908:889640782"
-                process.identifier shouldEqual "urn:www.cenbii.eu:profile:bii28:ver2.0"
-                documentType.identifier shouldEqual "urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:www.cenbii.eu:transaction:biitrns001:ver2.0:extended:urn:www.peppol.eu:bis:peppol28a:ver1.0:extended:urn:www.difi.no:ehf:ordre:ver1.0::2.1"
+                sender.identifier shouldBeEqualTo "9908:889640782"
+                receiver.identifier shouldBeEqualTo "9908:889640782"
+                process.identifier shouldBeEqualTo "urn:www.cenbii.eu:profile:bii28:ver2.0"
+                documentType.identifier shouldBeEqualTo "urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:www.cenbii.eu:transaction:biitrns001:ver2.0:extended:urn:www.peppol.eu:bis:peppol28a:ver1.0:extended:urn:www.difi.no:ehf:ordre:ver1.0::2.1"
                 with(instanceType) {
-                    standard shouldEqual "urn:oasis:names:specification:ubl:schema:xsd:Order-2"
-                    type shouldEqual "Order"
-                    version shouldEqual "2.1"
+                    standard shouldBeEqualTo "urn:oasis:names:specification:ubl:schema:xsd:Order-2"
+                    type shouldBeEqualTo "Order"
+                    version shouldBeEqualTo "2.1"
                 }
-                identifier.identifier shouldEqual callId
+                identifier.identifier shouldBeEqualTo callId
             }
             document.shouldNotBeEmpty()
         }
@@ -54,16 +54,16 @@ class StandardBusinessDocumentGeneratorTest {
             "/outbound/outbound-valid-order-schemeid-v3-no-sbdh.xml"
         ) { (header, document) ->
             with(header) {
-                sender.identifier shouldEqual "0192:889640782"
-                receiver.identifier shouldEqual "0192:889640782"
-                process.identifier shouldEqual "urn:www.cenbii.eu:profile:bii28:ver2.0"
-                documentType.identifier shouldEqual "urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:www.cenbii.eu:transaction:biitrns001:ver2.0:extended:urn:www.peppol.eu:bis:peppol28a:ver1.0:extended:urn:www.difi.no:ehf:ordre:ver1.0::2.1"
+                sender.identifier shouldBeEqualTo "0192:889640782"
+                receiver.identifier shouldBeEqualTo "0192:889640782"
+                process.identifier shouldBeEqualTo "urn:www.cenbii.eu:profile:bii28:ver2.0"
+                documentType.identifier shouldBeEqualTo "urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:www.cenbii.eu:transaction:biitrns001:ver2.0:extended:urn:www.peppol.eu:bis:peppol28a:ver1.0:extended:urn:www.difi.no:ehf:ordre:ver1.0::2.1"
                 with(instanceType) {
-                    standard shouldEqual "urn:oasis:names:specification:ubl:schema:xsd:Order-2"
-                    type shouldEqual "Order"
-                    version shouldEqual "2.1"
+                    standard shouldBeEqualTo "urn:oasis:names:specification:ubl:schema:xsd:Order-2"
+                    type shouldBeEqualTo "Order"
+                    version shouldBeEqualTo "2.1"
                 }
-                identifier.identifier shouldEqual callId
+                identifier.identifier shouldBeEqualTo callId
             }
             document.shouldNotBeEmpty()
         }
@@ -116,6 +116,6 @@ class StandardBusinessDocumentGeneratorTest {
     ) {
         this.generateStandardBusinessDocument<T>(payloadPath.getResource())
             .getErrorOrElse { throw IllegalStateException("should return error") }
-            .`should equal`(expectedErrorMessage)
+            .`should be equal to`(expectedErrorMessage)
     }
 }

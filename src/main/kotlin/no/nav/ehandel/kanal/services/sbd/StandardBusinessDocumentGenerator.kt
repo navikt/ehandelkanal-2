@@ -16,7 +16,8 @@ import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.domain.documenttypes.invoice.mapToHeader
 import no.nav.ehandel.kanal.domain.documenttypes.order.mapToHeader
 
-private val logger = KotlinLogging.logger { }
+@PublishedApi
+internal val logger = KotlinLogging.logger { }
 
 class StandardBusinessDocumentGenerator {
 
@@ -24,14 +25,15 @@ class StandardBusinessDocumentGenerator {
      * returns a tuple consisting of the generated standard business document header as well as the string representation
      * of the generated standard business document with the header and provided payload contained
      */
+    @PublishedApi
     internal inline fun <reified T> generateStandardBusinessDocument(rawXmlPayload: String): Result<Pair<Header, String>, ErrorMessage> =
         rawXmlPayload
             .parsePayload<T>()
             .andThen { payload -> payload.mapToSbdh() }
             .andThen { header -> header.mapToStandardBusinessDocument(rawXmlPayload) }
 }
-
-private fun Header.mapToStandardBusinessDocument(rawXmlPayload: String): Result<Pair<Header, String>, ErrorMessage> =
+@PublishedApi
+internal fun Header.mapToStandardBusinessDocument(rawXmlPayload: String): Result<Pair<Header, String>, ErrorMessage> =
     runCatching {
         ByteArrayOutputStream().use { outputStream ->
             SbdWriter.newInstance(outputStream, this).use { sbdWriter ->
@@ -46,8 +48,8 @@ private fun Header.mapToStandardBusinessDocument(rawXmlPayload: String): Result<
             Err(ErrorMessage.StandardBusinessDocument.FailedToPrependStandardBusinessDocumentHeader)
         }
     )
-
-private inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
+@PublishedApi
+internal inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
     runCatching {
         JAXB.unmarshal(this.byteInputStream(), T::class.java)
     }.fold(
@@ -57,8 +59,8 @@ private inline fun <reified T> String.parsePayload(): Result<T, ErrorMessage> =
             Err(ErrorMessage.StandardBusinessDocument.FailedToParseDocumentType)
         }
     )
-
-private inline fun <reified T> T.mapToSbdh(): Result<Header, ErrorMessage> =
+@PublishedApi
+internal inline fun <reified T> T.mapToSbdh(): Result<Header, ErrorMessage> =
     when (this) {
         is OrderType -> this.mapToHeader()
         is InvoiceType -> this.mapToHeader()

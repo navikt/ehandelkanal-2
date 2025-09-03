@@ -15,4 +15,7 @@
 
     <logger name="no.nav.ehandel.kanal" level="DEBUG"/>
     <logger name="no.nav.common.juridisklogg.client.RestArchiver" level="INFO" />
+    <logger name="no.nav.ehandel.kanal.camel.routes.AccessPoint" level="INFO"/>
+    <logger name="no.nav.ehandel.kanal.camel.routes.AccessPointKt" level="INFO"/>
+
 </configuration>
