@@ -1,7 +1,7 @@
-CREATE SEQUENCE IF NOT EXISTS report;
+SELECT pg_get_serial_sequence('report', 'id');
 
-ALTER TABLE report ALTER COLUMN id SET DEFAULT nextval('report');
+ALTER TABLE report
+    ALTER COLUMN id SET DEFAULT nextval('report_id_seq');
 
--- Valgfritt: synkroniser sekvensen til neste ID hvis tabellen kan ha eksisterende rader
--- SELECT setval('report', GREATEST(COALESCE((SELECT MAX(id) FROM report), 0) + 1, 1), false);
+SELECT pg_get_serial_sequence('report', 'id');  -- usually 'report_id_seq'
 
