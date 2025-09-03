@@ -1,7 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 group = "no.nav.integrasjon"
 version = "1.0.52-SNAPSHOT"
@@ -23,24 +21,21 @@ val javax_activation_version = "1.2.0"
 val difi_commons_ubl_version = "0.9.5"
 val hikari_version = "3.4.1"
 val vault_driver_version = "3.1.0"
-val flyway_version = "6.0.4"
+val flyway_version = "7.15.0"
 val h2_version = "1.4.200"
 val postgres_version = "42.2.8"
 val exposed_version = "0.41.1"
 val result_version = "1.1.6"
 val wiremock_version = "2.25.1"
-val mockk_version = "1.9"
+val mockk_version = "1.13.10"
 val kluent_version = "1.73"
-
-
-
 
 plugins {
     application
     kotlin("jvm") version "1.9.24"
     //id("org.jmailen.kotlinter") version "5.2.0"
     id("com.github.ben-manes.versions") version "0.51.0"
-    id("org.flywaydb.flyway") version "6.0.8"
+    id("org.flywaydb.flyway") version "7.15.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -50,12 +45,24 @@ plugins {
 //     reporters = arrayOf("plain")    
 // }
 
-application {
-    mainClassName = "no.nav.ehandel.kanal.EhandelBootstrapKt"
+flyway {
+    locations = arrayOf(
+        "classpath:db/migration/common",
+        "classpath:db/migration/{vendor}"
+    )
 }
+
+application {
+    mainClass.set("no.nav.ehandel.kanal.EhandelBootstrapKt")
+}
+
 
 repositories {
     mavenCentral()
+}
+
+kotlin {
+    jvmToolchain(11)
 }
 
 dependencies {
@@ -112,7 +119,7 @@ dependencies {
     }
     //testCompileOnly("junit:junit:4.12")
     testImplementation("junit:junit:4.13.2")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.5.1")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.2")
 }
 
 tasks {
@@ -123,6 +130,7 @@ tasks {
         archiveClassifier.set("")
     }
     withType<Test> {
+        useJUnitPlatform()
         testLogging {
             events("passed", "skipped", "failed", "standardOut", "standardError")
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
@@ -130,9 +138,13 @@ tasks {
             showCauses = true
             showExceptions = true
         }
-        systemProperty("db.url", "jdbc:h2:./integrationtestdb;MODE=PostgreSQL")
         include("**/*Test.class")
         include("**/*IT.class")
+
+        reports {
+            junitXml.required.set(true)
+            html.required.set(true)
+        }
     }
 // withType<Test> {
 //     useJUnitPlatform()
@@ -156,19 +168,7 @@ tasks {
 //         html.required.set(true)
 //     }
 //
-//     // nice summary at end of test run
-//     afterSuite(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
-//         if (desc.parent == null) {
-//             println(
-//                 "\nResults: ${result.resultType} " +
-//                 "(${result.successfulTestCount} passed, " +
-//                 "${result.failedTestCount} failed, " +
-//                 "${result.skippedTestCount} skipped)"
-//             )
-//             println("Report HTML: ${reports.html.outputLocation.get().asFile.absolutePath}/index.html")
-//         }
-//     }))
-// }
+//
 //}
     withType<Wrapper> {
         gradleVersion = "7.6.4"
@@ -186,3 +186,8 @@ tasks {
     named("shadowDistZip")      { dependsOn("jar") }
     named("shadowDistTar")      { dependsOn("jar") }
 }
+tasks.matching { it.name.startsWith("flyway") }.configureEach {
+    dependsOn("processResources")
+}
+
+

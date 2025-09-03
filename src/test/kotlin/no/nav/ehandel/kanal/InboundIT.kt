@@ -56,7 +56,6 @@ private val camelContext = configureCamelContext(defaultRegistry()).apply {
             mockEndpoints("^(?!(jms|ftp)).*")
         }
     })
-    getRouteDefinition("inboxPoller").autoStartup(false)
     removeRouteDefinition(getRouteDefinition(INBOUND_FTP_TEST_ROUTE))
 }
 
@@ -76,11 +75,10 @@ class InboundIT {
         accessPointClient, inboxQueue, inboundRoute,
         ebasys, ebasysUnknownFiles, inboundMq, fileAreaCatalogue
     )
-    private var camelStarted = false
 
     @Before
     fun setUp() {
-        if (!inboundWireMockRule.isRunning) inboundWireMockRule.start()
+        camelContext.start()
     }
 
     @After
@@ -88,7 +86,6 @@ class InboundIT {
         verifyAccessPointRequests()
         inboundWireMockRule.resetRequests()
         camelContext.stop()
-        camelStarted = false
         DeleteDbFiles.execute("./", "integrationtestdb", true)
     }
 
@@ -104,7 +101,7 @@ class InboundIT {
             ) // Expect that the message has legal archive header set
         }
         NotifyBuilder(camelContext).wereSentTo(ACCESS_POINT_READ.uri).whenExactlyCompleted(1).create()
-            .matches(10, TimeUnit.SECONDS)
+            .matches(3, TimeUnit.SECONDS)
         verify(exactly(1), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
@@ -121,7 +118,7 @@ class InboundIT {
             ) // Expect that the message has legal archive header set
         }
         NotifyBuilder(camelContext).wereSentTo(ACCESS_POINT_READ.uri).whenExactlyCompleted(1).create()
-            .matches(10, TimeUnit.SECONDS)
+            .matches(3, TimeUnit.SECONDS)
         verify(exactly(1), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
@@ -133,7 +130,7 @@ class InboundIT {
         inboundMq.expectedMessageCount(1) // Expect that the message is sent to the inbound MQ queue
 
         NotifyBuilder(camelContext).fromRoute(ACCESS_POINT_READ.id).whenExactlyCompleted(1).create()
-            .matches(10, TimeUnit.SECONDS)
+            .matches(3, TimeUnit.SECONDS)
         verify(exactly(0), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
@@ -146,7 +143,7 @@ class InboundIT {
         fileAreaCatalogue.expectedMessageCount(1) // Expect that the message is put on the file area
 
         NotifyBuilder(camelContext).fromRoute(ACCESS_POINT_READ.id).whenExactlyCompleted(1).create()
-            .matches(10, TimeUnit.SECONDS)
+            .matches(3, TimeUnit.SECONDS)
         verify(exactly(0), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
@@ -163,7 +160,7 @@ class InboundIT {
             expectedMessageCount(1) // Expect that the message is sent to Ebasys (manual processing folder)
         }
         NotifyBuilder(camelContext).fromRoute(INBOUND_EHF.id).whenExactlyCompleted(1).create()
-            .matches(10, TimeUnit.SECONDS)
+            .matches(3, TimeUnit.SECONDS)
         verify(exactly(0), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
@@ -175,7 +172,7 @@ class InboundIT {
         ebasysUnknownFiles.expectedMessageCount(1) // Expect that the message is sent to Ebasys (manual processing folder)
 
         NotifyBuilder(camelContext).fromRoute(ACCESS_POINT_READ.id).whenExactlyCompleted(1).create()
-            .matches(10, TimeUnit.SECONDS)
+            .matches(3, TimeUnit.SECONDS)
         verify(exactly(0), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
@@ -192,7 +189,7 @@ class InboundIT {
             ) // Expect that the message has legal archive header set
         }
         NotifyBuilder(camelContext).wereSentTo(ACCESS_POINT_READ.uri).whenExactlyCompleted(1).create()
-            .matches(10, TimeUnit.SECONDS)
+            .matches(3, TimeUnit.SECONDS)
         verify(exactly(1), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
@@ -204,7 +201,7 @@ class InboundIT {
         ebasysUnknownFiles.expectedMessageCount(1)
 
         NotifyBuilder(camelContext).fromRoute(ACCESS_POINT_READ.id).whenExactlyCompleted(1).create()
-            .matches(10, TimeUnit.SECONDS)
+            .matches(3, TimeUnit.SECONDS)
         verify(exactly(0), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
@@ -221,14 +218,6 @@ class InboundIT {
         inboundRoute.run {
             expectedMessageCount(1)
             expectedHeaderReceived(CamelHeader.MSG_NO, "1")
-        }
-    }
-
-    private fun ensureCamelStarted() {
-        if (!camelStarted) {
-            camelContext.start()
-            camelContext.startRoute("inboxPoller")
-            camelStarted = true
         }
     }
 
@@ -257,7 +246,6 @@ class InboundIT {
                         .withBodyFile(messageFileName)
                 )
         )
-        ensureCamelStarted()
     }
 
     private fun verifyAccessPointRequests() {
