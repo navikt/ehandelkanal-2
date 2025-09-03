@@ -4,7 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.charset.Charset
 import java.util.Base64
 import no.nav.ehandel.kanal.services.legalarchive.ArchiveRequest
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 
 class ArchiveRequestTest {
@@ -24,7 +24,7 @@ class ArchiveRequestTest {
         val request = ArchiveRequest(messageId = id, messageContent = content, sender = sender, receiver = receiver)
         val expected =
             """{"meldingsId":"$id","avsender":"$sender","mottaker":"$receiver","meldingsInnhold":"$contentEncoded"}"""
-        mapper.writeValueAsString(request) shouldEqual expected
+        mapper.writeValueAsString(request) shouldBeEqualTo expected
     }
 
     @Test
@@ -38,7 +38,7 @@ class ArchiveRequestTest {
         )
         val expected =
             """{"meldingsId":"$id","avsender":"$sender","mottaker":"$receiver","meldingsInnhold":"$contentEncoded","joarkRef":"$joarkRef"}"""
-        mapper.writeValueAsString(request) shouldEqual expected
+        mapper.writeValueAsString(request) shouldBeEqualTo expected
     }
 
     @Test
@@ -52,7 +52,7 @@ class ArchiveRequestTest {
         )
         val expected =
             """{"meldingsId":"$id","avsender":"$sender","mottaker":"$receiver","meldingsInnhold":"$contentEncoded","antallAarLagres":$retention}"""
-        mapper.writeValueAsString(request) shouldEqual expected
+        mapper.writeValueAsString(request) shouldBeEqualTo expected
     }
 
     @Test
@@ -67,6 +67,6 @@ class ArchiveRequestTest {
         )
         val expected =
             """{"meldingsId":"$id","avsender":"$sender","mottaker":"$receiver","meldingsInnhold":"$contentEncoded","joarkRef":"$joarkRef","antallAarLagres":$retention}"""
-        mapper.writeValueAsString(request) shouldEqual expected
+        mapper.writeValueAsString(request) shouldBeEqualTo expected
     }
 }

@@ -36,7 +36,7 @@ data class RenewCredentialsTaskData(
 enum class Role {
     ADMIN, USER, READONLY;
 
-    override fun toString() = name.toLowerCase()
+    override fun toString() = name.lowercase()
 }
 
 object Database {
@@ -44,6 +44,8 @@ object Database {
     fun initLocal() {
         Flyway.configure().run {
             dataSource(DatabaseProps.url, DatabaseProps.username, DatabaseProps.password)
+            locations("classpath:db/migration/common", "classpath:db/migration/h2")
+            cleanOnValidationError(true)
             load().migrate()
         }
         Database.connect(HikariDataSource(HikariConfig().apply {
@@ -65,6 +67,7 @@ object Database {
                 role = Role.ADMIN
             )
             dataSource(DatabaseProps.url, credentials.username, credentials.password)
+            locations("classpath:db/migration/common", "classpath:db/migration/postgresql")
             initSql("SET ROLE \"${DatabaseProps.name}-${Role.ADMIN}\"") // required for assigning proper owners for the tables
             load().migrate()
         }

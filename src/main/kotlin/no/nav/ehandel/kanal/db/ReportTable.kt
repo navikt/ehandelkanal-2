@@ -1,9 +1,11 @@
 package no.nav.ehandel.kanal.db
 
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.jodatime.date
 
 object ReportTable : Table() {
-    val id = integer("id").autoIncrement("report").primaryKey()
+    val id = integer("id").autoIncrement("report")
+    override val primaryKey = PrimaryKey(id, name = "PK_Report_ID")
     val fileName = varchar("file_name", length = 256)
     val documentType = varchar("document_type", length = 64)
     val orgNumber = varchar("org_number", length = 128).nullable()
