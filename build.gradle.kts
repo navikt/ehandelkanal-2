@@ -6,7 +6,7 @@ version = "1.0.52-SNAPSHOT"
 
 val camel_version = "2.24.2"
 val ibm_mq_version = "9.1.3.0"
-val jackson_version = "2.10.0"
+val jackson_version = "2.17.2"
 val konfig_version = "1.6.10.0"
 val difi_commons_sbdh_version = "0.9.5"
 val difi_peppol_sbdh_version = "1.1.3"
@@ -14,20 +14,20 @@ val kotlin_logging_version = "1.7.6"
 val jaxb_api_version = "2.4.0-b180830.0359"
 val jaxb_runtime_version = "2.4.0-b180830.0438"
 val ktor_version = "1.6.8"
-val logstash_version = "6.2"
-val logback_version = "1.2.3"
+val logstash_version = "7.4"
+val logback_version = "1.5.6"
 val prometheus_version = "0.8.0"
 val javax_activation_version = "1.2.0"
 val difi_commons_ubl_version = "0.9.5"
-val hikari_version = "3.4.1"
+val hikari_version = "5.1.0"
 val vault_driver_version = "3.1.0"
 val flyway_version = "7.15.0"
 val h2_version = "1.4.200"
-val postgres_version = "42.2.8"
+val postgres_version = "42.7.4"
 val exposed_version = "0.41.1"
 val result_version = "1.1.6"
-val wiremock_version = "2.25.1"
-val mockk_version = "1.13.10"
+val wiremock_version = "2.35.1"
+val mockk_version = "1.13.12"
 val kluent_version = "1.73"
 
 plugins {
@@ -109,7 +109,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jodatime:$exposed_version")
     testImplementation("org.apache.camel:camel-test:$camel_version")
-    testImplementation("com.github.tomakehurst:wiremock:$wiremock_version")
+    testImplementation("com.github.tomakehurst:wiremock-jre8:$wiremock_version")
     testImplementation("io.mockk:mockk:$mockk_version")
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
@@ -117,7 +117,6 @@ dependencies {
     testImplementation("org.amshove.kluent:kluent:$kluent_version") {
         exclude(group = "com.nhaarman.mockitokotlin2")
     }
-    //testCompileOnly("junit:junit:4.12")
     testImplementation("junit:junit:4.13.2")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.2")
 }
