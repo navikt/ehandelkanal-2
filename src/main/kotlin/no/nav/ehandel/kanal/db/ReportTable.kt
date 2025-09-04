@@ -4,7 +4,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.jodatime.date
 
 object ReportTable : Table() {
-    val id = integer("id").autoIncrement("report")
+    val id = integer("id").autoIncrement()
     override val primaryKey = PrimaryKey(id, name = "PK_Report_ID")
     val fileName = varchar("file_name", length = 256)
     val documentType = varchar("document_type", length = 64)
