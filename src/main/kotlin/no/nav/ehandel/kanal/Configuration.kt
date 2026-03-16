@@ -7,7 +7,6 @@ import com.natpryce.konfig.Key
 import com.natpryce.konfig.intType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
-import io.ktor.client.request.get
 import java.io.File
 
 private const val VAULT_APPLICATION_PROPERTIES_PATH = "/var/run/secrets/nais.io/vault/application.properties"
@@ -24,28 +23,24 @@ val config = if (System.getenv("APP_PROFILE") == "remote") {
 }
 
 object AccessPointProps {
-    data class Properties(val url: String, val apiKey: String, val header: String)
+    data class Properties(val url: String)
 
     val inbox = Properties(
         url = config[Key("vefasrest.inbox.url", stringType)].removeSuffix("/"),
-        apiKey = config[Key("vefasrest.inbox.apikey", stringType)],
-        header = config[Key("vefasrest.inbox.header", stringType)]
     )
     val outbox = Properties(
         url = config[Key("vefasrest.outbox.url", stringType)].removeSuffix("/"),
-        apiKey = config[Key("vefasrest.outbox.apikey", stringType)],
-        header = config[Key("vefasrest.outbox.header", stringType)]
     )
     val messages = Properties(
         url = config[Key("vefasrest.messages.url", stringType)].removeSuffix("/"),
-        apiKey = config[Key("vefasrest.messages.apikey", stringType)],
-        header = config[Key("vefasrest.messages.header", stringType)]
     )
     val transmit = Properties(
         url = config[Key("vefasrest.transmit.url", stringType)].removeSuffix("/"),
-        apiKey = config[Key("vefasrest.transmit.apikey", stringType)],
-        header = config[Key("vefasrest.transmit.header", stringType)]
     )
+}
+
+object EntraIdProps {
+    val targetUrl = config[Key("entraid.target.url", stringType)]
 }
 
 object DatabaseProps {
