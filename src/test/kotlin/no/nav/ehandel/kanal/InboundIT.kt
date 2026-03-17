@@ -1,6 +1,5 @@
 package no.nav.ehandel.kanal
 
-import com.github.tomakehurst.wiremock.client.BasicCredentials
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.exactly
@@ -18,9 +17,15 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.server.engine.ApplicationEngine
+import io.mockk.every
 import io.mockk.mockk
 import java.util.concurrent.TimeUnit
+import no.nav.ehandel.kanal.auth.EntraIdTokenProvider
+import no.nav.ehandel.kanal.camel.processors.AccessPointClient
+import no.nav.ehandel.kanal.camel.processors.InboundDataExtractor
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
+import no.nav.ehandel.kanal.services.log.InboundLogger
+import org.apache.camel.impl.SimpleRegistry
 import no.nav.ehandel.kanal.camel.routes.ACCESS_POINT_CLIENT
 import no.nav.ehandel.kanal.camel.routes.ACCESS_POINT_READ
 import no.nav.ehandel.kanal.camel.routes.INBOUND_EHF
@@ -48,8 +53,23 @@ private const val inboxMessagesUrl = "/vefasrest/inbox/"
 private const val inboxReadUrl = "/vefasrest/inbox/1/read"
 private const val inboxMessageXmlDocUrl = "/vefasrest/messages/1/xml-document"
 
+// Mock EntraIdTokenProvider for tests
+private val mockEntraIdTokenProvider: EntraIdTokenProvider = mockk {
+    every { getToken() } returns "mock-bearer-token"
+}
+
+// Create a test registry with mocked token provider
+private fun testRegistry() = SimpleRegistry().apply {
+    val accessPointClient = AccessPointClient(mockEntraIdTokenProvider)
+    put("accessPointClient", accessPointClient)
+    put("inboundLogger", InboundLogger)
+    put("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
+    put("inboundDataExtractor", InboundDataExtractor)
+    put("mqConnectionFactory", mqConnectionFactory)
+}
+
 private val server: ApplicationEngine = mockk(relaxed = true)
-private val camelContext = configureCamelContext(defaultRegistry()).apply {
+private val camelContext = configureCamelContext(testRegistry()).apply {
     routeDefinitions[0].adviceWith(this, object : AdviceWithRouteBuilder() {
         override fun configure() {
             mockEndpointsAndSkip("^(jms|ftp).*")
@@ -236,8 +256,7 @@ class InboundIT {
     private fun setUpStubs(messageFileName: String) {
         stubFor(
             get(urlEqualTo(inboxMessageXmlDocUrl))
-                .withHeader(AccessPointProps.messages.header, equalTo(AccessPointProps.messages.apiKey))
-                .withBasicAuth(ServiceUserProps.username, ServiceUserProps.password)
+                .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                 .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
                 .willReturn(
                     aResponse()
@@ -251,22 +270,19 @@ class InboundIT {
     private fun verifyAccessPointRequests() {
         verify(
             exactly(1), getRequestedFor(urlEqualTo(inboxMessagesUrl))
-                .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
-                .withBasicAuth(BasicCredentials(ServiceUserProps.username, ServiceUserProps.password))
+                .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                 .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
         )
 
         verify(
             exactly(1), getRequestedFor(urlEqualTo(inboxMessageXmlDocUrl))
-                .withHeader(AccessPointProps.messages.header, equalTo(AccessPointProps.messages.apiKey))
-                .withBasicAuth(BasicCredentials(ServiceUserProps.username, ServiceUserProps.password))
+                .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                 .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
         )
 
         verify(
             exactly(1), postRequestedFor(urlEqualTo(inboxReadUrl))
-                .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
-                .withBasicAuth(BasicCredentials(ServiceUserProps.username, ServiceUserProps.password))
+                .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                 .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
         )
     }
@@ -281,8 +297,7 @@ class InboundIT {
         fun setUpClass() {
             stubFor(
                 get(urlEqualTo(inboxMessagesUrl))
-                    .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
-                    .withBasicAuth(ServiceUserProps.username, ServiceUserProps.password)
+                    .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                     .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
                     .willReturn(
                         aResponse()
@@ -293,8 +308,7 @@ class InboundIT {
             )
             stubFor(
                 post(urlEqualTo(inboxReadUrl))
-                    .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
-                    .withBasicAuth(ServiceUserProps.username, ServiceUserProps.password)
+                    .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                     .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
                     .willReturn(
                         aResponse()
@@ -305,9 +319,8 @@ class InboundIT {
             )
             stubFor(
                 get(urlEqualTo(inboxCountUrl))
-                    .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
+                    .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                     .withHeader(HttpHeaders.Accept, equalTo(ContentType.Text.Plain.toString()))
-                    .withBasicAuth(ServiceUserProps.username, ServiceUserProps.password)
                     .willReturn(
                         aResponse()
                             .withStatus(200)

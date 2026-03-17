@@ -39,3 +39,11 @@ spec:
     requests:
       cpu: 100m
       memory: 768Mi
+  azure:
+    application:
+      enabled: true
+  accessPolicy:
+    outbound:
+      rules:
+        - application: sokos-vefasrest
+          namespace: okonomi
