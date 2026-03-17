@@ -7,6 +7,13 @@ metadata:
     team: team-oebs
 spec:
   # image: {{ image }}
+  env:
+    - name: ENTRAID_TARGET_URL
+      value: {{entraid_target_url}}
+    - name: VEFASREST_MESSAGES_URL
+      value: {{vefasrest_message_url}}
+    - name: VEFASREST_INBOX_URL
+      value: {{vefasrest_inbox_url}}
   replicas:
     min: 1
     max: 1
