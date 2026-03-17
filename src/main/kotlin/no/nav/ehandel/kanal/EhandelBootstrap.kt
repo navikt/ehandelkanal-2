@@ -120,7 +120,7 @@ fun bootstrap(camelContext: CamelContext, server: ApplicationEngine) {
 }
 
 fun defaultRegistry() = SimpleRegistry().apply {
-    val entraIdTokenProvider = EntraIdTokenProvider(EntraIdProps.targetUrl)
+    val entraIdTokenProvider = EntraIdTokenProvider()
     val accessPointClient = AccessPointClient(entraIdTokenProvider)
 
     put("accessPointClient", accessPointClient)
@@ -147,7 +147,7 @@ fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) =
 fun Application.main(
     applicationState: ApplicationState = ApplicationState(running = true, initialized = true),
     outboundMessageService: OutboundMessageService = OutboundMessageService(
-        AccessPointClient(EntraIdTokenProvider(EntraIdProps.targetUrl)),
+        AccessPointClient(EntraIdTokenProvider()),
         StandardBusinessDocumentGenerator()
     )
 ) {

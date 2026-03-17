@@ -6,10 +6,10 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-class EntraIdTokenProvider(
-    private val tokenTarget: String) {
+class EntraIdTokenProvider {
 
     private val tokenEndpoint: String = System.getenv("NAIS_TOKEN_ENDPOINT") ?: "http://token-provider/token"
+    private val tokenTarget: String = System.getenv("ENTRAID_TARGET_URL") ?: "api://token-provider/token"
     private val client = HttpClient.newHttpClient()
 
     fun getToken(): String {
