@@ -8,6 +8,7 @@ import com.natpryce.konfig.intType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import java.io.File
+import kotlin.text.removeSuffix
 
 private const val VAULT_APPLICATION_PROPERTIES_PATH = "/var/run/secrets/nais.io/vault/application.properties"
 
@@ -26,21 +27,16 @@ object AccessPointProps {
     data class Properties(val url: String)
 
     val inbox = Properties(
-        url = config[Key("vefasrest.inbox.url", stringType)].removeSuffix("/"),
-    )
+        url = System.getenv("VEFASREST_INBOX_URL") ?: config[Key("vefasrest.inbox.url", stringType)].removeSuffix("/"))
     val outbox = Properties(
         url = config[Key("vefasrest.outbox.url", stringType)].removeSuffix("/"),
     )
     val messages = Properties(
-        url = config[Key("vefasrest.messages.url", stringType)].removeSuffix("/"),
+        url = System.getenv("VEFASREST_MESSAGES_URL") ?: config[Key("vefasrest.messages.url", stringType)].removeSuffix("/"),
     )
     val transmit = Properties(
         url = config[Key("vefasrest.transmit.url", stringType)].removeSuffix("/"),
     )
-}
-
-object EntraIdProps {
-    val targetUrl = config[Key("entraid.target.url", stringType)]
 }
 
 object DatabaseProps {

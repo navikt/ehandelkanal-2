@@ -1,2 +1,8 @@
 ingresses: ["https://ehandelkanal-2.nais.preprod.local"]
-spring.profiles.active: "dev"
+env:
+  - name: ENTRAID_TARGET_URL
+    value: api://dev-fss.team-oebs.ehandelkanal-2/.default
+  - name: VEFASREST_MESSAGES_URL
+    value: https://sokos-vefasrest.intern.dev.nav.no/api/messages/
+  - name: VEFASREST_INBOX_URL
+    value: https://sokos-vefasrest.intern.dev.nav.no/api/inbox/
