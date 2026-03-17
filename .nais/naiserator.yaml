@@ -11,9 +11,9 @@ spec:
     - name: ENTRAID_TARGET_URL
       value: {{entraid_target_url}}
     - name: VEFASREST_MESSAGES_URL
-      value: {{vefarest_message_url}}
+      value: {{vefasrest_message_url}}
     - name: VEFASREST_INBOX_URL
-      value: {{vefarest_inbox_url}}
+      value: {{vefasrest_inbox_url}}
   replicas:
     min: 1
     max: 1

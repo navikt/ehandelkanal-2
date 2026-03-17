@@ -1,4 +1,4 @@
 ingresses: ["https://ehandelkanal-2.nais.preprod.local"]
 entraid_target_url: "api://dev-fss.team-oebs.ehandelkanal-2/.default"
-vefarest_message_url: "https://sokos-vefasrest.intern.dev.nav.no/api/messages/"
-vefarest_inbox_url: "https://sokos-vefasrest.intern.dev.nav.no/api/inbox/"
+vefasrest_message_url: "https://sokos-vefasrest.intern.dev.nav.no/api/messages/"
+vefasrest_inbox_url: "https://sokos-vefasrest.intern.dev.nav.no/api/inbox/"
