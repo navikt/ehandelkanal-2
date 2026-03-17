@@ -39,6 +39,3 @@ spec:
     requests:
       cpu: 100m
       memory: 768Mi
-  azure:
-    application:
-      enabled: true
