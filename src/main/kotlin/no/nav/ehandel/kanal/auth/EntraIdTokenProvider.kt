@@ -1,10 +1,13 @@
 package no.nav.ehandel.kanal.auth
 
+import mu.KotlinLogging
 import no.nav.ehandel.kanal.common.singletons.objectMapper
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+
+private val LOGGER = KotlinLogging.logger { }
 
 class EntraIdTokenProvider {
 
@@ -12,7 +15,12 @@ class EntraIdTokenProvider {
     private val tokenTarget: String = System.getenv("ENTRAID_TARGET_URL") ?: "api://token-provider/token"
     private val client = HttpClient.newHttpClient()
 
+    init {
+        LOGGER.info { "EntraIdTokenProvider initialized with endpoint: $tokenEndpoint, target: $tokenTarget" }
+    }
+
     fun getToken(): String {
+        LOGGER.debug { "Requesting token from endpoint: $tokenEndpoint" }
         val requestBody = "{\"identity_provider\": \"entra_id\", \"target\": \"$tokenTarget\"}"
 
         val request = HttpRequest.newBuilder()
@@ -22,7 +30,13 @@ class EntraIdTokenProvider {
             .build()
 
         val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+
+        if (response.statusCode() != 200) {
+            LOGGER.error { "Token request failed with status: ${response.statusCode()}, body: ${response.body()}" }
+        }
+
         val json = objectMapper.readTree(response.body())
+        LOGGER.debug { "Token fetched successfully" }
         return json.get("access_token").asText()
     }
 }
