@@ -49,9 +49,9 @@ import org.junit.Test
 
 private const val juridiskLoggUrl = "/juridisklogg/api/rest/logg"
 private const val inboxCountUrl = "/vefasrest/inbox/count"
-private const val inboxMessagesUrl = "/vefasrest/inbox/"
-private const val inboxReadUrl = "/vefasrest/inbox/1/read"
-private const val inboxMessageXmlDocUrl = "/vefasrest/messages/1/xml-document"
+private const val inboxMessagesUrl = "/vefasrest/inbox/hent-uleste-meldinger"
+private const val inboxReadUrl = "/vefasrest/inbox/marker-som-lest/1"
+private const val inboxMessageXmlDocUrl = "/vefasrest/messages/xml-document/1"
 
 // Mock EntraIdTokenProvider for tests
 private val mockEntraIdTokenProvider: EntraIdTokenProvider = mockk {
