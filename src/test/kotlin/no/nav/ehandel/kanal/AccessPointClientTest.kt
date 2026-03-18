@@ -80,7 +80,7 @@ class AccessPointClientTest {
 
     @Test
     fun `get inbox message headers`() {
-        val url = "/$MOCK_SERVER_PATH/inbox/"
+        val url = "/$MOCK_SERVER_PATH/inbox/hent-uleste-meldinger"
         wireMockRule.accessPointStub(
             url = url,
             method = HttpMethod.Get,
@@ -94,7 +94,7 @@ class AccessPointClientTest {
     @ExperimentalStdlibApi
     @Test
     fun `download message payload`() {
-        val url = "/$MOCK_SERVER_PATH/messages/1/xml-document"
+        val url = "/$MOCK_SERVER_PATH/messages/xml-document/1"
         wireMockRule.accessPointStub(
             url = url,
             method = HttpMethod.Get,
@@ -107,7 +107,7 @@ class AccessPointClientTest {
 
     @Test
     fun `mark message as read`() {
-        val url = "/$MOCK_SERVER_PATH/inbox/1/read"
+        val url = "/$MOCK_SERVER_PATH/inbox/marker-som-lest/1"
         wireMockRule.accessPointStub(
             url = url,
             method = HttpMethod.Post,
