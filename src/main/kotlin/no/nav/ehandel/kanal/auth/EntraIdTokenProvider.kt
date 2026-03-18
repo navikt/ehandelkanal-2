@@ -20,7 +20,6 @@ class EntraIdTokenProvider {
     }
 
     fun getToken(): String {
-        LOGGER.debug { "Requesting token from endpoint: $tokenEndpoint" }
         val requestBody = "{\"identity_provider\": \"entra_id\", \"target\": \"$tokenTarget\"}"
 
         val request = HttpRequest.newBuilder()
@@ -36,9 +35,6 @@ class EntraIdTokenProvider {
         }
 
         val json = objectMapper.readTree(response.body())
-        LOGGER.debug { "Token fetched successfully" }
-        val token = json.get("access_token").asText()
-        LOGGER.info { "Token: $token" } // todo: fjern logging av token etter testing
         return json.get("access_token").asText()
     }
 }
