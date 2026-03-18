@@ -37,6 +37,8 @@ class EntraIdTokenProvider {
 
         val json = objectMapper.readTree(response.body())
         LOGGER.debug { "Token fetched successfully" }
+        val token = json.get("access_token").asText()
+        LOGGER.info { "Token: $token" } // todo: fjern logging av token etter testing
         return json.get("access_token").asText()
     }
 }
