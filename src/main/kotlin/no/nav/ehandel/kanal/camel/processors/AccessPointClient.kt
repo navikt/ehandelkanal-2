@@ -62,7 +62,7 @@ class AccessPointClient(
     fun getInboxMessageHeaders(exchange: Exchange): String = runBlocking {
         LOGGER.trace { "Getting inbox messageheaders" }
         httpClient.get<String> {
-            url("${AccessPointProps.inbox.url}/")
+            url("${AccessPointProps.inbox.url}/hent-uleste-meldinger")
             header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
             header(HttpHeaders.Accept, ContentType.Application.Xml)
         }.also {
@@ -75,7 +75,7 @@ class AccessPointClient(
         val payload = runBlocking {
             InboundLogger.downloadInboundMessage(exchange, msgNo)
             httpClient.get<ByteArray> {
-                url("${AccessPointProps.messages.url}/$msgNo/xml-document")
+                url("${AccessPointProps.messages.url}/xml-document/$msgNo")
                 header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
                 header(HttpHeaders.Accept, ContentType.Application.Xml)
             }
@@ -93,7 +93,7 @@ class AccessPointClient(
         LOGGER.trace { "Marking MsgNo $msgNo as read" }
         try {
             httpClient.post<String> {
-                url("${AccessPointProps.inbox.url}/$msgNo/read")
+                url("${AccessPointProps.inbox.url}/marker-som-lest/$msgNo")
                 header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
                 header(HttpHeaders.Accept, ContentType.Application.Xml)
             }.also {
