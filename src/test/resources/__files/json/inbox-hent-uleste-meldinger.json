@@ -1,0 +1,23 @@
+{
+  "meldinger": [
+    {
+      "msgNo": 1,
+      "accountUsername": "service-user",
+      "direction": "IN",
+      "received": "2025-01-24T12:34:56Z",
+      "delivered": null,
+      "sender": "sender-001",
+      "receiver": "receiver-001",
+      "messageUUID": "uuid-1234",
+      "transmissionId": null,
+      "instanceId": null,
+      "documentId": "doc-001",
+      "procecessId": "proc-001",
+      "remoteHost": "10.0.0.1",
+      "apName": "AP",
+      "payloadUrl": "https://storage.example.com/payload/1",
+      "evidenceUrl": null,
+      "countryC1": "NO"
+    }
+  ]
+}

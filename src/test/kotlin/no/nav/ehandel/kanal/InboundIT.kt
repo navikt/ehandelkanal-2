@@ -120,9 +120,14 @@ class InboundIT {
                 1
             ) // Expect that the message has legal archive header set
         }
-        NotifyBuilder(camelContext).wereSentTo(ACCESS_POINT_READ.uri).whenExactlyCompleted(1).create()
+        NotifyBuilder(camelContext)
+            .wereSentTo(ACCESS_POINT_READ.uri)
+            .whenExactlyCompleted(1)
+            .create()
             .matches(3, TimeUnit.SECONDS)
-        verify(exactly(1), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
+        verify(
+            exactly(1),
+            postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
 
@@ -214,6 +219,9 @@ class InboundIT {
         assertMockEndpointsSatisfied()
     }
 
+    //Det er et eget endepunkt hvor man kan hente xml for de ulike?
+    //Det er altså mulig å først gjøre et kall for å hente meldingen som har kommet inn, også gjøre kall for å hente xmlen
+
     @Test
     fun `invalid invoice with missing namespace prefix declaration`() {
         setUpStubs("message-faktura-invoice-missing-namespace-prefix.xml")
@@ -271,7 +279,7 @@ class InboundIT {
         verify(
             exactly(1), getRequestedFor(urlEqualTo(inboxMessagesUrl))
                 .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
         )
 
         verify(
@@ -283,7 +291,7 @@ class InboundIT {
         verify(
             exactly(1), postRequestedFor(urlEqualTo(inboxReadUrl))
                 .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
         )
     }
 
@@ -298,22 +306,22 @@ class InboundIT {
             stubFor(
                 get(urlEqualTo(inboxMessagesUrl))
                     .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/xml; charset=utf-8")
+                            .withHeader(ContentTypeHeader.KEY, "application/json")
                             .withBodyFile("inbox-message-headers-ok.xml")
                     )
             )
             stubFor(
                 post(urlEqualTo(inboxReadUrl))
                     .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/xml; charset=utf-8")
+                            .withHeader(ContentTypeHeader.KEY, "application/json")
                             .withBodyFile("inbox-message-read-ok.xml")
                     )
             )
@@ -334,7 +342,7 @@ class InboundIT {
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/json; charset=utf-8")
+                            .withHeader(ContentTypeHeader.KEY, "application/json")
                             .withBody("{\"id\":\"1\"}")
                     )
             )

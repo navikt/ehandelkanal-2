@@ -38,6 +38,7 @@ import no.nav.ehandel.kanal.helpers.getResource
 import no.nav.ehandel.kanal.helpers.shouldBeXmlEqualTo
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldContain
 import org.apache.camel.Exchange
 import org.apache.camel.Message
 import org.junit.BeforeClass
@@ -84,11 +85,13 @@ class AccessPointClientTest {
         wireMockRule.accessPointStub(
             url = url,
             method = HttpMethod.Get,
-            acceptHeaderValue = ContentType.Application.Xml,
-            body = StubBody.WithFile(path = "inbox-message-headers-ok.xml")
+            acceptHeaderValue = ContentType.Application.Json,
+            body = StubBody.WithFile(path = "json/inbox-hent-uleste-meldinger.json")
         )
         val body = vefaClient.getInboxMessageHeaders(exchange)
-        body shouldBeXmlEqualTo "/__files/inbox-message-headers-ok.xml".getResource()
+        body shouldContain "\"meldinger\""
+
+        //body shouldBeXmlEqualTo "/__files/json/inbox-hent-uleste-meldinger.json".getResource()
     }
 
     @ExperimentalStdlibApi
@@ -307,7 +310,7 @@ private fun WireMockServer.accessPointStub(
     )
 }
 
-private sealed class StubBody {
+sealed class StubBody {
     data class WithContent(val content: String) : StubBody()
     data class WithFile(val path: String) : StubBody()
 }

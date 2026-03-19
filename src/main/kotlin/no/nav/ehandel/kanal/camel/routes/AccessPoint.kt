@@ -41,7 +41,7 @@ object AccessPoint : RouteBuilder() {
             .to("$ACCESS_POINT_CLIENT?method=getInboxMessageHeaders(*)")
             .process { readyToProcess.logAndSet(false) }
             .split()
-                .tokenizeXML("message")
+                .jsonpath("$.meldinger[*]")
                 .streaming()
                 .executorService(threadPool)
                 .process { LOGGER.info { it.getBody<String>() } }
@@ -57,8 +57,8 @@ object AccessPoint : RouteBuilder() {
                 .process { LOGGER.info { "Exception during download, likely network issues - silently ignore and retry on next poll" } }
                 .handled(true)
             .end()
-            .setHeader(CamelHeader.TRACE_ID, xpath("/message/message-meta-data/uuid/text()", String::class.java))
-            .setHeader(CamelHeader.MSG_NO, xpath("/message/message-meta-data/msg-no/text()", String::class.java))
+            .setHeader(CamelHeader.TRACE_ID, jsonpath("$.messageUUID"))
+            .setHeader(CamelHeader.MSG_NO, jsonpath("$.msgNo"))
             .process { MDC.put("callId", it.getHeader(CamelHeader.TRACE_ID)) }
             .to("$ACCESS_POINT_CLIENT?method=downloadMessagePayload(*, \${header.MSG_NO})")
             .process { messagesReceivedTotal.inc() }
