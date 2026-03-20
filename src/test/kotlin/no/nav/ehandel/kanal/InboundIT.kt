@@ -120,9 +120,14 @@ class InboundIT {
                 1
             ) // Expect that the message has legal archive header set
         }
-        NotifyBuilder(camelContext).wereSentTo(ACCESS_POINT_READ.uri).whenExactlyCompleted(1).create()
+        NotifyBuilder(camelContext)
+            .wereSentTo(ACCESS_POINT_READ.uri)
+            .whenExactlyCompleted(1)
+            .create()
             .matches(3, TimeUnit.SECONDS)
-        verify(exactly(1), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
+        verify(
+            exactly(1),
+            postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
 
@@ -271,7 +276,7 @@ class InboundIT {
         verify(
             exactly(1), getRequestedFor(urlEqualTo(inboxMessagesUrl))
                 .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
         )
 
         verify(
@@ -283,7 +288,7 @@ class InboundIT {
         verify(
             exactly(1), postRequestedFor(urlEqualTo(inboxReadUrl))
                 .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
         )
     }
 
@@ -298,23 +303,23 @@ class InboundIT {
             stubFor(
                 get(urlEqualTo(inboxMessagesUrl))
                     .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/xml; charset=utf-8")
-                            .withBodyFile("inbox-message-headers-ok.xml")
+                            .withHeader(ContentTypeHeader.KEY, "application/json; charset=utf-8")
+                            .withBodyFile("json/inbox-hent-uleste-meldinger.json")
                     )
             )
             stubFor(
                 post(urlEqualTo(inboxReadUrl))
                     .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/xml; charset=utf-8")
-                            .withBodyFile("inbox-message-read-ok.xml")
+                            .withHeader(ContentTypeHeader.KEY, "text/plain; charset=utf-8")
+                            .withBody("OK")
                     )
             )
             stubFor(

@@ -64,7 +64,7 @@ class AccessPointClient(
         httpClient.get<String> {
             url("${AccessPointProps.inbox.url}/hent-uleste-meldinger")
             header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
-            header(HttpHeaders.Accept, ContentType.Application.Xml)
+            header(HttpHeaders.Accept, ContentType.Application.Json)
         }.also {
             LOGGER.trace { "Inbox messages: $it" }
         }
@@ -95,7 +95,7 @@ class AccessPointClient(
             httpClient.post<String> {
                 url("${AccessPointProps.inbox.url}/marker-som-lest/$msgNo")
                 header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
-                header(HttpHeaders.Accept, ContentType.Application.Xml)
+                header(HttpHeaders.Accept, ContentType.Application.Json)
             }.also {
                 LOGGER.info { "Successfully marked MsgNo $msgNo as read" }
             }

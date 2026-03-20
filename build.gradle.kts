@@ -85,6 +85,7 @@ dependencies {
     implementation("org.apache.camel:camel-core:$camel_version")
     implementation("org.apache.camel:camel-jms:$camel_version")
     implementation("org.apache.camel:camel-ftp:$camel_version")
+    implementation("org.apache.camel:camel-jsonpath:$camel_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstash_version")
     implementation("io.github.microutils:kotlin-logging:$kotlin_logging_version")
