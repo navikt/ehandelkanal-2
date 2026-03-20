@@ -7,6 +7,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.put
+import com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.verify
@@ -286,9 +288,9 @@ class InboundIT {
         )
 
         verify(
-            exactly(1), postRequestedFor(urlEqualTo(inboxReadUrl))
+            exactly(1), putRequestedFor(urlEqualTo(inboxReadUrl))
                 .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
+                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Text.Plain.toString()))
         )
     }
 
@@ -312,9 +314,9 @@ class InboundIT {
                     )
             )
             stubFor(
-                post(urlEqualTo(inboxReadUrl))
+                put(urlEqualTo(inboxReadUrl))
                     .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
-                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
+                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Text.Plain.toString()))
                     .willReturn(
                         aResponse()
                             .withStatus(200)

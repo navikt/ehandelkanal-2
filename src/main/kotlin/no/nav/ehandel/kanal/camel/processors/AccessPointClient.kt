@@ -9,7 +9,7 @@ import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.header
-import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -92,10 +92,10 @@ class AccessPointClient(
     fun markMessageAsRead(msgNo: String): String = runBlocking {
         LOGGER.trace { "Marking MsgNo $msgNo as read" }
         try {
-            httpClient.post<String> {
+            httpClient.put<String> {
                 url("${AccessPointProps.inbox.url}/marker-som-lest/$msgNo")
                 header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
-                header(HttpHeaders.Accept, ContentType.Application.Json)
+                header(HttpHeaders.Accept, ContentType.Text.Plain)
             }.also {
                 LOGGER.info { "Successfully marked MsgNo $msgNo as read" }
             }

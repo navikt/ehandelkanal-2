@@ -7,6 +7,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
+import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
@@ -111,12 +112,12 @@ class AccessPointClientTest {
         val url = "/$MOCK_SERVER_PATH/inbox/marker-som-lest/1"
         wireMockRule.accessPointStub(
             url = url,
-            method = HttpMethod.Post,
-            acceptHeaderValue = ContentType.Application.Xml,
-            body = StubBody.WithFile(path = "inbox-message-read-ok.xml")
+            method = HttpMethod.Put,
+            acceptHeaderValue = ContentType.Text.Plain,
+            body = StubBody.WithContent("OK")
         )
         val body = vefaClient.markMessageAsRead("1")
-        body shouldBeXmlEqualTo "/__files/inbox-message-read-ok.xml".getResource()
+        body shouldBeXmlEqualTo "OK"
     }
 
     @Test
@@ -287,6 +288,7 @@ private fun WireMockServer.accessPointStub(
         when (method) {
             HttpMethod.Get -> get(urlPathEqualTo(url))
             HttpMethod.Post -> post(urlPathEqualTo(url))
+            HttpMethod.Put -> put(urlPathEqualTo(url))
             else -> throw IllegalArgumentException("Unsupported Http Method")
         }.apply {
             withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
