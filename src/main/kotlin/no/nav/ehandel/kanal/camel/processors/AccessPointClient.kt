@@ -95,7 +95,7 @@ class AccessPointClient(
             httpClient.post<String> {
                 url("${AccessPointProps.inbox.url}/marker-som-lest/$msgNo")
                 header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
-                header(HttpHeaders.Accept, ContentType.Application.Xml)
+                header(HttpHeaders.Accept, ContentType.Application.Json)
             }.also {
                 LOGGER.info { "Successfully marked MsgNo $msgNo as read" }
             }

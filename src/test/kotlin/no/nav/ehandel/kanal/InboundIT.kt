@@ -310,8 +310,8 @@ class InboundIT {
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/json")
-                            .withBodyFile("inbox-message-headers-ok.xml")
+                            .withHeader(ContentTypeHeader.KEY, "application/json; charset=utf-8")
+                            .withBodyFile("json/inbox-hent-uleste-meldinger.json")
                     )
             )
             stubFor(
@@ -321,8 +321,8 @@ class InboundIT {
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/json")
-                            .withBodyFile("inbox-message-read-ok.xml")
+                            .withHeader(ContentTypeHeader.KEY, "text/plain; charset=utf-8")
+                            .withBody("OK")
                     )
             )
             stubFor(
