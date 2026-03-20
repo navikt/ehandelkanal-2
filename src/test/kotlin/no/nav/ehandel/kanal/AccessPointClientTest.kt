@@ -90,8 +90,6 @@ class AccessPointClientTest {
         )
         val body = vefaClient.getInboxMessageHeaders(exchange)
         body shouldContain "\"meldinger\""
-
-        //body shouldBeXmlEqualTo "/__files/json/inbox-hent-uleste-meldinger.json".getResource()
     }
 
     @ExperimentalStdlibApi

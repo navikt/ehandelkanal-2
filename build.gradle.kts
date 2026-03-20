@@ -82,7 +82,6 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:$jackson_version")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-joda:$jackson_version")
-    implementation("com.jayway.jsonpath:json-path:2.9.0")
     implementation("org.apache.camel:camel-core:$camel_version")
     implementation("org.apache.camel:camel-jms:$camel_version")
     implementation("org.apache.camel:camel-ftp:$camel_version")

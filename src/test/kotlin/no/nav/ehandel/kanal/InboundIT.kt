@@ -219,9 +219,6 @@ class InboundIT {
         assertMockEndpointsSatisfied()
     }
 
-    //Det er et eget endepunkt hvor man kan hente xml for de ulike?
-    //Det er altså mulig å først gjøre et kall for å hente meldingen som har kommet inn, også gjøre kall for å hente xmlen
-
     @Test
     fun `invalid invoice with missing namespace prefix declaration`() {
         setUpStubs("message-faktura-invoice-missing-namespace-prefix.xml")
@@ -342,7 +339,7 @@ class InboundIT {
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/json")
+                            .withHeader(ContentTypeHeader.KEY, "application/json; charset=utf-8")
                             .withBody("{\"id\":\"1\"}")
                     )
             )
