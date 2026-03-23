@@ -10,15 +10,20 @@ import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.post
 import io.ktor.routing.route
+import mu.KotlinLogging
 import no.difi.commons.ubl21.jaxb.InvoiceType
 import no.difi.commons.ubl21.jaxb.OrderType
+
+private val LOGGER = KotlinLogging.logger { }
 
 fun Route.outbound(outboundMessageService: OutboundMessageService) {
     route("/outbound") {
         post("/order") {
+            LOGGER.warn { "[UNDOCUMENTED] POST /api/v1/outbound/order called - THIS FUNCTIONALITY IS NOT DOCUMENTED IN README!" }
             call.handleOutboundRequest<OrderType>(outboundMessageService)
         }
         post("/invoice") {
+            LOGGER.warn { "[UNDOCUMENTED] POST /api/v1/outbound/invoice called - THIS FUNCTIONALITY IS NOT DOCUMENTED IN README!" }
             call.handleOutboundRequest<InvoiceType>(outboundMessageService)
         }
     }
