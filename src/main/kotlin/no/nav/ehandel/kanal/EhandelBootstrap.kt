@@ -29,6 +29,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import no.nav.ehandel.kanal.auth.EntraIdTokenProvider
 import no.nav.ehandel.kanal.camel.processors.AccessPointClient
 import no.nav.ehandel.kanal.camel.processors.InboundDataExtractor
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
@@ -114,13 +115,15 @@ fun main() = runBlocking {
 
 fun bootstrap(camelContext: CamelContext, server: ApplicationEngine) {
     DefaultExports.initialize()
-    AccessPointClient.init()
     camelContext.start()
     server.start(wait = false)
 }
 
 fun defaultRegistry() = SimpleRegistry().apply {
-    put("accessPointClient", AccessPointClient)
+    val entraIdTokenProvider = EntraIdTokenProvider()
+    val accessPointClient = AccessPointClient(entraIdTokenProvider)
+
+    put("accessPointClient", accessPointClient)
     put("inboundLogger", InboundLogger)
     put("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
     put("inboundDataExtractor", InboundDataExtractor)
@@ -144,7 +147,8 @@ fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) =
 fun Application.main(
     applicationState: ApplicationState = ApplicationState(running = true, initialized = true),
     outboundMessageService: OutboundMessageService = OutboundMessageService(
-        AccessPointClient, StandardBusinessDocumentGenerator()
+        AccessPointClient(EntraIdTokenProvider()),
+        StandardBusinessDocumentGenerator()
     )
 ) {
     install(StatusPages) {

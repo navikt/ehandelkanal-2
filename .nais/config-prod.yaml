@@ -1,1 +1,4 @@
 ingresses: ["https://ehandelkanal-2.nais.adeo.no"]
+entraid_target_url: "api://prod-fss.okonomi.sokos-vefasrest/.default"
+vefasrest_message_url: "https://sokos-vefasrest.intern.nav.no/api/messages"
+vefasrest_inbox_url: "https://sokos-vefasrest.intern.nav.no/api/inbox"

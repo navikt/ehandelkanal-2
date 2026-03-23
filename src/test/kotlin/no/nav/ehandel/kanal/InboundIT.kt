@@ -1,6 +1,5 @@
 package no.nav.ehandel.kanal
 
-import com.github.tomakehurst.wiremock.client.BasicCredentials
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.exactly
@@ -8,6 +7,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.put
+import com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.verify
@@ -18,9 +19,15 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.server.engine.ApplicationEngine
+import io.mockk.every
 import io.mockk.mockk
 import java.util.concurrent.TimeUnit
+import no.nav.ehandel.kanal.auth.EntraIdTokenProvider
+import no.nav.ehandel.kanal.camel.processors.AccessPointClient
+import no.nav.ehandel.kanal.camel.processors.InboundDataExtractor
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
+import no.nav.ehandel.kanal.services.log.InboundLogger
+import org.apache.camel.impl.SimpleRegistry
 import no.nav.ehandel.kanal.camel.routes.ACCESS_POINT_CLIENT
 import no.nav.ehandel.kanal.camel.routes.ACCESS_POINT_READ
 import no.nav.ehandel.kanal.camel.routes.INBOUND_EHF
@@ -44,12 +51,27 @@ import org.junit.Test
 
 private const val juridiskLoggUrl = "/juridisklogg/api/rest/logg"
 private const val inboxCountUrl = "/vefasrest/inbox/count"
-private const val inboxMessagesUrl = "/vefasrest/inbox/"
-private const val inboxReadUrl = "/vefasrest/inbox/1/read"
-private const val inboxMessageXmlDocUrl = "/vefasrest/messages/1/xml-document"
+private const val inboxMessagesUrl = "/vefasrest/inbox/hent-uleste-meldinger"
+private const val inboxReadUrl = "/vefasrest/inbox/marker-som-lest/1"
+private const val inboxMessageXmlDocUrl = "/vefasrest/messages/xml-document/1"
+
+// Mock EntraIdTokenProvider for tests
+private val mockEntraIdTokenProvider: EntraIdTokenProvider = mockk {
+    every { getToken() } returns "mock-bearer-token"
+}
+
+// Create a test registry with mocked token provider
+private fun testRegistry() = SimpleRegistry().apply {
+    val accessPointClient = AccessPointClient(mockEntraIdTokenProvider)
+    put("accessPointClient", accessPointClient)
+    put("inboundLogger", InboundLogger)
+    put("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
+    put("inboundDataExtractor", InboundDataExtractor)
+    put("mqConnectionFactory", mqConnectionFactory)
+}
 
 private val server: ApplicationEngine = mockk(relaxed = true)
-private val camelContext = configureCamelContext(defaultRegistry()).apply {
+private val camelContext = configureCamelContext(testRegistry()).apply {
     routeDefinitions[0].adviceWith(this, object : AdviceWithRouteBuilder() {
         override fun configure() {
             mockEndpointsAndSkip("^(jms|ftp).*")
@@ -100,9 +122,14 @@ class InboundIT {
                 1
             ) // Expect that the message has legal archive header set
         }
-        NotifyBuilder(camelContext).wereSentTo(ACCESS_POINT_READ.uri).whenExactlyCompleted(1).create()
+        NotifyBuilder(camelContext)
+            .wereSentTo(ACCESS_POINT_READ.uri)
+            .whenExactlyCompleted(1)
+            .create()
             .matches(3, TimeUnit.SECONDS)
-        verify(exactly(1), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
+        verify(
+            exactly(1),
+            postRequestedFor(urlEqualTo(juridiskLoggUrl)))
         assertMockEndpointsSatisfied()
     }
 
@@ -236,8 +263,7 @@ class InboundIT {
     private fun setUpStubs(messageFileName: String) {
         stubFor(
             get(urlEqualTo(inboxMessageXmlDocUrl))
-                .withHeader(AccessPointProps.messages.header, equalTo(AccessPointProps.messages.apiKey))
-                .withBasicAuth(ServiceUserProps.username, ServiceUserProps.password)
+                .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                 .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
                 .willReturn(
                     aResponse()
@@ -251,23 +277,20 @@ class InboundIT {
     private fun verifyAccessPointRequests() {
         verify(
             exactly(1), getRequestedFor(urlEqualTo(inboxMessagesUrl))
-                .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
-                .withBasicAuth(BasicCredentials(ServiceUserProps.username, ServiceUserProps.password))
-                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
+                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
         )
 
         verify(
             exactly(1), getRequestedFor(urlEqualTo(inboxMessageXmlDocUrl))
-                .withHeader(AccessPointProps.messages.header, equalTo(AccessPointProps.messages.apiKey))
-                .withBasicAuth(BasicCredentials(ServiceUserProps.username, ServiceUserProps.password))
+                .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                 .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
         )
 
         verify(
-            exactly(1), postRequestedFor(urlEqualTo(inboxReadUrl))
-                .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
-                .withBasicAuth(BasicCredentials(ServiceUserProps.username, ServiceUserProps.password))
-                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+            exactly(1), putRequestedFor(urlEqualTo(inboxReadUrl))
+                .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
+                .withHeader(HttpHeaders.Accept, equalTo(ContentType.Text.Plain.toString()))
         )
     }
 
@@ -281,33 +304,30 @@ class InboundIT {
         fun setUpClass() {
             stubFor(
                 get(urlEqualTo(inboxMessagesUrl))
-                    .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
-                    .withBasicAuth(ServiceUserProps.username, ServiceUserProps.password)
-                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                    .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
+                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Json.toString()))
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/xml; charset=utf-8")
-                            .withBodyFile("inbox-message-headers-ok.xml")
+                            .withHeader(ContentTypeHeader.KEY, "application/json; charset=utf-8")
+                            .withBodyFile("json/inbox-hent-uleste-meldinger.json")
                     )
             )
             stubFor(
-                post(urlEqualTo(inboxReadUrl))
-                    .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
-                    .withBasicAuth(ServiceUserProps.username, ServiceUserProps.password)
-                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Application.Xml.toString()))
+                put(urlEqualTo(inboxReadUrl))
+                    .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
+                    .withHeader(HttpHeaders.Accept, equalTo(ContentType.Text.Plain.toString()))
                     .willReturn(
                         aResponse()
                             .withStatus(200)
-                            .withHeader(ContentTypeHeader.KEY, "application/xml; charset=utf-8")
-                            .withBodyFile("inbox-message-read-ok.xml")
+                            .withHeader(ContentTypeHeader.KEY, "text/plain; charset=utf-8")
+                            .withBody("OK")
                     )
             )
             stubFor(
                 get(urlEqualTo(inboxCountUrl))
-                    .withHeader(AccessPointProps.inbox.header, equalTo(AccessPointProps.inbox.apiKey))
+                    .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
                     .withHeader(HttpHeaders.Accept, equalTo(ContentType.Text.Plain.toString()))
-                    .withBasicAuth(ServiceUserProps.username, ServiceUserProps.password)
                     .willReturn(
                         aResponse()
                             .withStatus(200)

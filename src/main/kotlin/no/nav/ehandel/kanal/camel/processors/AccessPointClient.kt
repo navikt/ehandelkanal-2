@@ -9,7 +9,7 @@ import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.header
-import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -23,6 +23,7 @@ import no.difi.vefa.peppol.common.model.Header
 import no.difi.vefasrest.model.OutboxPostResponseType
 import no.difi.vefasrest.model.QueuedMessagesSendResultType
 import no.nav.ehandel.kanal.AccessPointProps
+import no.nav.ehandel.kanal.auth.EntraIdTokenProvider
 import no.nav.ehandel.kanal.common.functions.retry
 import no.nav.ehandel.kanal.common.models.ErrorMessage
 import no.nav.ehandel.kanal.common.singletons.httpClient
@@ -34,9 +35,11 @@ import org.apache.camel.language.XPath
 
 private val LOGGER = KotlinLogging.logger { }
 
-object AccessPointClient : Processor {
+class AccessPointClient(
+    private val entraIdTokenProvider: EntraIdTokenProvider
+) : Processor {
 
-    fun init() {
+    init {
         LOGGER.apply {
             info { "Vefa Inbox URL: ${AccessPointProps.inbox.url}" }
             info { "Vefa Outbox URL: ${AccessPointProps.outbox.url}" }
@@ -49,7 +52,7 @@ object AccessPointClient : Processor {
         LOGGER.trace { "Checking inbox count" }
         Integer.valueOf(httpClient.get<String> {
             url("${AccessPointProps.inbox.url}/count")
-            header(AccessPointProps.inbox.header, AccessPointProps.inbox.apiKey)
+            header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
             header(HttpHeaders.Accept, ContentType.Text.Plain)
         }).also {
             LOGGER.trace { "Inbox count: $it" }
@@ -59,9 +62,9 @@ object AccessPointClient : Processor {
     fun getInboxMessageHeaders(exchange: Exchange): String = runBlocking {
         LOGGER.trace { "Getting inbox messageheaders" }
         httpClient.get<String> {
-            url("${AccessPointProps.inbox.url}/")
-            header(AccessPointProps.inbox.header, AccessPointProps.inbox.apiKey)
-            header(HttpHeaders.Accept, ContentType.Application.Xml)
+            url("${AccessPointProps.inbox.url}/hent-uleste-meldinger")
+            header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
+            header(HttpHeaders.Accept, ContentType.Application.Json)
         }.also {
             LOGGER.trace { "Inbox messages: $it" }
         }
@@ -72,8 +75,8 @@ object AccessPointClient : Processor {
         val payload = runBlocking {
             InboundLogger.downloadInboundMessage(exchange, msgNo)
             httpClient.get<ByteArray> {
-                url("${AccessPointProps.messages.url}/$msgNo/xml-document")
-                header(AccessPointProps.messages.header, AccessPointProps.messages.apiKey)
+                url("${AccessPointProps.messages.url}/xml-document/$msgNo")
+                header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
                 header(HttpHeaders.Accept, ContentType.Application.Xml)
             }
         }
@@ -89,10 +92,10 @@ object AccessPointClient : Processor {
     fun markMessageAsRead(msgNo: String): String = runBlocking {
         LOGGER.trace { "Marking MsgNo $msgNo as read" }
         try {
-            httpClient.post<String> {
-                url("${AccessPointProps.inbox.url}/$msgNo/read")
-                header(AccessPointProps.inbox.header, AccessPointProps.inbox.apiKey)
-                header(HttpHeaders.Accept, ContentType.Application.Xml)
+            httpClient.put<String> {
+                url("${AccessPointProps.inbox.url}/marker-som-lest/$msgNo")
+                header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
+                header(HttpHeaders.Accept, ContentType.Text.Plain)
             }.also {
                 LOGGER.info { "Successfully marked MsgNo $msgNo as read" }
             }
@@ -116,7 +119,7 @@ object AccessPointClient : Processor {
                 LOGGER.info { "SendToOutbox - Sending new message to outbox" }
                 httpClient.submitFormWithBinaryData<String>(formData = mapToFormData(payload, header)) {
                     url(AccessPointProps.outbox.url)
-                    header(AccessPointProps.outbox.header, AccessPointProps.outbox.apiKey)
+                    header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
                     header(HttpHeaders.Accept, ContentType.Application.Xml)
                 }
             }.let { response ->
@@ -145,7 +148,7 @@ object AccessPointClient : Processor {
             ) {
                 httpClient.get<String> {
                     url("${AccessPointProps.transmit.url}/$msgNo")
-                    header(AccessPointProps.transmit.header, AccessPointProps.transmit.apiKey)
+                    header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
                     header(HttpHeaders.Accept, ContentType.Application.Xml)
                 }
             }.let { response ->
