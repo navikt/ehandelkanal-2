@@ -13,7 +13,7 @@ Det er forventet at tjenesten skal fases ut etter at det blir gjort anskaffelse 
 og håndtering av EHF-fakturaer. Det er uklart når dette vil skje.
 
 ## Arkitektur 
-Legg inn en arkitekturtegning her når den er tilgjengelig.
+![Arkitekturdiagram](docs/illustration-architecture.png)
 
 ## Funkjsonalitet
 Hver tiende sekund trigges følgende prosess:
