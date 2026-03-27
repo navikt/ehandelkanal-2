@@ -20,6 +20,7 @@ private val logger = KotlinLogging.logger { }
 object Report {
 
     suspend fun getAll(date: DateTime? = null) = dbQuery {
+        logger.info("DB: Getting all report entries${if (date != null) " for date $date" else ""}")
         val rows = date?.let {
             ReportTable.select {
                 ReportTable.receivedAt.between(
@@ -35,6 +36,7 @@ object Report {
     }
 
     fun insert(csvValues: CsvValues) = transaction {
+        logger.info("DB: Inserting report entry for file ${csvValues.fileName}, type ${csvValues.type}")
         ReportTable.insert {
             it[fileName] = csvValues.fileName
             it[documentType] = csvValues.type.name
