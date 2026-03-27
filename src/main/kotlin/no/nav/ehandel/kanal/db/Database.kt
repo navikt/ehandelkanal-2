@@ -132,5 +132,6 @@ object Database {
 }
 
 suspend fun <T> dbQuery(block: () -> T): T = withContext(dispatcher) {
+    logger.info("Executing database query")
     transaction { block() }
 }

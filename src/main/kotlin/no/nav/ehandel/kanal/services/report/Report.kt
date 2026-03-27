@@ -1,8 +1,8 @@
 package no.nav.ehandel.kanal.services.report
-
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.StringJoiner
+import mu.KotlinLogging
 import no.nav.ehandel.kanal.common.extensions.formatDate
 import no.nav.ehandel.kanal.common.models.DocumentType
 import no.nav.ehandel.kanal.db.ReportTable
@@ -14,6 +14,8 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
+
+private val logger = KotlinLogging.logger { }
 
 object Report {
 
@@ -47,6 +49,7 @@ object Report {
     }
 
     suspend fun getAllUniqueDaysWithEntries(): List<DateTime> = dbQuery {
+        logger.info("DB: Getting all unique days with report entries")
         ReportTable
             .slice(ReportTable.receivedAt)
             .selectAll()
