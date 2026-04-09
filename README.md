@@ -63,8 +63,6 @@ Meldinger routes ulikt avhengig av dokumenttype og filstørrelse:
     - `GET /xml-document/{msgNo}` - Henter XML-payload for en melding
 - **Juridisk logg** - brukes for å lagre Invoice og CreditNote under 20 MB for etterfølgende tilgang ved nedetid
 - **`/reports` REST API** - tjenesten eksponerer egne endepunkter for rapportering (beskyttet med Azure AD via NAIS):
-  - `GET /reports/inbound` - Henter rapport over innkommende meldinger
-  - `GET /reports/outbound` - Henter rapport over utgående meldinger
 
 ## Hvordan kjøre lokalt
 Applikasjonen kan bygges lokalt ved å kjøre `./gradlew clean build`
