@@ -46,7 +46,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.ClassRule
-import org.junit.Ignore
 import org.junit.Test
 
 private const val juridiskLoggUrl = "/juridisklogg/api/rest/logg"
@@ -155,19 +154,6 @@ class InboundIT {
         setUpStubs("message-faktura-catalogue-small-ok.xml")
         setUpInboundValidExpectations()
         inboundMq.expectedMessageCount(1) // Expect that the message is sent to the inbound MQ queue
-
-        NotifyBuilder(camelContext).fromRoute(ACCESS_POINT_READ.id).whenExactlyCompleted(1).create()
-            .matches(3, TimeUnit.SECONDS)
-        verify(exactly(0), postRequestedFor(urlEqualTo(juridiskLoggUrl)))
-        assertMockEndpointsSatisfied()
-    }
-
-    @Test
-    @Ignore // TODO
-    fun `valid catalogue with size larger than set limit`() {
-        setUpStubs("message-faktura-catalogue-large-ok.xml")
-        setUpInboundValidExpectations()
-        fileAreaCatalogue.expectedMessageCount(1) // Expect that the message is put on the file area
 
         NotifyBuilder(camelContext).fromRoute(ACCESS_POINT_READ.id).whenExactlyCompleted(1).create()
             .matches(3, TimeUnit.SECONDS)
