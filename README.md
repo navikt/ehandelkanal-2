@@ -24,6 +24,8 @@ for de listede nye meldingene
 4. Router meldinger basert på Dokumenttype og størrelse
 5. Lagrer xml i juridisk logg gjennom access punkt (kun for Invoice/CreditNote under størrelsesbegrensning)
 6. Kall `PUT /marker-som-lest/{msgNo}` mot VefasRest Inbox API for å markere at meldingen er blitt lest
+7. Logger metadata om prosesserte meldinger til PostgreSQL-database on prem for rapportering.
+Tjenesten eksponerer også et `/reports`-endepunkt for å hente rapporter over prosesserte meldinger.
 
 ### Routing av meldinger (punkt 4)
 Meldinger routes ulikt avhengig av dokumenttype og filstørrelse:
@@ -45,11 +47,11 @@ Meldinger routes ulikt avhengig av dokumenttype og filstørrelse:
 
 **Referanse i koden:**
 - Routing-logikk: `src/main/kotlin/no/nav/ehandel/kanal/camel/routes/Inbound.kt` (linje 145-175)
-- Størrelseskonstanter: `LEGAL_ARCHIVE_SIZE_LIMIT` (linje 30) og `catalogueSizeLimit` i `Configuration.kt`
-
+- Størrelseskonstanter: `LEGAL_ARCHIVE_SIZE_LIMIT` (linje 30) og `catalogueSizeLimit` i `Configuration.kt` tj
 ## Avhengigheter
 - **Filområde via FTP** - tidligere koblet sammen med EBASYS, brukes for å lagre Invoice, CreditNote og store Catalogue-filer
 - **Meldingskø (MQ)** - brukes for OrderResponse og små Catalogue-meldinger
+- **PostgreSQL database (on prem)** - lagrer metadata om prosesserte inbound i databasen og eksponerer disse via `/reports`-endepunktet
 - **VefasRest Inbox API** - brukes for å sjekke etter nye meldinger og markere dem som lest
   - Swagger (dev): https://sokos-vefasrest.intern.dev.nav.no/api/inbox/docs
   - Endepunkter: 
@@ -60,6 +62,7 @@ Meldinger routes ulikt avhengig av dokumenttype og filstørrelse:
   - Endepunkter:
     - `GET /xml-document/{msgNo}` - Henter XML-payload for en melding
 - **Juridisk logg** - brukes for å lagre Invoice og CreditNote under 20 MB for etterfølgende tilgang ved nedetid
+- **`/reports` endepunkt** - tjenesten eksponerer egne endepunkter for rapportering (beskyttet med Azure AD via NAIS):
 
 ## Hvordan kjøre lokalt
 Applikasjonen kan bygges lokalt ved å kjøre `./gradlew clean build`

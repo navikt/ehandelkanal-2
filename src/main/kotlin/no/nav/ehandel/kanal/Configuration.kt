@@ -28,14 +28,8 @@ object AccessPointProps {
 
     val inbox = Properties(
         url = System.getenv("VEFASREST_INBOX_URL") ?: config[Key("vefasrest.inbox.url", stringType)].removeSuffix("/"))
-    val outbox = Properties(
-        url = config[Key("vefasrest.outbox.url", stringType)].removeSuffix("/"),
-    )
     val messages = Properties(
         url = System.getenv("VEFASREST_MESSAGES_URL") ?: config[Key("vefasrest.messages.url", stringType)].removeSuffix("/"),
-    )
-    val transmit = Properties(
-        url = config[Key("vefasrest.transmit.url", stringType)].removeSuffix("/"),
     )
 }
 
@@ -83,14 +77,6 @@ object ServiceUserProps {
 
 object QueueProps {
     val inName = config[Key("mq.queue.in.name", stringType)]
-}
-
-object SecurityTokenServiceProps {
-    val wellKnownUrl: String = config.getOrElse(
-        Key("sts.well-known.url", stringType),
-        "http://security-token-service.default.svc.nais.local/rest/v1/sts/.well-known/openid-configuration"
-    )
-    val acceptedAudiences: List<String> = config[Key("sts.jwt.accepted.audiences", stringType)].split(",")
 }
 
 val catalogueSizeLimit = config[Key("catalogue.mqsizelimit", intType)]
