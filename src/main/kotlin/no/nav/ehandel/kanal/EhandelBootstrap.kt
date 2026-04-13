@@ -2,9 +2,6 @@ package no.nav.ehandel.kanal
 
 import io.ktor.application.Application
 import io.ktor.application.install
-import io.ktor.auth.Authentication
-import io.ktor.auth.authenticate
-import io.ktor.auth.jwt.jwt
 import io.ktor.features.CallId
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
@@ -14,6 +11,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.jackson.JacksonConverter
 import io.ktor.request.path
+import io.ktor.routing.routing
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -42,7 +40,9 @@ import no.nav.ehandel.kanal.common.singletons.objectMapper
 import no.nav.ehandel.kanal.db.Database
 import no.nav.ehandel.kanal.db.Vault
 import no.nav.ehandel.kanal.routes.exceptionHandler
+import no.nav.ehandel.kanal.routes.nais
 import no.nav.ehandel.kanal.routes.notFoundHandler
+import no.nav.ehandel.kanal.routes.report
 import no.nav.ehandel.kanal.services.log.InboundLogger
 import org.apache.camel.CamelContext
 import org.apache.camel.impl.DefaultCamelContext
@@ -56,7 +56,7 @@ private val backgroundTaskContext = Executors.newSingleThreadExecutor().asCorout
 fun main() = runBlocking {
     val applicationState = ApplicationState()
     val camelContext = configureCamelContext(defaultRegistry())
-    val server = createHttpServer()
+    val server = createHttpServer(applicationState = applicationState)
     bootstrap(camelContext, server)
 
     when (appProfileLocal) {
@@ -134,10 +134,11 @@ fun configureCamelContext(registry: Registry) = DefaultCamelContext(registry).ap
     name = appName
 }
 
-fun createHttpServer(port: Int = 8080) =
-    embeddedServer(Netty, port, module = { main() })
+fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) =
+    embeddedServer(Netty, port, module = { main(applicationState) })
 
 fun Application.main(
+    applicationState: ApplicationState
 ) {
     install(StatusPages) {
         notFoundHandler()
@@ -155,6 +156,13 @@ fun Application.main(
     }
     install(ContentNegotiation) {
         register(ContentType.Application.Json, JacksonConverter(objectMapper))
+    }
+    routing {
+        nais(
+            readinessCheck = { applicationState.initialized },
+            livenessCheck = { applicationState.running }
+        )
+        report()
     }
 }
 
