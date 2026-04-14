@@ -53,11 +53,12 @@ jobs:
   build:
     name: Build and push image (NAIS)
     needs: test
-    if: github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'dev/ehandelkanal-2')
+    #if: github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'dev/ehandelkanal-2')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      id-token: write
+      contents: read      # Lese kode fra repoet
+      id-token: write     # Skrive OIDC tokens for NAIS autentisering
+      packages: read      # Lese fra GitHub Container Registry (for base image)
     outputs:
       image: ${{ steps.docker.outputs.image }}
       telemetry: ${{ steps.docker.outputs.telemetry }}
