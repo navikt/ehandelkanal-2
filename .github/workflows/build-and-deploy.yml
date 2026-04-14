@@ -66,6 +66,7 @@ jobs:
         uses: nais/docker-build-push@v0
         with:
           team: team-oebs
+          platform: linux/amd64  # Bygger eksplisitt for AMD64 (NAIS kjører på AMD64, ikke ARM64)
           cache_from: type=gha  # Henter cached layers fra GitHub Actions cache for raskere bygg
           cache_to: type=gha,mode=max  # Lagrer alle layers til cache for fremtidige bygg
 
