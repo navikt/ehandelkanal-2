@@ -43,7 +43,7 @@ jobs:
       # Dette gjør at build-steget kan bruke JAR-filen uten å bygge på nytt
       # Kjøres bare ved push til master eller dev/ehandelkanal-2 (ikke PR)
       - name: Upload build artifacts
-        if: github.event_name != 'pull_request'
+        #if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
