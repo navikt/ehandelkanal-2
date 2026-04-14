@@ -2,9 +2,6 @@ package no.nav.ehandel.kanal
 
 import io.ktor.application.Application
 import io.ktor.application.install
-import io.ktor.auth.Authentication
-import io.ktor.auth.authenticate
-import io.ktor.auth.jwt.jwt
 import io.ktor.features.CallId
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
@@ -14,7 +11,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.jackson.JacksonConverter
 import io.ktor.request.path
-import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
@@ -48,9 +44,6 @@ import no.nav.ehandel.kanal.routes.nais
 import no.nav.ehandel.kanal.routes.notFoundHandler
 import no.nav.ehandel.kanal.routes.report
 import no.nav.ehandel.kanal.services.log.InboundLogger
-import no.nav.ehandel.kanal.services.outbound.OutboundMessageService
-import no.nav.ehandel.kanal.services.outbound.outbound
-import no.nav.ehandel.kanal.services.sbd.StandardBusinessDocumentGenerator
 import org.apache.camel.CamelContext
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.SimpleRegistry
@@ -145,11 +138,7 @@ fun createHttpServer(port: Int = 8080, applicationState: ApplicationState) =
     embeddedServer(Netty, port, module = { main(applicationState) })
 
 fun Application.main(
-    applicationState: ApplicationState = ApplicationState(running = true, initialized = true),
-    outboundMessageService: OutboundMessageService = OutboundMessageService(
-        AccessPointClient(EntraIdTokenProvider()),
-        StandardBusinessDocumentGenerator()
-    )
+    applicationState: ApplicationState
 ) {
     install(StatusPages) {
         notFoundHandler()
@@ -168,23 +157,12 @@ fun Application.main(
     install(ContentNegotiation) {
         register(ContentType.Application.Json, JacksonConverter(objectMapper))
     }
-    install(Authentication) {
-        jwt {
-            val jwtConfig = JwtConfig(SecurityTokenServiceProps)
-            skipWhen { appProfileLocal }
-            realm = jwtConfig.realm
-            verifier(jwtConfig.jwkProvider, jwtConfig.openIdConfig.issuer)
-            validate { credentials -> jwtConfig.validate(credentials) }
-        }
-    }
     routing {
-        nais(readinessCheck = { applicationState.initialized }, livenessCheck = { applicationState.running })
+        nais(
+            readinessCheck = { applicationState.initialized },
+            livenessCheck = { applicationState.running }
+        )
         report()
-        authenticate {
-            route("/api/v1") {
-                outbound(outboundMessageService = outboundMessageService)
-            }
-        }
     }
 }
 

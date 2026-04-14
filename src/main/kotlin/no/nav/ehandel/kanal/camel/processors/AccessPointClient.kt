@@ -42,20 +42,7 @@ class AccessPointClient(
     init {
         LOGGER.apply {
             info { "Vefa Inbox URL: ${AccessPointProps.inbox.url}" }
-            info { "Vefa Outbox URL: ${AccessPointProps.outbox.url}" }
             info { "Vefa Messages URL: ${AccessPointProps.messages.url}" }
-            info { "Vefa Transmit URL: ${AccessPointProps.transmit.url}" }
-        }
-    }
-
-    fun getInboxCount(): Int = runBlocking {
-        LOGGER.trace { "Checking inbox count" }
-        Integer.valueOf(httpClient.get<String> {
-            url("${AccessPointProps.inbox.url}/count")
-            header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
-            header(HttpHeaders.Accept, ContentType.Text.Plain)
-        }).also {
-            LOGGER.trace { "Inbox count: $it" }
         }
     }
 
@@ -105,69 +92,6 @@ class AccessPointClient(
         }
     }
 
-    suspend fun sendToOutbox(
-        payload: String,
-        header: Header,
-        attempts: Int = 10
-    ): Result<OutboxPostResponseType, ErrorMessage> =
-        runCatching {
-            retry(
-                callName = "Access Point - Outbound",
-                attempts = attempts,
-                illegalExceptions = *arrayOf(ClientRequestException::class)
-            ) {
-                LOGGER.info { "SendToOutbox - Sending new message to outbox" }
-                httpClient.submitFormWithBinaryData<String>(formData = mapToFormData(payload, header)) {
-                    url(AccessPointProps.outbox.url)
-                    header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
-                    header(HttpHeaders.Accept, ContentType.Application.Xml)
-                }
-            }.let { response ->
-                LOGGER.debug { "SendToOutbox - Payload: '$response'" }
-                JAXB.unmarshal(response.byteInputStream(), OutboxPostResponseType::class.java)
-            }
-        }.fold(
-            onSuccess = { response -> Ok(response) },
-            onFailure = { e ->
-                LOGGER.error(e) { "SendToOutbox - Failed to send payload to outbox" }
-                e.toErrorMessage()
-            }
-        )
-
-    suspend fun transmitMessage(
-        outboxResponse: OutboxPostResponseType,
-        attempts: Int = 10
-    ): Result<QueuedMessagesSendResultType, ErrorMessage> =
-        runCatching {
-            val msgNo = outboxResponse.message.messageMetaData.msgNo
-            LOGGER.info { "Transmitting MsgNo '$msgNo' to external party" }
-            retry(
-                callName = "Access Point - Transmit",
-                attempts = attempts,
-                illegalExceptions = *arrayOf(ClientRequestException::class)
-            ) {
-                httpClient.get<String> {
-                    url("${AccessPointProps.transmit.url}/$msgNo")
-                    header("Authorization", "Bearer ${entraIdTokenProvider.getToken()}")
-                    header(HttpHeaders.Accept, ContentType.Application.Xml)
-                }
-            }.let { response ->
-                LOGGER.debug { "Transmit - Payload: '$response'" }
-                JAXB.unmarshal(response.byteInputStream(), QueuedMessagesSendResultType::class.java)
-            }
-        }.fold(
-            onSuccess = { response ->
-                when {
-                    response.succeededCount != 1 -> Err(ErrorMessage.AccessPoint.TransmitError)
-                    else -> Ok(response)
-                }
-            },
-            onFailure = { e ->
-                LOGGER.error(e) { "Transmit - failed to trigger transmit" }
-                e.toErrorMessage()
-            }
-        )
-
     // Used during resubmit to set original in body as the body to used when resubmitted
     override fun process(exchange: Exchange) {
         LOGGER.apply {
@@ -178,46 +102,4 @@ class AccessPointClient(
         exchange.getIn().body = exchange.unitOfWork.originalInMessage.body
     }
 
-    fun calculateDocumentID(
-        @XPath(value = "namespace-uri(/*)") rootNamespace: String,
-        @XPath(value = "local-name(/*)") localName: String,
-        customizationId: String,
-        @XPath(
-            value = "/*/cbc:UBLVersionID/text()",
-            namespaces = [(NamespacePrefix(
-                prefix = "cbc",
-                uri = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
-            ))]
-        )
-        ublVersion: String
-    ): String {
-        LOGGER.apply {
-            info { "rootNamespace: $rootNamespace" }
-            info { "localName: $localName" }
-            info { "customizationId: $customizationId" }
-            info { "ublVersion: $ublVersion" }
-        }
-        return "$rootNamespace::$localName##$customizationId::$ublVersion"
-    }
-}
-
-private inline fun <reified T> Throwable.toErrorMessage(): Result<T, ErrorMessage> =
-    Err(
-        error = when (this) {
-            is ResponseException -> ErrorMessage.AccessPoint.ServerResponseError
-            is DataBindingException -> ErrorMessage.AccessPoint.DataBindError
-            else -> ErrorMessage.InternalError
-        }
-    )
-
-private fun mapToFormData(payload: String, header: Header): List<PartData> = formData {
-    append("file", payload, headersOf(HttpHeaders.ContentType, "${ContentType.Application.Xml}"))
-    append("SenderID", header.sender.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-    append("RecipientID", header.receiver.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
-    append(
-        "DocumentID",
-        header.documentType.identifier,
-        headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}")
-    )
-    append("ProcessID", header.process.identifier, headersOf(HttpHeaders.ContentType, "${ContentType.Text.Plain}"))
 }
