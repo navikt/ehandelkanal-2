@@ -27,7 +27,7 @@ jobs:
         run: ./gradlew --warning-mode all clean build shadowJar
       # Kjøres bare ved push til master eller dev/ehandelkanal-2 (ikke PR)
       - name: Upload build artifacts
-        if: github.event_name != 'pull_request'
+        #if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
@@ -37,7 +37,7 @@ jobs:
   build:
     name: Build and push image (NAIS)
     needs: test
-    if: github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'dev/ehandelkanal-2')
+    #if: github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'dev/ehandelkanal-2')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -66,13 +66,14 @@ jobs:
         uses: nais/docker-build-push@v0
         with:
           team: team-oebs
-          cache_from: type=gha  # Henter cached layers fra GitHub Actions cache for raskere bygg
-          cache_to: type=gha,mode=max  # Lagrer alle layers til cache for fremtidige bygg
+          platform: linux/amd64  # Bygger eksplisitt for AMD64 (NAIS kjører på AMD64, ikke ARM64)
+          cache_from: type=gha
+          cache_to: type=gha,mode=max
 
   deploy-dev:
     name: Deploy to NAIS dev
     needs: build
-    if: github.ref_name == 'dev/ehandelkanal-2'  # Kjører bare ved push til dev/ehandelkanal-2 branchen
+    #if: github.ref_name == 'dev/ehandelkanal-2'  # Kjører bare ved push til dev/ehandelkanal-2 branchen
     runs-on: ubuntu-latest
     permissions:
       contents: read
