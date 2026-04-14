@@ -79,7 +79,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-fss
@@ -98,7 +97,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: prod-fss
