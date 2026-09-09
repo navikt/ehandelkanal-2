@@ -53,4 +53,5 @@ spec:
     outbound:
       rules:
         - application: sokos-vefasrest
-          namespace: okonomi
+          namespace: bankkommunikasjon
+          cluster: dev-gcp
