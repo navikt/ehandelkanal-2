@@ -2,3 +2,7 @@ ingresses: ["https://ehandelkanal-2.nais.preprod.local"]
 entraid_target_url: "api://dev-gcp.bankkommunikasjon.sokos-vefasrest/.default"
 vefasrest_message_url: "https://sokos-vefasrest-gcp.intern.dev.nav.no/api/messages"
 vefasrest_inbox_url: "https://sokos-vefasrest-gcp.intern.dev.nav.no/api/inbox"
+access_policy_outbound_rules:
+  - application: "sokos-vefasrest"
+    namespace: "bankkommunikasjon"
+    cluster: "dev-gcp"
