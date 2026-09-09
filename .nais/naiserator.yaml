@@ -52,6 +52,8 @@ spec:
   accessPolicy:
     outbound:
       rules:
-        - application: sokos-vefasrest
-          namespace: bankkommunikasjon
-          cluster: dev-gcp
+        {{#each access_policy_outbound_rules}}
+        - application: {{application}}
+          namespace: {{namespace}}
+          cluster: {{cluster}}
+        {{/each}}
