@@ -52,5 +52,8 @@ spec:
   accessPolicy:
     outbound:
       rules:
-        - application: sokos-vefasrest
-          namespace: okonomi
+        {{#each access_policy_outbound_rules}}
+        - application: {{application}}
+          namespace: {{namespace}}
+          cluster: {{cluster}}
+        {{/each}}
