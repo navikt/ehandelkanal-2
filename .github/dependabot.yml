@@ -1,0 +1,49 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "10:00"
+      timezone: "Europe/Oslo"
+    cooldown:
+      default-days: 7
+    groups:
+      all-gradle-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+    reviewers:
+      - navikt/oebs-java-dev
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "10:00"
+      timezone: "Europe/Oslo"
+    cooldown:
+      default-days: 7
+    groups:
+      all-docker-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+    reviewers:
+      - navikt/oebs-java-dev
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "10:00"
+      timezone: "Europe/Oslo"
+    cooldown:
+      default-days: 7
+    groups:
+      all-github-actions-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+    reviewers:
+      - navikt/oebs-java-dev
