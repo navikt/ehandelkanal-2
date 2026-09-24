@@ -26,6 +26,19 @@ stegvise, verifiserbare oppdateringer med egne commits, gruppert etter risiko.
 4. Der eksisterende tester ikke dekker endret oppførsel (f.eks. H2 SQL-modus,
    Exposed DSL-endringer, Flyway-konfigurasjon), utvides testene før/sammen med
    oppgraderingen.
+5. **Blokkerte oppgraderinger utsettes, de tvinges ikke gjennom.** Gjelder for
+   ethvert steg i alle faser: hvis en dependency ikke lar seg oppgradere til
+   mål-versjonen fordi den (transitivt) krever en nyere versjon av noe vi ennå
+   ikke har oppgradert (typisk Kotlin-pluginet eller Gradle), gjør vi følgende:
+   - Oppgrader til høyeste versjon som faktisk er kompatibel med dagens
+     Kotlin-plugin/Gradle-versjon (verifisert med `./gradlew clean test`).
+   - Noter den utsatte dependencyen i **«Utsatt til senere» (under)** med
+     hvilken forutsetning som mangler.
+   - Gå videre til neste dependency i planen — ikke la ett blokkert steg
+     stoppe resten av rekkefølgen.
+   - Når forutsetningen er oppfylt (f.eks. etter Kotlin-plugin- eller
+     Gradle-oppgradering i Fase 3/4), samles de utsatte oppgraderingene i
+     **Fase 5 — Oppfølging av utsatte oppgraderinger**.
 
 ## Rekkefølge og faser
 
@@ -47,6 +60,20 @@ stegvise, verifiserbare oppdateringer med egne commits, gruppert etter risiko.
 | prometheus simpleclient (common/hotspot) | 0.8.0 | 0.16.0 | 0.x-serie, sjekk deprecations men API stort sett stabilt |
 
 Commit-forslag: `chore(deps): oppdater lavrisiko-avhengigheter (jackson, logback, postgres, mockk, difi, prometheus)`
+
+**Status (gjennomført):** jackson, logback-classic, peppol-sbdh, postgresql og
+prometheus simpleclient er oppdatert som planlagt. mockk og
+com.github.ben-manes.versions-pluginet ble **utsatt** (se «Utsatt til senere»
+under) — jackson ble også kun delvis oppdatert (til 2.19.4, ikke 2.22.2) av
+samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
+
+## Utsatt til senere (fylles ut fortløpende, følges opp i Fase 5)
+
+| Dependency | Ønsket mål-versjon | Faktisk satt til | Blokkert av | Følges opp når |
+|---|---|---|---|---|
+| jackson-databind / jackson-module-kotlin / jackson-datatype-joda | 2.22.2 | 2.19.4 | `jackson-module-kotlin` ≥2.20 krever Kotlin-stdlib 2.0+/2.1+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| mockk | 1.14.11 | 1.13.12 (uendret) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| com.github.ben-manes.versions (plugin) | 0.64.0 | 0.51.0 (uendret) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -155,6 +182,19 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   og full build+test etter hvert steg.
 - Sjekk kompatibilitetsmatrise for Kotlin-plugin, shadow-plugin og
   flyway-plugin mot hver Gradle-major.
+
+### Fase 5 — Oppfølging av utsatte oppgraderinger (samlesteg)
+Når Kotlin-pluginet (Fase 3) og Gradle wrapper (Fase 4) er oppgradert, går vi
+tilbake til tabellen **«Utsatt til senere»** og fullfører de oppgraderingene
+som da er blitt mulige, én commit per dependency som i de tidligere fasene:
+- jackson (databind/module-kotlin/datatype-joda) → 2.22.2 (eller nyeste
+  tilgjengelige på det tidspunktet)
+- mockk → 1.14.11 (eller nyeste tilgjengelige)
+- com.github.ben-manes.versions-plugin → 0.64.0 (eller nyeste tilgjengelige)
+
+Kjør `./gradlew clean test` etter hver av disse også, selv om de er
+"lavrisiko" — de er nettopp utsatt fordi de har en (nå oppfylt) avhengighet
+til verktøykjeden.
 
 ## Testing per steg (gjelder for alle commits)
 - `./gradlew clean test` — full testsuite.
