@@ -6,29 +6,31 @@ version = "1.0.52-SNAPSHOT"
 
 val camel_version = "2.24.2"
 val ibm_mq_version = "9.1.3.0"
-val jackson_version = "2.17.2"
+val jackson_version = "2.19.4"
 val konfig_version = "1.6.10.0"
 val difi_commons_sbdh_version = "0.9.5"
-val difi_peppol_sbdh_version = "1.1.3"
+val difi_peppol_sbdh_version = "1.1.4"
 val kotlin_logging_version = "1.7.6"
 val jaxb_api_version = "2.4.0-b180830.0359"
 val jaxb_runtime_version = "2.4.0-b180830.0438"
 val ktor_version = "1.6.8"
 val logstash_version = "7.4"
-val logback_version = "1.5.6"
-val prometheus_version = "0.8.0"
+val logback_version = "1.6.3"
+val prometheus_version = "0.16.0"
 val javax_activation_version = "1.2.0"
 val difi_commons_ubl_version = "0.9.5"
 val hikari_version = "5.1.0"
 val vault_driver_version = "3.1.0"
 val flyway_version = "7.15.0"
 val h2_version = "1.4.200"
-val postgres_version = "42.7.4"
+val postgres_version = "42.7.13"
 val exposed_version = "0.41.1"
 val result_version = "1.1.6"
 val wiremock_version = "2.35.1"
 val mockk_version = "1.13.12"
 val kluent_version = "1.73"
+val junit_version = "4.13.2"
+val junit_vintage_version = "5.10.2"
 
 plugins {
     application
@@ -118,8 +120,8 @@ dependencies {
     testImplementation("org.amshove.kluent:kluent:$kluent_version") {
         exclude(group = "com.nhaarman.mockitokotlin2")
     }
-    testImplementation("junit:junit:4.13.2")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.2")
+    testImplementation("junit:junit:$junit_version")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junit_vintage_version")
 }
 
 tasks {
