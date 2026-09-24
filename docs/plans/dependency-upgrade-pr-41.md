@@ -74,6 +74,8 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | jackson-databind / jackson-module-kotlin / jackson-datatype-joda | 2.22.2 | 2.19.4 | `jackson-module-kotlin` ≥2.20 krever Kotlin-stdlib 2.0+/2.1+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | mockk | 1.14.11 | 1.13.12 (uendret) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | com.github.ben-manes.versions (plugin) | 0.64.0 | 0.51.0 (uendret) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
+| shadow-plugin | 8.1.1 | 7.1.2 (uendret, allerede siste 7.x-versjon) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
+| junit-vintage-engine | 6.1.3 | 5.11.4 (fra 5.10.2) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -82,6 +84,13 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | shadow-plugin | 7.1.2 | 8.1.1 | Task-navn/konfig for shadowJar kan ha endret seg |
 | wiremock-jre8 | 2.35.1 | 3.0.1 | Artefakt `wiremock-jre8` er avviklet i 3.x → vurder bytte til `wiremock` (og evt. `wiremock-standalone`); pakkenavn/API endret (`com.github.tomakehurst.wiremock` → `org.wiremock`) |
 | junit-vintage-engine | 5.10.2 | 6.1.3 | JUnit 6 krever nyere JUnit Platform; sjekk at JUnit 4-testene (`ArchiveRequestTest` mfl. som evt. bruker JUnit4) fortsatt kjøres av vintage-engine |
+
+**Status (gjennomført):**
+- IBM MQ allclient → 10.0.0.5: fullført uendret API (fortsatt `javax.jms-api`).
+- shadow-plugin: **utsatt**, se «Utsatt til senere» (krever Gradle ≥8.0).
+- wiremock-jre8 → org.wiremock:wiremock 3.0.1: fullført, pakkenavn uendret
+  (`com.github.tomakehurst.wiremock.*`), ingen kodeendring nødvendig.
+- junit-vintage-engine → 5.11.4 (**delvis**, ikke 6.1.3): se «Utsatt til senere».
 
 Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 
