@@ -122,11 +122,20 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 
 **JAXB runtime: 2.4.0 → 4.0.9**
 - **Rødsone / kjernelogikk**: SBDH/XML-parsing er kjernen i meldingsflyten.
-- Steg 1: 2.x → siste 3.0.x (jaxb-runtime 3.0 = siste `javax.xml.bind`-generasjon)
-- Steg 2: 3.0.x → 4.0.x — dette er **jakarta-navnerom-migrering**
+- **Korrigert under gjennomføring**: navnerom-migreringen skjer allerede ved
+  **3.0.x**, ikke ved 4.0 som først antatt. Verifisert direkte i JAR-innhold:
+  `jakarta.xml.bind-api:2.3.3` → pakke fortsatt `javax.xml.bind`;
+  `jakarta.xml.bind-api:3.0.1` → pakke byttet til `jakarta.xml.bind`.
+- Steg 1: `jaxb-runtime` 2.4.0-beta → **2.3.9** (siste stabile `javax.xml.bind`-
+  generasjon), `jaxb-api`-avhengigheten byttet fra `javax.xml.bind:jaxb-api`
+  til `jakarta.xml.bind:jakarta.xml.bind-api:2.3.3` (kun gruppe-/artefakt-
+  navnebytte, pakkenavn uendret) — **fullført**, ingen kodeendring nødvendig,
+  alle 40 tester grønne.
+- Steg 2: 2.3.9 → 3.0.2/4.0.x — dette er **jakarta-navnerom-migreringen**
   (`javax.xml.bind.*` → `jakarta.xml.bind.*`). Krever endring i importer i
-  koden og i genererte SBDH/UBL-klasser, samt bytte av `jaxb-api`-avhengigheten
-  til jakarta-varianten. Dette er den mest risikable enkeltoppgraderingen i PR-en.
+  `AccessPointClient.kt`, `InboundDataExtractor.kt`,
+  `StandardBusinessDocumentGenerator.kt` og evt. genererte SBDH/UBL-klasser.
+  Dette er den mest risikable enkeltoppgraderingen i PR-en.
 - Verifiser med `InboundSbdhMetaDataExtractorTest`, `InboundSbdhRemoverTest`,
   `StandardBusinessDocumentGeneratorTest`, `XmlDetectorTest` — utvid disse om
   de ikke dekker (de)serialisering etter namespace-bytte.
