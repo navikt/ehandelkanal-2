@@ -1,27 +1,14 @@
 package no.nav.ehandel.kanal
 
-import com.natpryce.konfig.ConfigurationProperties
-import com.natpryce.konfig.ConfigurationProperties.Companion.systemProperties
-import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.intType
-import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import java.io.File
 import kotlin.text.removeSuffix
 
 private const val VAULT_APPLICATION_PROPERTIES_PATH = "/var/run/secrets/nais.io/vault/application.properties"
 
-val config = if (System.getenv("APP_PROFILE") == "remote") {
-    systemProperties() overriding
-        EnvironmentVariables() overriding
-        ConfigurationProperties.fromFile(File(VAULT_APPLICATION_PROPERTIES_PATH)) overriding
-        ConfigurationProperties.fromResource("application.properties")
-} else {
-    systemProperties() overriding
-        EnvironmentVariables() overriding
-        ConfigurationProperties.fromResource("application.properties")
-}
+val config = loadConfig(System.getenv("APP_PROFILE"), File(VAULT_APPLICATION_PROPERTIES_PATH))
 
 object AccessPointProps {
     data class Properties(val url: String)
