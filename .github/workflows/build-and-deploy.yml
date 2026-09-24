@@ -70,6 +70,17 @@ jobs:
           cache_from: type=gha  # Henter cached layers fra GitHub Actions cache for raskere bygg
           cache_to: type=gha,mode=max  # Lagrer alle layers til cache for fremtidige bygg
 
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # Stopper deploy hvis imaget mangler JDK_JAVA_OPTIONS, truststore, Java 21 eller Oslo-tidssone
+      - name: Smoke test image
+        env:
+          IMAGE: ${{ steps.docker.outputs.image }}
+        run: .github/smoke/smoke-test-image.sh "$IMAGE"
+
   deploy-dev:
     name: Deploy to NAIS dev
     needs: build
