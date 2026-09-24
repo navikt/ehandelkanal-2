@@ -85,6 +85,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | com.github.ben-manes.versions (plugin) | 0.64.0 | 0.51.0 (uendret) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | shadow-plugin | 8.1.1 | 7.1.2 (uendret, allerede siste 7.x-versjon) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | junit-vintage-engine | 6.1.3 | 5.11.4 (fra 5.10.2) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
+| logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -114,9 +115,10 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 - Kjør testene som logger (feilhåndteringsstier) etter hvert steg.
 
 **logstash-logback-encoder: 7.4 → 9.0**
-- Steg 1: 7.4 → siste 8.x
-- Steg 2: 8.x → 9.0
-- Sjekk encoder-konfigurasjon i `logback.xml`/kode for feltnavn-endringer.
+- Steg 1: 7.4 → 8.1 — **fullført**. Eneste breaking change i 8.0 gjelder
+  `logback-access` (ikke i bruk her). Ingen kodeendring nødvendig.
+- Steg 2: 8.1 → 9.0 — **utsatt**, se «Utsatt til senere». 9.0 migrerer til
+  Jackson 3 (`tools.jackson.*`), som er inkompatibelt med vår Jackson 2.19.4.
 
 **JAXB runtime: 2.4.0 → 4.0.9**
 - **Rødsone / kjernelogikk**: SBDH/XML-parsing er kjernen i meldingsflyten.
