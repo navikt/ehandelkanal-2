@@ -39,6 +39,15 @@ stegvise, verifiserbare oppdateringer med egne commits, gruppert etter risiko.
    - Når forutsetningen er oppfylt (f.eks. etter Kotlin-plugin- eller
      Gradle-oppgradering i Fase 3/4), samles de utsatte oppgraderingene i
      **Fase 5 — Oppfølging av utsatte oppgraderinger**.
+6. **Ett delsteg av gangen, med pause for bekreftelse mellom hvert.** Når en
+   dependency krysser flere mellomliggende major-versjoner (f.eks.
+   kotlin-logging 1.x → 2.x → 3.x), skal hvert delsteg gjøres, testes og
+   **committes/bekreftes av bruker før neste delsteg gjøres** — ikke flere
+   versjonshopp i samme fil-endring uten opphold imellom. Dette gir bruker
+   mulighet til å committe/pushe eller avbryte etter hvert delsteg, i tråd med
+   samme prinsipp som mellom ulike dependencies. Det holder ikke å bare
+   rapportere delstegene i samme svar; selve endringen i `build.gradle.kts`
+   skal stoppe ved delsteget og vente på bekreftelse før filen endres videre.
 
 ## Rekkefølge og faser
 
