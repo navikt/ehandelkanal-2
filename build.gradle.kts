@@ -131,6 +131,7 @@ tasks {
     }
     withType<Test> {
         useJUnitPlatform()
+        systemProperty("user.timezone", "Europe/Oslo")
         testLogging {
             events("passed", "skipped", "failed", "standardOut", "standardError")
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
