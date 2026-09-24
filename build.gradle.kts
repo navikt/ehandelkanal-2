@@ -26,11 +26,11 @@ val h2_version = "1.4.200"
 val postgres_version = "42.7.13"
 val exposed_version = "0.41.1"
 val result_version = "1.1.6"
-val wiremock_version = "2.35.1"
+val wiremock_version = "3.0.1"
 val mockk_version = "1.13.12"
 val kluent_version = "1.73"
 val junit_version = "4.13.2"
-val junit_vintage_version = "5.10.2"
+val junit_vintage_version = "5.11.4"
 
 plugins {
     application
@@ -112,7 +112,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jodatime:$exposed_version")
     testImplementation("org.apache.camel:camel-test:$camel_version")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:$wiremock_version")
+    testImplementation("org.wiremock:wiremock:$wiremock_version")
     testImplementation("io.mockk:mockk:$mockk_version")
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
