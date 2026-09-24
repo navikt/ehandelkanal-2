@@ -11,8 +11,8 @@ val konfig_version = "1.6.10.0"
 val difi_commons_sbdh_version = "0.9.5"
 val difi_peppol_sbdh_version = "1.1.4"
 val kotlin_logging_version = "3.0.5"
-val jaxb_api_version = "2.4.0-b180830.0359"
-val jaxb_runtime_version = "2.4.0-b180830.0438"
+val jaxb_api_version = "2.3.3"
+val jaxb_runtime_version = "2.3.9"
 val ktor_version = "1.6.8"
 val logstash_version = "8.1"
 val logback_version = "1.6.3"
@@ -98,7 +98,7 @@ dependencies {
     implementation("io.prometheus:simpleclient_hotspot:$prometheus_version")
     implementation("com.sun.activation:javax.activation:$javax_activation_version")
     implementation("org.glassfish.jaxb:jaxb-runtime:$jaxb_runtime_version")
-    implementation("javax.xml.bind:jaxb-api:$jaxb_api_version")
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:$jaxb_api_version")
     implementation("no.difi.commons:commons-ubl21:$difi_commons_ubl_version")
     implementation("com.zaxxer:HikariCP:$hikari_version")
     implementation("com.bettercloud:vault-java-driver:$vault_driver_version")
