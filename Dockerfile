@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:22-jre-jammy
 
 COPY build/libs/*.jar app.jar
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
