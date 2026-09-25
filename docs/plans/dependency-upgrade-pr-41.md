@@ -152,6 +152,13 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 - Steg 2: 6.3.3 → 7.1.0 — **fullført**, ingen kodeendring. 7.0 la til
   `HikariCredentialsProvider`; når den ikke er satt, brukes samme
   credentials-sti som i 6.x (verifisert i kildekoden). 40/40 tester grønne.
+- **Etterarbeid:** rotasjonsblokken i `runRenewCredentialsTask` er trukket ut
+  til `HikariDataSource.rotateCredentials(...)` og dekket av
+  `CredentialRotationTest` (H2 med to brukere; gammel bruker ugyldiggjøres
+  etter rotasjon). Verifisert med mutasjonssjekk: uten
+  `softEvictConnections()` feiler testen. Token-fornyingen i Vault
+  (`lookupSelf`/`renewSelf`) er dekket av `VaultTokenRenewalTest` (WireMock).
+  Dette erstatter å vente ~24 t på første credential-rotasjon i dev.
 - Sjekk minimum-Java-krav per major (nyere HikariCP kan kreve nyere JDK-baseline —
   vi er på JDK 21 så bør være greit, men bekreft).
 
