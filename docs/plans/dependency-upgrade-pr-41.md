@@ -194,6 +194,13 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   Oppgradering simulert: schema-historikk laget med 7.15.0 validerer med
   8.5.13 (checksummer uendret, 0 pending). PostgreSQL-stien (`initRemote`)
   kan ikke testes lokalt — verifiseres ved deploy til dev. 42/42 tester grønne.
+- Steg 8 → 9 (8.5.13 → 9.22.3) — **fullført, med kodeendring**. Flyway 9
+  endret standard for `cleanDisabled` til `true`, slik at
+  `cleanOnValidationError(true)` i `Database.initLocal` (kun lokal H2-profil)
+  kastet `FlywayException` i stedet for å rense og migrere på nytt. Løst med
+  `cleanDisabled(false)` i `initLocal`; `initRemote` bruker ikke clean og
+  får nå en tryggere standard. Ny `DatabaseInitLocalTest`: rød uten fiks,
+  grønn med. Schema-historikk fra 7.15.0 validerer med 9.22.3. 43/43 grønne.
 
 **h2database: 1.4.200 → 2.5.250**
 - **Rødsone / testinfrastruktur**: H2 2.x har strengere SQL-kompatibilitetsmodus

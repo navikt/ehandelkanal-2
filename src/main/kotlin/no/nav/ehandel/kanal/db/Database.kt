@@ -45,6 +45,7 @@ object Database {
         Flyway.configure().run {
             dataSource(DatabaseProps.url, DatabaseProps.username, DatabaseProps.password)
             locations("classpath:db/migration/common", "classpath:db/migration/h2")
+            cleanDisabled(false)
             cleanOnValidationError(true)
             load().migrate()
         }
