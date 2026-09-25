@@ -163,7 +163,16 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   `createVaultClient(...)` i `Vault.kt`. Ny `VaultClientTest` (WireMock)
   verifiserer URL og token-header: grønn på 3.1.0, rød på 4.1.0 uten fiks,
   grønn med fiks. 41/41 tester grønne.
-- Steg 2: 4.x → 5.1.0 (5.0 endrer retry-oppførsel: ingen retry på 4xx)
+- Steg 2: 4.1.0 → 5.1.0 — **fullført, med kodeendring**. 5.0 endret
+  `Logical.read()` til å returnere 4xx-svar i stedet for å kaste
+  `VaultException`. Uten tiltak ville en 403 ført til
+  `IllegalStateException("Username is not set…")` og 403-loggen i
+  `Database.getNewCredentials` ville aldri slått til. Løst med
+  `Vault.readSecret(path)` som kaster `VaultException(status)` ved ikke-2xx.
+  `Auth` (lookupSelf/renewSelf) kaster fortsatt ved ikke-200, uendret.
+  Retry-endringen i 5.0 påvirker oss ikke (vi bruker ikke `withRetries`,
+  standard er 0). Ny 403-test i `VaultClientTest`: rød uten fiks, grønn med.
+  42/42 tester grønne.
 - **Rødsone**: dette er secrets-håndtering. Sjekk endringer i
   autentiseringsmetoder/timeout-/retry-oppførsel manuelt, ikke bare bump.
 

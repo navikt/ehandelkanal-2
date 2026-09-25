@@ -4,6 +4,7 @@ import com.bettercloud.vault.SslConfig
 import com.bettercloud.vault.Vault
 import com.bettercloud.vault.VaultConfig
 import com.bettercloud.vault.VaultException
+import com.bettercloud.vault.response.LogicalResponse
 import java.io.File
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
@@ -21,6 +22,15 @@ internal fun createVaultClient(address: String, token: String): Vault = Vault(
         .build(),
     1
 )
+
+internal fun Vault.readSecret(path: String): LogicalResponse {
+    val response = logical().read(path)
+    val status = response.restResponse.status
+    if (status !in 200..299) {
+        throw VaultException("Vault responded with HTTP status code: $status", status)
+    }
+    return response
+}
 
 object Vault {
     private const val MIN_REFRESH_MARGIN = 600_000L // 10 minutes
