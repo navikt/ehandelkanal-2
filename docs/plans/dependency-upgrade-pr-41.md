@@ -187,6 +187,13 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   defaults kan ha endret seg.
 - Oppdater `flyway { locations = ... }`-blokken i `build.gradle.kts` om syntaks
   har endret seg mellom versjoner.
+- **Forutsetning**: prod/dev kjører PostgreSQL 17.10 (bekreftet fra
+  oppstartslogg i dev). Flyway 8 Community krever PG ≥10.
+- Steg 7 → 8 (7.15.0 → 8.5.13, core + Gradle-plugin) — **fullført**, ingen
+  kodeendring. H2-migreringene dekkes av `InboundIT` (`Database.initLocal`).
+  Oppgradering simulert: schema-historikk laget med 7.15.0 validerer med
+  8.5.13 (checksummer uendret, 0 pending). PostgreSQL-stien (`initRemote`)
+  kan ikke testes lokalt — verifiseres ved deploy til dev. 42/42 tester grønne.
 
 **h2database: 1.4.200 → 2.5.250**
 - **Rødsone / testinfrastruktur**: H2 2.x har strengere SQL-kompatibilitetsmodus
