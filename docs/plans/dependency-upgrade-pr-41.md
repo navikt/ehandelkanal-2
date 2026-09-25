@@ -39,6 +39,15 @@ stegvise, verifiserbare oppdateringer med egne commits, gruppert etter risiko.
    - Når forutsetningen er oppfylt (f.eks. etter Kotlin-plugin- eller
      Gradle-oppgradering i Fase 3/4), samles de utsatte oppgraderingene i
      **Fase 5 — Oppfølging av utsatte oppgraderinger**.
+6. **Ett delsteg av gangen, med pause for bekreftelse mellom hvert.** Når en
+   dependency krysser flere mellomliggende major-versjoner (f.eks.
+   kotlin-logging 1.x → 2.x → 3.x), skal hvert delsteg gjøres, testes og
+   **committes/bekreftes av bruker før neste delsteg gjøres** — ikke flere
+   versjonshopp i samme fil-endring uten opphold imellom. Dette gir bruker
+   mulighet til å committe/pushe eller avbryte etter hvert delsteg, i tråd med
+   samme prinsipp som mellom ulike dependencies. Det holder ikke å bare
+   rapportere delstegene i samme svar; selve endringen i `build.gradle.kts`
+   skal stoppe ved delsteget og vente på bekreftelse før filen endres videre.
 
 ## Rekkefølge og faser
 
@@ -76,6 +85,8 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | com.github.ben-manes.versions (plugin) | 0.64.0 | 0.51.0 (uendret) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | shadow-plugin | 8.1.1 | 7.1.2 (uendret, allerede siste 7.x-versjon) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | junit-vintage-engine | 6.1.3 | 5.11.4 (fra 5.10.2) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
+| logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
+| jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -105,30 +116,63 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 - Kjør testene som logger (feilhåndteringsstier) etter hvert steg.
 
 **logstash-logback-encoder: 7.4 → 9.0**
-- Steg 1: 7.4 → siste 8.x
-- Steg 2: 8.x → 9.0
-- Sjekk encoder-konfigurasjon i `logback.xml`/kode for feltnavn-endringer.
+- Steg 1: 7.4 → 8.1 — **fullført**. Eneste breaking change i 8.0 gjelder
+  `logback-access` (ikke i bruk her). Ingen kodeendring nødvendig.
+- Steg 2: 8.1 → 9.0 — **utsatt**, se «Utsatt til senere». 9.0 migrerer til
+  Jackson 3 (`tools.jackson.*`), som er inkompatibelt med vår Jackson 2.19.4.
 
 **JAXB runtime: 2.4.0 → 4.0.9**
 - **Rødsone / kjernelogikk**: SBDH/XML-parsing er kjernen i meldingsflyten.
-- Steg 1: 2.x → siste 3.0.x (jaxb-runtime 3.0 = siste `javax.xml.bind`-generasjon)
-- Steg 2: 3.0.x → 4.0.x — dette er **jakarta-navnerom-migrering**
+- **Korrigert under gjennomføring**: navnerom-migreringen skjer allerede ved
+  **3.0.x**, ikke ved 4.0 som først antatt. Verifisert direkte i JAR-innhold:
+  `jakarta.xml.bind-api:2.3.3` → pakke fortsatt `javax.xml.bind`;
+  `jakarta.xml.bind-api:3.0.1` → pakke byttet til `jakarta.xml.bind`.
+- Steg 1: `jaxb-runtime` 2.4.0-beta → **2.3.9** (siste stabile `javax.xml.bind`-
+  generasjon), `jaxb-api`-avhengigheten byttet fra `javax.xml.bind:jaxb-api`
+  til `jakarta.xml.bind:jakarta.xml.bind-api:2.3.3` (kun gruppe-/artefakt-
+  navnebytte, pakkenavn uendret) — **fullført**, ingen kodeendring nødvendig,
+  alle 40 tester grønne.
+- Steg 2: 2.3.9 → 3.0.2/4.0.x — dette er **jakarta-navnerom-migreringen**
   (`javax.xml.bind.*` → `jakarta.xml.bind.*`). Krever endring i importer i
-  koden og i genererte SBDH/UBL-klasser, samt bytte av `jaxb-api`-avhengigheten
-  til jakarta-varianten. Dette er den mest risikable enkeltoppgraderingen i PR-en.
+  `AccessPointClient.kt`, `InboundDataExtractor.kt`,
+  `StandardBusinessDocumentGenerator.kt` og evt. genererte SBDH/UBL-klasser.
+  Dette er den mest risikable enkeltoppgraderingen i PR-en.
+  **Utsatt**, se «Utsatt til senere»: difi-bibliotekene vi er avhengige av
+  finnes bare i `javax.xml.bind`-varianter.
 - Verifiser med `InboundSbdhMetaDataExtractorTest`, `InboundSbdhRemoverTest`,
   `StandardBusinessDocumentGeneratorTest`, `XmlDetectorTest` — utvid disse om
   de ikke dekker (de)serialisering etter namespace-bytte.
 
 **HikariCP: 5.1.0 → 7.1.0**
-- Steg 1: 5.x → siste 6.x
-- Steg 2: 6.x → 7.1.0
+- Steg 1: 5.1.0 → 6.3.3 — **fullført**, ingen kodeendring. 6.0 innførte
+  atomisk credentials-håndtering (#2189); verifisert i kildekoden at
+  `hikariConfigMXBean.setUsername/setPassword` (Vault-rotasjon i
+  `Database.runRenewCredentialsTask`) fortsatt oppdaterer credentials som
+  leses ved hver ny tilkobling. 40/40 tester grønne.
+- Steg 2: 6.3.3 → 7.1.0 — **fullført**, ingen kodeendring. 7.0 la til
+  `HikariCredentialsProvider`; når den ikke er satt, brukes samme
+  credentials-sti som i 6.x (verifisert i kildekoden). 40/40 tester grønne.
 - Sjekk minimum-Java-krav per major (nyere HikariCP kan kreve nyere JDK-baseline —
   vi er på JDK 21 så bør være greit, men bekreft).
 
 **vault-java-driver: 3.1.0 → 5.1.0**
-- Steg 1: 3.x → 4.x
-- Steg 2: 4.x → 5.1.0
+- Steg 1: 3.1.0 → 4.1.0 — **fullført, med kodeendring**. 4.0 antar KV v2
+  som standard og skriver om alle `logical()`-stier (`<mount>/creds/<role>`
+  → `<mount>/data/creds/<role>`), noe som ville knekt henting av
+  DB-credentials i prod. Løst med `Vault(config, 1)` i ny
+  `createVaultClient(...)` i `Vault.kt`. Ny `VaultClientTest` (WireMock)
+  verifiserer URL og token-header: grønn på 3.1.0, rød på 4.1.0 uten fiks,
+  grønn med fiks. 41/41 tester grønne.
+- Steg 2: 4.1.0 → 5.1.0 — **fullført, med kodeendring**. 5.0 endret
+  `Logical.read()` til å returnere 4xx-svar i stedet for å kaste
+  `VaultException`. Uten tiltak ville en 403 ført til
+  `IllegalStateException("Username is not set…")` og 403-loggen i
+  `Database.getNewCredentials` ville aldri slått til. Løst med
+  `Vault.readSecret(path)` som kaster `VaultException(status)` ved ikke-2xx.
+  `Auth` (lookupSelf/renewSelf) kaster fortsatt ved ikke-200, uendret.
+  Retry-endringen i 5.0 påvirker oss ikke (vi bruker ikke `withRetries`,
+  standard er 0). Ny 403-test i `VaultClientTest`: rød uten fiks, grønn med.
+  42/42 tester grønne.
 - **Rødsone**: dette er secrets-håndtering. Sjekk endringer i
   autentiseringsmetoder/timeout-/retry-oppførsel manuelt, ikke bare bump.
 

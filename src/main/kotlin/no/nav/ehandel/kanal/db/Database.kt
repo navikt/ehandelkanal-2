@@ -103,7 +103,7 @@ object Database {
         val path = "$mountPath/creds/$databaseName-$role"
         logger.debug("Getting database credentials for path '$path'")
         try {
-            val response = Vault.client.logical().read(path)
+            val response = Vault.client.readSecret(path)
             val username = checkNotNull(response.data["username"]) { "Username is not set in response from Vault" }
             val password = checkNotNull(response.data["password"]) { "Password is not set in response from Vault" }
             logger.debug("Got new credentials (username=$username, leaseDuration=${response.leaseDuration})")
