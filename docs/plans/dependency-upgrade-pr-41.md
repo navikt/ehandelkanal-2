@@ -201,6 +201,24 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   `cleanDisabled(false)` i `initLocal`; `initRemote` bruker ikke clean og
   får nå en tryggere standard. Ny `DatabaseInitLocalTest`: rød uten fiks,
   grønn med. Schema-historikk fra 7.15.0 validerer med 9.22.3. 43/43 grønne.
+- Steg 9 → 10 (9.22.3 → 10.22.0) — **fullført, med bygg-endringer**.
+  - PostgreSQL-støtte er skilt ut i egen modul: lagt til
+    `runtimeOnly("org.flywaydb:flyway-database-postgresql")`. Uten den feiler
+    `initRemote` med «No database found to handle jdbc:postgresql». H2 er
+    fortsatt i core. Ny `FlywayDatabaseSupportTest` (bruker internt API
+    `DatabaseTypeRegister`, må trolig justeres ved senere Flyway-hopp) —
+    rød uten modulen, grønn med.
+  - Flyway 10 finner databasemoduler via `ServiceLoader`. Uten
+    `mergeServiceFiles()` i shadowJar overskrev PG-modulens
+    `META-INF/services/org.flywaydb.core.extensibility.Plugin` core sin
+    (H2 m.fl. forsvant fra fat-JAR). Lagt til `mergeServiceFiles()`.
+    Sideeffekter gjennomgått: JDBC-drivere (PG + H2), Jackson-moduler (ikke
+    auto-registrert hos oss), JAXB (samme impl), Camel `TypeConverter`
+    (`org.apache.camel.core` er en dummy-markør som filtreres bort) — ingen
+    endret oppførsel.
+  - `flyway*`-Gradle-tasks (kun manuell bruk) vil trenge PG-modulen på
+    buildscript-classpath om de skal brukes mot PostgreSQL.
+  - 45/45 tester grønne.
 
 **h2database: 1.4.200 → 2.5.250**
 - **Rødsone / testinfrastruktur**: H2 2.x har strengere SQL-kompatibilitetsmodus
