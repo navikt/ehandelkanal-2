@@ -149,7 +149,9 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   `hikariConfigMXBean.setUsername/setPassword` (Vault-rotasjon i
   `Database.runRenewCredentialsTask`) fortsatt oppdaterer credentials som
   leses ved hver ny tilkobling. 40/40 tester grønne.
-- Steg 2: 6.x → 7.1.0
+- Steg 2: 6.3.3 → 7.1.0 — **fullført**, ingen kodeendring. 7.0 la til
+  `HikariCredentialsProvider`; når den ikke er satt, brukes samme
+  credentials-sti som i 6.x (verifisert i kildekoden). 40/40 tester grønne.
 - Sjekk minimum-Java-krav per major (nyere HikariCP kan kreve nyere JDK-baseline —
   vi er på JDK 21 så bør være greit, men bekreft).
 
