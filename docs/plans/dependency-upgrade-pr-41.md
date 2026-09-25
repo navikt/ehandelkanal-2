@@ -240,6 +240,10 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   `DatabaseInitLocalTest` utvidet med test for at pending migreringer ikke
   sletter data. Schema-historikk fra 7.15.0 validerer med 11.20.3; begge
   database-typer er med i fat-JAR. 46/46 tester grønne.
+- Steg 11 → 12 (11.20.3 → 12.11.0) — **fullført**, ingen kodeendring.
+  Java 17-bytekode (vi kjører 21), H2 fortsatt i core, PG-støtte uendret
+  (PG 17 innenfor støttet område). Schema-historikk fra 7.15.0 validerer med
+  12.11.0; begge database-typer er med i fat-JAR. 46/46 tester grønne.
 
 **h2database: 1.4.200 → 2.5.250**
 - **Rødsone / testinfrastruktur**: H2 2.x har strengere SQL-kompatibilitetsmodus
