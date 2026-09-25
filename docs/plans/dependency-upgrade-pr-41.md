@@ -244,6 +244,19 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   Java 17-bytekode (vi kjører 21), H2 fortsatt i core, PG-støtte uendret
   (PG 17 innenfor støttet område). Schema-historikk fra 7.15.0 validerer med
   12.11.0; begge database-typer er med i fat-JAR. 46/46 tester grønne.
+- Steg 12 → 13 (12.11.0 → 13.8.0, ikke 13.7.0 som først planlagt) —
+  **fullført**, ingen kodeendring. Samme API og DB-støtte som 12.
+  - `flyway-core` 13 drar inn `jackson-annotations:2.22` (resten av Jackson
+    er 2.19.4). Fra 2.20 versjoneres annotations uten patch og er
+    bakoverkompatible med eldre databind, så kombinasjonen er støttet.
+    Justeres naturlig når Jackson oppgraderes i Fase 5. Ingen Jackson 3
+    (`tools.jackson`) på classpath.
+  - CockroachDB er skilt ut i `flyway-database-cockroachdb`, som dras inn
+    transitivt av PG-modulen. Ingen endring nødvendig.
+  - Schema-historikk fra 7.15.0 validerer med 13.8.0; begge database-typer
+    er med i fat-JAR. 46/46 tester grønne.
+  - **Flyway-oppgraderingen er ferdig.** Deploy til dev og verifiser
+    `initRemote` mot PostgreSQL før neste dependency.
 
 **h2database: 1.4.200 → 2.5.250**
 - **Rødsone / testinfrastruktur**: H2 2.x har strengere SQL-kompatibilitetsmodus
