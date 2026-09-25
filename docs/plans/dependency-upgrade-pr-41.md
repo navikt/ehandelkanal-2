@@ -187,6 +187,76 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   defaults kan ha endret seg.
 - Oppdater `flyway { locations = ... }`-blokken i `build.gradle.kts` om syntaks
   har endret seg mellom versjoner.
+- **Forutsetning**: prod/dev kjører PostgreSQL 17.10 (bekreftet fra
+  oppstartslogg i dev). Flyway 8 Community krever PG ≥10.
+- Steg 7 → 8 (7.15.0 → 8.5.13, core + Gradle-plugin) — **fullført**, ingen
+  kodeendring. H2-migreringene dekkes av `InboundIT` (`Database.initLocal`).
+  Oppgradering simulert: schema-historikk laget med 7.15.0 validerer med
+  8.5.13 (checksummer uendret, 0 pending). PostgreSQL-stien (`initRemote`)
+  kan ikke testes lokalt — verifiseres ved deploy til dev. 42/42 tester grønne.
+- Steg 8 → 9 (8.5.13 → 9.22.3) — **fullført, med kodeendring**. Flyway 9
+  endret standard for `cleanDisabled` til `true`, slik at
+  `cleanOnValidationError(true)` i `Database.initLocal` (kun lokal H2-profil)
+  kastet `FlywayException` i stedet for å rense og migrere på nytt. Løst med
+  `cleanDisabled(false)` i `initLocal`; `initRemote` bruker ikke clean og
+  får nå en tryggere standard. Ny `DatabaseInitLocalTest`: rød uten fiks,
+  grønn med. Schema-historikk fra 7.15.0 validerer med 9.22.3. 43/43 grønne.
+- Steg 9 → 10 (9.22.3 → 10.22.0) — **fullført, med bygg-endringer**.
+  - PostgreSQL-støtte er skilt ut i egen modul: lagt til
+    `runtimeOnly("org.flywaydb:flyway-database-postgresql")`. Uten den feiler
+    `initRemote` med «No database found to handle jdbc:postgresql». H2 er
+    fortsatt i core. Ny `FlywayDatabaseSupportTest` (bruker internt API
+    `DatabaseTypeRegister`, må trolig justeres ved senere Flyway-hopp) —
+    rød uten modulen, grønn med.
+  - Flyway 10 finner databasemoduler via `ServiceLoader`. Uten
+    `mergeServiceFiles()` i shadowJar overskrev PG-modulens
+    `META-INF/services/org.flywaydb.core.extensibility.Plugin` core sin
+    (H2 m.fl. forsvant fra fat-JAR). Lagt til `mergeServiceFiles()`.
+    Sideeffekter gjennomgått: JDBC-drivere (PG + H2), Jackson-moduler (ikke
+    auto-registrert hos oss), JAXB (samme impl), Camel `TypeConverter`
+    (`org.apache.camel.core` er en dummy-markør som filtreres bort) — ingen
+    endret oppførsel.
+  - `flyway*`-Gradle-tasks (kun manuell bruk) vil trenge PG-modulen på
+    buildscript-classpath om de skal brukes mot PostgreSQL.
+  - 45/45 tester grønne.
+- Steg 10 → 11 (10.22.0 → 11.20.3) — **fullført, med kodeendring**.
+  `cleanOnValidationError` er fjernet i 11 (metoden finnes, men `migrate()`
+  kaster «cleanOnValidationError has been removed» om den er satt), så
+  `initLocal` feilet alltid. Erstattet med eksplisitt
+  `validateWithResult()` → `clean()` ved feil → `migrate()`. Kun lokal
+  profil; `initRemote` er uendret og bruker aldri clean.
+
+  `ignoreMigrationPatterns("*:pending", "*:future")` avgjør hva som regnes
+  som valideringsfeil:
+  - `*:pending` — migreringer som finnes i koden, men ikke er kjørt ennå.
+    Uten dette ville hver nye migrering gitt valideringsfeil og tømt den
+    lokale databasen, i stedet for å bare kjøre den nye migreringen.
+  - `*:future` — migreringer i databasen som koden ikke kjenner (f.eks.
+    etter bytte til en eldre branch). Dette er Flyways standard, men må
+    settes eksplisitt fordi vi overstyrer mønsterlisten.
+
+  Dermed tømmes databasen bare ved ekte avvik, som endret checksum på en
+  migrering som allerede er kjørt — tilsvarende den gamle oppførselen.
+  `DatabaseInitLocalTest` utvidet med test for at pending migreringer ikke
+  sletter data. Schema-historikk fra 7.15.0 validerer med 11.20.3; begge
+  database-typer er med i fat-JAR. 46/46 tester grønne.
+- Steg 11 → 12 (11.20.3 → 12.11.0) — **fullført**, ingen kodeendring.
+  Java 17-bytekode (vi kjører 21), H2 fortsatt i core, PG-støtte uendret
+  (PG 17 innenfor støttet område). Schema-historikk fra 7.15.0 validerer med
+  12.11.0; begge database-typer er med i fat-JAR. 46/46 tester grønne.
+- Steg 12 → 13 (12.11.0 → 13.8.0, ikke 13.7.0 som først planlagt) —
+  **fullført**, ingen kodeendring. Samme API og DB-støtte som 12.
+  - `flyway-core` 13 drar inn `jackson-annotations:2.22` (resten av Jackson
+    er 2.19.4). Fra 2.20 versjoneres annotations uten patch og er
+    bakoverkompatible med eldre databind, så kombinasjonen er støttet.
+    Justeres naturlig når Jackson oppgraderes i Fase 5. Ingen Jackson 3
+    (`tools.jackson`) på classpath.
+  - CockroachDB er skilt ut i `flyway-database-cockroachdb`, som dras inn
+    transitivt av PG-modulen. Ingen endring nødvendig.
+  - Schema-historikk fra 7.15.0 validerer med 13.8.0; begge database-typer
+    er med i fat-JAR. 46/46 tester grønne.
+  - **Flyway-oppgraderingen er ferdig.** Deploy til dev og verifiser
+    `initRemote` mot PostgreSQL før neste dependency.
 
 **h2database: 1.4.200 → 2.5.250**
 - **Rødsone / testinfrastruktur**: H2 2.x har strengere SQL-kompatibilitetsmodus

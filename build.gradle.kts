@@ -21,7 +21,7 @@ val javax_activation_version = "1.2.0"
 val difi_commons_ubl_version = "0.9.5"
 val hikari_version = "7.1.0"
 val vault_driver_version = "5.1.0"
-val flyway_version = "7.15.0"
+val flyway_version = "13.8.0"
 val h2_version = "1.4.200"
 val postgres_version = "42.7.13"
 val exposed_version = "0.41.1"
@@ -37,7 +37,7 @@ plugins {
     kotlin("jvm") version "1.9.24"
     //id("org.jmailen.kotlinter") version "5.2.0"
     id("com.github.ben-manes.versions") version "0.51.0"
-    id("org.flywaydb.flyway") version "7.15.0"
+    id("org.flywaydb.flyway") version "13.8.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -111,6 +111,9 @@ dependencies {
     implementation("com.michael-bull.kotlin-result:kotlin-result:$result_version")
     implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jodatime:$exposed_version")
+
+    runtimeOnly("org.flywaydb:flyway-database-postgresql:$flyway_version")
+
     testImplementation("org.apache.camel:camel-test:$camel_version")
     testImplementation("org.wiremock:wiremock:$wiremock_version")
     testImplementation("io.mockk:mockk:$mockk_version")
@@ -130,6 +133,7 @@ tasks {
     }
     withType<ShadowJar> {
         archiveClassifier.set("")
+        mergeServiceFiles()
     }
     withType<Test> {
         useJUnitPlatform()
