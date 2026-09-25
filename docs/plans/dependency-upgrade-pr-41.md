@@ -219,6 +219,27 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   - `flyway*`-Gradle-tasks (kun manuell bruk) vil trenge PG-modulen på
     buildscript-classpath om de skal brukes mot PostgreSQL.
   - 45/45 tester grønne.
+- Steg 10 → 11 (10.22.0 → 11.20.3) — **fullført, med kodeendring**.
+  `cleanOnValidationError` er fjernet i 11 (metoden finnes, men `migrate()`
+  kaster «cleanOnValidationError has been removed» om den er satt), så
+  `initLocal` feilet alltid. Erstattet med eksplisitt
+  `validateWithResult()` → `clean()` ved feil → `migrate()`. Kun lokal
+  profil; `initRemote` er uendret og bruker aldri clean.
+
+  `ignoreMigrationPatterns("*:pending", "*:future")` avgjør hva som regnes
+  som valideringsfeil:
+  - `*:pending` — migreringer som finnes i koden, men ikke er kjørt ennå.
+    Uten dette ville hver nye migrering gitt valideringsfeil og tømt den
+    lokale databasen, i stedet for å bare kjøre den nye migreringen.
+  - `*:future` — migreringer i databasen som koden ikke kjenner (f.eks.
+    etter bytte til en eldre branch). Dette er Flyways standard, men må
+    settes eksplisitt fordi vi overstyrer mønsterlisten.
+
+  Dermed tømmes databasen bare ved ekte avvik, som endret checksum på en
+  migrering som allerede er kjørt — tilsvarende den gamle oppførselen.
+  `DatabaseInitLocalTest` utvidet med test for at pending migreringer ikke
+  sletter data. Schema-historikk fra 7.15.0 validerer med 11.20.3; begge
+  database-typer er med i fat-JAR. 46/46 tester grønne.
 
 **h2database: 1.4.200 → 2.5.250**
 - **Rødsone / testinfrastruktur**: H2 2.x har strengere SQL-kompatibilitetsmodus

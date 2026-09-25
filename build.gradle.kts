@@ -21,7 +21,7 @@ val javax_activation_version = "1.2.0"
 val difi_commons_ubl_version = "0.9.5"
 val hikari_version = "7.1.0"
 val vault_driver_version = "5.1.0"
-val flyway_version = "10.22.0"
+val flyway_version = "11.20.3"
 val h2_version = "1.4.200"
 val postgres_version = "42.7.13"
 val exposed_version = "0.41.1"
@@ -37,7 +37,7 @@ plugins {
     kotlin("jvm") version "1.9.24"
     //id("org.jmailen.kotlinter") version "5.2.0"
     id("com.github.ben-manes.versions") version "0.51.0"
-    id("org.flywaydb.flyway") version "10.22.0"
+    id("org.flywaydb.flyway") version "11.20.3"
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 

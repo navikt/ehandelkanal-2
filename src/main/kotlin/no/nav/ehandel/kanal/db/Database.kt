@@ -46,8 +46,11 @@ object Database {
             dataSource(DatabaseProps.url, DatabaseProps.username, DatabaseProps.password)
             locations("classpath:db/migration/common", "classpath:db/migration/h2")
             cleanDisabled(false)
-            cleanOnValidationError(true)
-            load().migrate()
+            ignoreMigrationPatterns("*:pending", "*:future")
+            load()
+        }.run {
+            if (!validateWithResult().validationSuccessful) clean()
+            migrate()
         }
         Database.connect(HikariDataSource(HikariConfig().apply {
             jdbcUrl = DatabaseProps.url
