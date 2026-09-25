@@ -86,6 +86,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | shadow-plugin | 8.1.1 | 7.1.2 (uendret, allerede siste 7.x-versjon) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | junit-vintage-engine | 6.1.3 | 5.11.4 (fra 5.10.2) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
+| jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -136,12 +137,18 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   `AccessPointClient.kt`, `InboundDataExtractor.kt`,
   `StandardBusinessDocumentGenerator.kt` og evt. genererte SBDH/UBL-klasser.
   Dette er den mest risikable enkeltoppgraderingen i PR-en.
+  **Utsatt**, se «Utsatt til senere»: difi-bibliotekene vi er avhengige av
+  finnes bare i `javax.xml.bind`-varianter.
 - Verifiser med `InboundSbdhMetaDataExtractorTest`, `InboundSbdhRemoverTest`,
   `StandardBusinessDocumentGeneratorTest`, `XmlDetectorTest` — utvid disse om
   de ikke dekker (de)serialisering etter namespace-bytte.
 
 **HikariCP: 5.1.0 → 7.1.0**
-- Steg 1: 5.x → siste 6.x
+- Steg 1: 5.1.0 → 6.3.3 — **fullført**, ingen kodeendring. 6.0 innførte
+  atomisk credentials-håndtering (#2189); verifisert i kildekoden at
+  `hikariConfigMXBean.setUsername/setPassword` (Vault-rotasjon i
+  `Database.runRenewCredentialsTask`) fortsatt oppdaterer credentials som
+  leses ved hver ny tilkobling. 40/40 tester grønne.
 - Steg 2: 6.x → 7.1.0
 - Sjekk minimum-Java-krav per major (nyere HikariCP kan kreve nyere JDK-baseline —
   vi er på JDK 21 så bør være greit, men bekreft).
