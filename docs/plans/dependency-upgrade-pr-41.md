@@ -156,8 +156,14 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   vi er på JDK 21 så bør være greit, men bekreft).
 
 **vault-java-driver: 3.1.0 → 5.1.0**
-- Steg 1: 3.x → 4.x
-- Steg 2: 4.x → 5.1.0
+- Steg 1: 3.1.0 → 4.1.0 — **fullført, med kodeendring**. 4.0 antar KV v2
+  som standard og skriver om alle `logical()`-stier (`<mount>/creds/<role>`
+  → `<mount>/data/creds/<role>`), noe som ville knekt henting av
+  DB-credentials i prod. Løst med `Vault(config, 1)` i ny
+  `createVaultClient(...)` i `Vault.kt`. Ny `VaultClientTest` (WireMock)
+  verifiserer URL og token-header: grønn på 3.1.0, rød på 4.1.0 uten fiks,
+  grønn med fiks. 41/41 tester grønne.
+- Steg 2: 4.x → 5.1.0 (5.0 endrer retry-oppførsel: ingen retry på 4xx)
 - **Rødsone**: dette er secrets-håndtering. Sjekk endringer i
   autentiseringsmetoder/timeout-/retry-oppførsel manuelt, ikke bare bump.
 
