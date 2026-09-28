@@ -89,6 +89,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
 | exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | 0.53.0 (fra 0.41.1) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | kotlin-result | 2.3.1 | 2.0.1 (fra 1.1.6) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| camel-test (JUnit 4, `CamelTestSupport`) | camel-test-junit5 | camel-test 3.14.10 (deprecated) | `XmlDetectorTest` og `InboundSbdhRemoverTest` er JUnit 4-tester og kjøres av junit-vintage | Sammen med junit-vintage i Fase 4 (Camel 4 fjerner JUnit 4-støtten helt) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -390,8 +391,55 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
     `jaxb-runtime:2.3.9`. Det var slik også på 2.24/2.25. Kandidat for
     `exclude` i JAXB-oppgaven.
   - 58/58 tester grønne, ingen deprecation-advarsler.
-- Steg 3 (3.1.0 → 3.22.4): gjenstår. Bør trolig deles via LTS-versjonene
-  (f.eks. 3.14.x og 3.20.x) med upgrade-guidene for 3.x mellom hvert.
+- Steg 3 (3.1.0 → 3.22.4) er delt i to:
+  - Steg 3a: 3.1.0 → 3.14.10 (LTS).
+  - Steg 3b: 3.14.10 → 3.22.4.
+
+  Upgrade-guidene for 3.2–3.21 er gjennomgått. Relevante punkter for oss:
+  - 3.7: `AdviceWithRouteBuilder.adviceWith` er deprecated.
+  - 3.10: camel-jsonpath bruker Jackson som standard.
+  - 3.13: split av en `Map` splitter nå i entries.
+  - 3.17: camel-ftp bytter til JSch-forken `com.github.mwiede:jsch`.
+  - 3.18.3/3.20: jsonpath `unpackArray` er av som standard.
+  - 3.18: konvertering fra InputStream til `byte[]` lukker strømmen.
+- Steg 3a (3.1.0 → 3.14.10):
+  - Ny `InboxSplitHeadersTest`, grønn på 3.1.0 før bump. Den kjører
+    split (`$.meldinger[*]`) og header-uttrekk (msgNo/messageUUID) for 1,
+    2 og 0 meldinger. Den skal fange at ett enkelt element pakkes ut til
+    en `Map` og splittes i entries (3.13/3.20).
+  - `InboundIT` feilet 6 av 7 tester med `No bean could be found in the
+    registry for: accessPointClient`:
+    - Årsaken er at `DefaultRegistry.doStop()` lukker `SimpleRegistry`,
+      som tømmer alle bindinger.
+    - Testen stopper og starter den samme konteksten mellom hver test, så
+      bare første test fikk bønnen.
+    - Rettet ved å binde test-bønnene på nytt i `setUp()`
+      (`Registry.bindTestBeans()`).
+    - Prod påvirkes ikke, fordi konteksten der bare stoppes ved nedstenging.
+  - `AdviceWithRouteBuilder.adviceWith` → `AdviceWith.adviceWith`
+    (`InboundIT`).
+  - `CamelTestSupport` fra `camel-test` (JUnit 4) er deprecated og brukes i
+    `XmlDetectorTest` og `InboundSbdhRemoverTest`. Migrering til
+    `camel-test-junit5` er utsatt, se «Utsatt til senere».
+  - Transitivt:
+    - Spring 5.2.3 → 5.3.27.
+    - json-path 2.4.0 → 2.8.0.
+    - JMS er fortsatt `javax.jms`.
+  - **Rødsone – SFTP mot Ebasys:**
+    - JSch 0.1.55 er allerede byttet til `com.github.mwiede:jsch:0.2.1` i
+      3.14.10. Byttet er backportet fra 3.17.
+    - mwiede 0.2.x skrur av `ssh-rsa` (RSA med SHA-1) som standard.
+    - Ebasys-serveren har en RSA-vertsnøkkel. Hvis serveren bare støtter
+      `ssh-rsa`-signatur og ikke `rsa-sha2-256`/`rsa-sha2-512`, feiler
+      tilkoblingen.
+    - Da stopper FTP-testruten prosessen (`exitProcess(1)`) → crashloop.
+    - Camel 3.14.10 har `serverHostKeys`, `publicKeyAcceptedAlgorithms` og
+      `keyExchangeProtocols` på sftp-endepunktet, slik at `ssh-rsa` kan
+      skrus på igjen ved behov.
+    - Må verifiseres ved deploy til dev. Prod-serveren kan avvike fra dev.
+  - Fat-JAR: `TypeConverterLoader` er korrekt slått sammen fra fem JAR-er.
+  - 61/61 tester grønne. Ingen Camel-deprecations i main.
+- Steg 3b (3.14.10 → 3.22.4): gjenstår.
 
 **Kotlin-plugin (jvm): 1.9.24 → 2.4.20**
 - **Rødsone / verktøykjede**: Kotlin 2.0 introduserer K2-kompilatoren.
