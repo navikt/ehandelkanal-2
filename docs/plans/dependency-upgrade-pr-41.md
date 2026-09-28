@@ -265,13 +265,29 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   - **Flyway-oppgraderingen er ferdig.** Deploy til dev og verifiser
     `initRemote` mot PostgreSQL før neste dependency.
 
-**h2database: 1.4.200 → 2.5.250**
+**h2database: 1.4.200 → 2.5.252** (ikke 2.5.250 som først planlagt) — **fullført**, ingen kodeendring
 - **Rødsone / testinfrastruktur**: H2 2.x har strengere SQL-kompatibilitetsmodus
   (identifikatorer, reserverte ord, `MODE=`-innstillinger) — dette er testdatabasen,
   så alle DB-relaterte tester må kjøres grundig og eventuelt migreringsskript
   i `db/migration` justeres.
 - Ett steg er nok versjonsmessig (1.x → 2.x er én major), men testdekningen må
   utvides der testene i dag stoler på lempelig SQL-parsing.
+- Resultat: alle H2-migreringer (`common` + `h2/V1.3`) kjører på 2.5.252 i
+  `MODE=PostgreSQL`, og ingen skript måtte endres. `InboundIT` kjører
+  `Database.initLocal()` og `Report.insert` (tre inserts, `Entry successfully
+  inserted`). `DatabaseInitLocalTest` og `CredentialRotationTest` er grønne.
+  50/50 tester grønne.
+- H2 ligger i `implementation` og følger med i fat-JAR-en. Oppgraderingen
+  fjerner derfor også kjente sårbarheter i 1.4.200 (bl.a. CVE-2021-42392 og
+  CVE-2022-23221), selv om prod bare bruker PostgreSQL.
+- **Lokalt**: filformatet i H2 2.x er ikke kompatibelt med 1.4. Gamle
+  `./test.mv.db`/`./integrationtestdb.mv.db` må slettes før lokal kjøring
+  (filene er i `.gitignore`).
+
+**Etterarbeid (fra dev-logg etter Flyway 13)**
+- Flyway logger `initSql is deprecated` for `SET ROLE` i `initRemote`.
+  Virker fortsatt, men bør flyttes til en `afterConnect`-callback før
+  Flyway fjerner `initSql`.
 
 **exposed (core/dao/jdbc/java-time/jodatime): 0.41.1 → 1.5.0**
 - **Rødsone**: databasetilgangslag, kjernelogikk.
