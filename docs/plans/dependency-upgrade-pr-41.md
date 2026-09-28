@@ -87,6 +87,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | junit-vintage-engine | 6.1.3 | 5.11.4 (fra 5.10.2) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
+| exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | 0.53.0 (fra 0.41.1) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -296,6 +297,26 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   (f.eks. siste 0.5x før 1.0) og oppgrader stegvis dit før hopp til 1.5.0.
 - Alle DB-repository-tester må kjøres og eventuelt utvides for å dekke
   endret query-bygging.
+- Steg 1 (0.41.1 → 0.53.0) — **fullført**. 0.53.0 er siste versjon bygget
+  med Kotlin 1.9. Resten er **utsatt** til etter Kotlin 2.x (se «Utsatt til
+  senere»).
+  - Breaking changes 0.42–0.53 gjennomgått. Ingen treffer vår bruk (bare
+    `Table`, `insert`, `select`/`selectAll`, jodatime `date`, `transaction`,
+    `Database.connect`). Det som var nærmest: endret jodatime-formattering
+    for `date` (0.48) og bevaring av store/små bokstaver i
+    nøkkelord-identifikatorer (0.46). Ingen av kolonnene våre er nøkkelord.
+  - Ny `ReportTest` (H2 via `initLocal`) dekker lesestiene som ikke var
+    testet: `getAll` med og uten dato (inkludert kl. 23:59),
+    `getAllUniqueDaysWithEntries` (distinkt, nyeste først),
+    `getAllAsCsvFile` (eksakt CSV) og lagring av `amount`. Grønn på 0.41.1
+    før bump, grønn på 0.53.0 etter.
+  - Deprecated DSL migrert for å forberede 1.0: `select { }` →
+    `selectAll().where { }` og `slice(col).selectAll()` → `select(col)`.
+  - 55/55 tester grønne. `InboundIT` kjører fortsatt `Report.insert` (tre
+    inserts).
+- Steg 2 (0.53.0 → 1.5.0) — **utsatt** til Kotlin-plugin 2.x. Da kreves
+  pakke-rename til `org.jetbrains.exposed.v1.*` og at `transaction` flyttes
+  til `exposed-jdbc`.
 
 **kotlin-result: 1.1.6 → 2.3.1**
 - Steg 1: 1.x → siste 1.1.x/2.0-forhåndsversjon om relevant
