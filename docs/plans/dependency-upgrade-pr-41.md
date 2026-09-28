@@ -347,6 +347,27 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 - Alle integrasjonstester (`AccessPointClientTest`, `AccessPointInboxSplitTest`,
   `RestArchiverTest` m.fl.) må kjøres etter hvert steg — disse tester trolig
   ruting/prosessering direkte.
+- Steg 1 (2.24.2 → 2.25.4, siste 2.x) — **fullført**, ingen kodeendring.
+  Transitive endringer: bare Spring 5.1.6 → 5.1.20 (patch, via `camel-jms`
+  og `camel-spring`). JSch og json-path er uendret. Ingen nye
+  deprecation-advarsler. 55/55 tester grønne.
+- Kartlagt før steg 2 (2.25 → 3.0), det som må endres:
+  - `SimpleRegistry` (`EhandelBootstrap`, `InboundIT`): flyttet til
+    `org.apache.camel.support`, og `put` blir `bind`.
+  - `JndiRegistry` + `createRegistry()` (`XmlDetectorTest`,
+    `InboundSbdhRemoverTest`): fjernet, erstattes av `bindToRegistry`.
+  - `DefaultExchange` (`InboundSbdhMetaDataExtractorTest`): flyttet til
+    `org.apache.camel.support`.
+  - `routeDefinitions[0].adviceWith(...)` (`InboundIT`): erstattes av
+    `AdviceWithRouteBuilder.adviceWith(context, routeId) { }`.
+  - `@Produce(uri = ...)`/`@EndpointInject(uri = ...)`: `uri` er fjernet,
+    bruk `value`.
+  - `consumer.bridgeErrorHandler=true` på FTP-testruten: prefikset
+    `consumer.` er fjernet i 3.0, så det blir `bridgeErrorHandler=true`.
+    Camel 3 avviser ukjente endepunkt-parametere ved oppstart, så dette må
+    fanges av en test.
+  - `passiveMode` på `sftp`-endepunktene: må verifiseres at den fortsatt
+    aksepteres i 3.x. I 2.x godtas den, men har ingen effekt for SFTP.
 
 **Kotlin-plugin (jvm): 1.9.24 → 2.4.20**
 - **Rødsone / verktøykjede**: Kotlin 2.0 introduserer K2-kompilatoren.

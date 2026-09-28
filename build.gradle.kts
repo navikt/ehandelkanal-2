@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "no.nav.integrasjon"
 version = "1.0.52-SNAPSHOT"
 
-val camel_version = "2.24.2"
+val camel_version = "2.25.4"
 val ibm_mq_version = "10.0.0.5"
 val jackson_version = "2.19.4"
 val konfig_version = "1.6.10.0"
