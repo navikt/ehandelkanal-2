@@ -27,7 +27,6 @@ import no.nav.ehandel.kanal.camel.processors.AccessPointClient
 import no.nav.ehandel.kanal.camel.processors.InboundDataExtractor
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
 import no.nav.ehandel.kanal.services.log.InboundLogger
-import org.apache.camel.impl.SimpleRegistry
 import no.nav.ehandel.kanal.camel.routes.ACCESS_POINT_CLIENT
 import no.nav.ehandel.kanal.camel.routes.ACCESS_POINT_READ
 import no.nav.ehandel.kanal.camel.routes.INBOUND_EHF
@@ -41,6 +40,7 @@ import no.nav.ehandel.kanal.services.legalarchive.LEGAL_ARCHIVE_CAMEL_HEADER
 import org.apache.camel.builder.AdviceWithRouteBuilder
 import org.apache.camel.builder.NotifyBuilder
 import org.apache.camel.component.mock.MockEndpoint
+import org.apache.camel.support.DefaultRegistry
 import org.h2.tools.DeleteDbFiles
 import org.junit.After
 import org.junit.Before
@@ -60,23 +60,21 @@ private val mockEntraIdTokenProvider: EntraIdTokenProvider = mockk {
 }
 
 // Create a test registry with mocked token provider
-private fun testRegistry() = SimpleRegistry().apply {
+private fun testRegistry() = DefaultRegistry().apply {
     val accessPointClient = AccessPointClient(mockEntraIdTokenProvider)
-    put("accessPointClient", accessPointClient)
-    put("inboundLogger", InboundLogger)
-    put("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
-    put("inboundDataExtractor", InboundDataExtractor)
-    put("mqConnectionFactory", mqConnectionFactory)
+    bind("accessPointClient", accessPointClient)
+    bind("inboundLogger", InboundLogger)
+    bind("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
+    bind("inboundDataExtractor", InboundDataExtractor)
+    bind("mqConnectionFactory", mqConnectionFactory)
 }
 
 private val server: ApplicationEngine = mockk(relaxed = true)
 private val camelContext = configureCamelContext(testRegistry()).apply {
-    routeDefinitions[0].adviceWith(this, object : AdviceWithRouteBuilder() {
-        override fun configure() {
-            mockEndpointsAndSkip("^(jms|ftp).*")
-            mockEndpoints("^(?!(jms|ftp)).*")
-        }
-    })
+    AdviceWithRouteBuilder.adviceWith(this, routeDefinitions[0].id) {
+        it.mockEndpointsAndSkip("^(jms|ftp).*")
+        it.mockEndpoints("^(?!(jms|ftp)).*")
+    }
     removeRouteDefinition(getRouteDefinition(INBOUND_FTP_TEST_ROUTE))
 }
 

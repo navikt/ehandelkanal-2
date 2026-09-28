@@ -344,6 +344,7 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   (se migreringsguide). Sjekk at `camel-jaxb`-bruk, JMS- og FTP-endepunkter,
   og eventuelle Spring-koordinater ikke er berørt.
 - Stegvis: 2.24 → siste 2.x → 3.0.x (mest brytende) → siste 3.22.x.
+  (3.0.x ble byttet ut med 3.1.0, se steg 2.)
 - Alle integrasjonstester (`AccessPointClientTest`, `AccessPointInboxSplitTest`,
   `RestArchiverTest` m.fl.) må kjøres etter hvert steg — disse tester trolig
   ruting/prosessering direkte.
@@ -351,23 +352,46 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   Transitive endringer: bare Spring 5.1.6 → 5.1.20 (patch, via `camel-jms`
   og `camel-spring`). JSch og json-path er uendret. Ingen nye
   deprecation-advarsler. 55/55 tester grønne.
-- Kartlagt før steg 2 (2.25 → 3.0), det som må endres:
-  - `SimpleRegistry` (`EhandelBootstrap`, `InboundIT`): flyttet til
-    `org.apache.camel.support`, og `put` blir `bind`.
-  - `JndiRegistry` + `createRegistry()` (`XmlDetectorTest`,
-    `InboundSbdhRemoverTest`): fjernet, erstattes av `bindToRegistry`.
-  - `DefaultExchange` (`InboundSbdhMetaDataExtractorTest`): flyttet til
-    `org.apache.camel.support`.
-  - `routeDefinitions[0].adviceWith(...)` (`InboundIT`): erstattes av
-    `AdviceWithRouteBuilder.adviceWith(context, routeId) { }`.
-  - `@Produce(uri = ...)`/`@EndpointInject(uri = ...)`: `uri` er fjernet,
-    bruk `value`.
-  - `consumer.bridgeErrorHandler=true` på FTP-testruten: prefikset
-    `consumer.` er fjernet i 3.0, så det blir `bridgeErrorHandler=true`.
-    Camel 3 avviser ukjente endepunkt-parametere ved oppstart, så dette må
-    fanges av en test.
-  - `passiveMode` på `sftp`-endepunktene: må verifiseres at den fortsatt
-    aksepteres i 3.x. I 2.x godtas den, men har ingen effekt for SFTP.
+- Steg 2 (2.25.4 → 3.1.0, ikke 3.0.x som først planlagt) — **fullført**.
+  - Hvorfor 3.1.0: 3.0.x la til overloaden `process(Supplier<Processor>)`,
+    som gjorde alle `.process { }`-lambdaene våre tvetydige i Kotlin.
+    Overloaden ble fjernet igjen i 3.1.0. Å gå via 3.0.x hadde betydd å
+    skrive om ca. 20 lambdaer og så skrive dem tilbake.
+  - Ny `EndpointUriTest`, skrevet og grønn på 2.25.4 før bump. Den løser
+    opp de ekte Ebasys-URI-ene med både `ftp://` og `sftp://` (prod bruker
+    SFTP, testene FTP) og oppretter consumer for FTP-testruten. Den dekker
+    også MQ-URI-en. En mutasjonssjekk med en ukjent parameter gjør testen
+    rød. For å gjøre dette mulig er URI-verdiene i `Inbound.kt` endret fra
+    `private` til `internal`, og FTP-test-URI-en er trukket ut i
+    `ebasysConnectionTest`.
+  - På 3.1.0 feilet testen med `Unknown parameters=[{consumer.bridgeErrorHandler=true}]`.
+    I prod ville Camel-konteksten ikke startet. Rettet til
+    `bridgeErrorHandler=true`. `passiveMode` på `sftp` godtas fortsatt.
+  - Kodeendringer:
+    - `SimpleRegistry.put` → `org.apache.camel.support.DefaultRegistry.bind`
+      (`EhandelBootstrap`, `InboundIT`, `EndpointUriTest`).
+    - Ubrukte importer av `org.apache.camel.language.XPath`/`NamespacePrefix`
+      fjernet fra `AccessPointClient` (flyttet til `camel-xpath` i 3.x).
+    - `routeDefinitions[0].adviceWith(...)` →
+      `AdviceWithRouteBuilder.adviceWith(context, routeId) { }` (`InboundIT`).
+    - `DefaultExchange` → `org.apache.camel.support.DefaultExchange`.
+    - `JndiRegistry`/`createRegistry()` → `bindToRegistry(registry)`, og
+      `@Produce(uri = ...)`/`@EndpointInject(uri = ...)` → `value`
+      (`XmlDetectorTest`, `InboundSbdhRemoverTest`). Begge var deprecated
+      i 3.1.
+  - Transitivt: Spring 5.1.20 → 5.2.3 (minor). JSch 0.1.55 og json-path
+    2.4.0 er uendret. JMS er fortsatt `javax.jms`, så IBM MQ påvirkes ikke.
+  - Fat-JAR: Camel 3 finner type-convertere via
+    `META-INF/services/org/apache/camel/TypeConverterLoader`, som finnes i
+    fem JAR-er. `mergeServiceFiles()` (fra Flyway-steget) slår dem korrekt
+    sammen. Komponentfilene (`sftp`, `ftp`, `jms`, `timer` osv.) er med.
+  - Eksisterende, ikke nytt: `camel-core`/`camel-xml-jaxb` drar inn
+    `com.sun.xml.bind:jaxb-impl`/`jaxb-core:2.3.0` ved siden av vår
+    `jaxb-runtime:2.3.9`. Det var slik også på 2.24/2.25. Kandidat for
+    `exclude` i JAXB-oppgaven.
+  - 58/58 tester grønne, ingen deprecation-advarsler.
+- Steg 3 (3.1.0 → 3.22.4): gjenstår. Bør trolig deles via LTS-versjonene
+  (f.eks. 3.14.x og 3.20.x) med upgrade-guidene for 3.x mellom hvert.
 
 **Kotlin-plugin (jvm): 1.9.24 → 2.4.20**
 - **Rødsone / verktøykjede**: Kotlin 2.0 introduserer K2-kompilatoren.

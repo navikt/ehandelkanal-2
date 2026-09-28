@@ -10,15 +10,15 @@ import org.apache.camel.ProducerTemplate
 import org.apache.camel.RoutesBuilder
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.mock.MockEndpoint
-import org.apache.camel.impl.JndiRegistry
+import org.apache.camel.spi.Registry
 import org.apache.camel.test.junit4.CamelTestSupport
 import org.junit.Test
 
 class InboundSbdhRemoverTest : CamelTestSupport() {
 
-    @Produce(uri = "direct:start")
+    @Produce("direct:start")
     private lateinit var producer: ProducerTemplate
-    @EndpointInject(uri = "mock:result")
+    @EndpointInject("mock:result")
     private lateinit var result: MockEndpoint
 
     @Test
@@ -41,9 +41,7 @@ class InboundSbdhRemoverTest : CamelTestSupport() {
         }
     }
 
-    override fun createRegistry(): JndiRegistry {
-        return super.createRegistry().apply {
-            bind("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
-        }
+    override fun bindToRegistry(registry: Registry) {
+        registry.bind("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
     }
 }
