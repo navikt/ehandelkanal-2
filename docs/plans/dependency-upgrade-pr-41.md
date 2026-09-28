@@ -88,6 +88,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
 | exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | 0.53.0 (fra 0.41.1) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| kotlin-result | 2.3.1 | 2.0.1 (fra 1.1.6) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -322,6 +323,20 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 - Steg 1: 1.x → siste 1.1.x/2.0-forhåndsversjon om relevant
 - Steg 2: → 2.3.1 — sjekk endringer i `Result`-typen/ekstensjonsfunksjoner
   som brukes i feilhåndteringskoden (kjernelogikk).
+- Steg 1 (1.1.6 → 2.0.1) — **fullført**, ingen kodeendring. 2.0.1 er siste
+  versjon bygget med Kotlin 1.9. Resten er **utsatt** til etter Kotlin 2.x
+  (se «Utsatt til senere»).
+  - 2.0 gjør `Result` til en inline value class. `Ok`/`Err` kan ikke lenger
+    brukes som typer (`is Ok`, `as Err`), og flere deprecated funksjoner er
+    fjernet (`binding`, `getOr(verdi)`, `getErrorOr(verdi)`, `Result.of`,
+    `and`/`or` uten lambda). Koden bruker bare `Ok(...)`/`Err(...)` som
+    konstruktører pluss `getOrElse`, `andThen` og `getErrorOrElse`, som alle
+    er uendret.
+  - `StandardBusinessDocumentGeneratorTest` og `AccessPointClientTest`
+    dekker både Ok- og Err-stiene. 55/55 tester grønne.
+  - 2.x er et multiplatform-bibliotek, og Gradle velger JVM-varianten.
+    `Result`, `ResultKt` og `Failure` er med i fat-JAR-en.
+- Steg 2 (2.0.1 → 2.3.1) — **utsatt** til Kotlin-plugin 2.x.
 
 **camel-core/jms/ftp/jsonpath/test: 2.24.2 → 3.22.4**
 - **Rødsone / kjernelogikk**: dette er ruting-motoren for hele meldingsflyten.
