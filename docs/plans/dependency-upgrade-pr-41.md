@@ -680,6 +680,7 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
     `com.googlecode.json-simple:json-simple:1.1.1`, som `ktor-auth` 1.6.8
     drar inn, og json-simple deklarerer JUnit som compile-avhengighet.
     Kandidat for `exclude` eller forsvinner med Ktor-oppgradering.
+    (Oppdatering: ekskludert i Fase 5 steg 8.)
 - Steg 4 (Gradle 8.14.5 → 9.7.1, shadow 9.2.2 → 9.6.1):
   - Versjonsvalg: Kotlin-plugin 2.4.20 støtter fullt ut Gradle 7.6.3–9.7.0
     (KGP-kompatibilitetstabellen). 9.7.1 er en patch på 9.7 og ble valgt
@@ -734,12 +735,13 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   klient (`HttpClient(Apache)`, `JsonFeature`, `Auth`). Når Ktor ikke
   lenger bruker `ExperimentalCoroutineDispatcher`, fjernes
   coroutines-låsen i `build.gradle.kts`, slik at Exposed får versjonen den
-  er bygget mot (1.11.0). Fjerner trolig også `junit:junit:4.10` fra
-  fat-JAR-en (via `ktor-auth` → json-simple).
+  er bygget mot (1.11.0). Fjern da også `exclude(junit)` på
+  `ktor-auth`/`ktor-auth-jwt` hvis json-simple ikke lenger er med.
 - ✅ kotlin-result 2.0.1 → 2.3.1 (steg 4)
 - ✅ Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og
   fjern `junit-vintage-engine` og den direkte `junit:junit`-avhengigheten
   (steg 5).
+- ✅ Ekskluder `junit:junit` 4.10 (via json-simple) fra prod (steg 8).
 - ✅ Flyway `initSql` erstattet (steg 6). Flyway foreslår en
   `afterConnect`-callback, men den er ikke likeverdig for Postgres, se
   steg 6. Løst med `SetRoleDataSource` i stedet.
@@ -831,7 +833,7 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
     - Avvik som fantes fra før og ikke er endret: WireMock løfter `guava`
       (30.0 → 32.1.2) og `error_prone_annotations` på testklassestien, og
       `junit` er 4.13.2 i test mot 4.10 i prod (via json-simple, se Fase 4
-      steg 3b). En full låsing med `consistentResolution` ville tvunget
+      steg 3b; junit er fjernet fra prod i steg 8). En full låsing med `consistentResolution` ville tvunget
       guava ned til 30.0 for WireMock, så det ble ikke valgt.
   - Mutasjonssjekk: når `getToken()`-mocken i `AccessPointClientTest`
     returnerer feil token, feiler 4/4 tester (WireMock matcher på
@@ -1019,6 +1021,25 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
     konstant. Effekten er verifisert med jshell som beskrevet over.
   - 68/68 tester grønne.
   - Verifiseres i dev: advarselen er borte ved oppstart.
+
+- **Steg 8: ekskluder `junit:junit` fra prod**
+  - `ktor-auth` og `ktor-auth-jwt` 1.6.8 drar inn
+    `com.googlecode.json-simple:json-simple:1.1.1`, som deklarerer
+    `junit:junit:4.10` (og dermed `hamcrest-core` 1.1) som
+    compile-avhengighet.
+  - Bytekodesjekk av fat-JAR-en før endringen: ingen klasser utenfor
+    `org/junit`, `junit/` og `org/hamcrest` refererer til JUnit eller
+    Hamcrest, verken i constant pool (`org/junit/`, `junit/framework/`,
+    `org/hamcrest/`) eller som strenger med punktnotasjon (refleksjon).
+  - `exclude(group = "junit", module = "junit")` på `ktor-auth` og
+    `ktor-auth-jwt`. Ikke global exclude: kluent bruker JUnit 4 internt og
+    får den fortsatt via sin egen sti på testklassestien.
+  - Runtime-klassestien mister bare `junit:junit` 4.10 og
+    `org.hamcrest:hamcrest-core` 1.1. Testklassestien er uendret.
+  - Fat-JAR-en: 312 oppføringer fjernet og 0 lagt til (JUnit- og
+    Hamcrest-klasser, Hamcrest-metadata i `META-INF/maven` og JUnits
+    `LICENSE.txt` på rotnivå).
+  - 68/68 tester grønne.
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
