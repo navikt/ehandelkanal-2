@@ -1,12 +1,12 @@
 package no.nav.ehandel.kanal
 
+import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.BasicCredentials
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.verify
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.junit.WireMockRule
 import io.ktor.client.features.ClientRequestException
 import no.nav.ehandel.kanal.common.LegalArchiveException
 import no.nav.ehandel.kanal.common.singletons.objectMapper
@@ -15,9 +15,9 @@ import no.nav.ehandel.kanal.services.legalarchive.RestArchiver
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldThrow
 import org.amshove.kluent.withCause
-import org.junit.BeforeClass
-import org.junit.ClassRule
-import org.junit.Test
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 private const val port = 20000
 private const val username = "username"
@@ -58,14 +58,14 @@ class RestArchiverTest {
     }
 
     companion object {
-        @ClassRule
-        @JvmField
-        val wireMockRule =
-            WireMockRule(WireMockConfiguration.wireMockConfig().port(20000).notifier(Slf4jNotifier(true)))
+        private val wireMockServer =
+            WireMockServer(WireMockConfiguration.wireMockConfig().port(20000).notifier(Slf4jNotifier(true)))
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun setUpClass() {
+            wireMockServer.start()
+            WireMock.configureFor("localhost", wireMockServer.port())
             stubFor(
                 WireMock.post(WireMock.urlEqualTo("/archive"))
                     .atPriority(1)
@@ -87,6 +87,12 @@ class RestArchiverTest {
                             .withStatusMessage("Unauthorized")
                     )
             )
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun tearDownClass() {
+            wireMockServer.stop()
         }
     }
 }

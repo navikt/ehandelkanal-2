@@ -10,10 +10,10 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import no.nav.ehandel.kanal.db.createVaultClient
 import org.amshove.kluent.shouldBeEqualTo
-import org.junit.After
-import org.junit.Assert.assertThrows
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 private const val LOOKUP_SELF = "/v1/auth/token/lookup-self"
 private const val RENEW_SELF = "/v1/auth/token/renew-self"
@@ -22,12 +22,12 @@ class VaultTokenRenewalTest {
 
     private val server = WireMockServer(wireMockConfig().dynamicPort())
 
-    @Before
+    @BeforeEach
     fun setup() {
         server.start()
     }
 
-    @After
+    @AfterEach
     fun teardown() {
         server.stop()
     }

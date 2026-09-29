@@ -5,7 +5,7 @@ version = "1.0.52-SNAPSHOT"
 
 val camel_version = "3.22.4"
 val ibm_mq_version = "10.0.0.5"
-val jackson_version = "2.19.4"
+val jackson_version = "2.22.3"
 val konfig_version = "1.6.10.0"
 val difi_commons_sbdh_version = "0.9.5"
 val difi_peppol_sbdh_version = "1.1.4"
@@ -23,12 +23,12 @@ val vault_driver_version = "5.1.0"
 val flyway_version = "13.8.0"
 val h2_version = "2.5.252"
 val postgres_version = "42.7.13"
-val exposed_version = "0.53.0"
-val result_version = "2.0.1"
+val exposed_version = "1.5.0"
+val coroutines_version = "1.8.1"
+val result_version = "2.3.1"
 val wiremock_version = "3.0.1"
-val mockk_version = "1.13.12"
+val mockk_version = "1.14.11"
 val kluent_version = "1.73"
-val junit_version = "4.13.2"
 val junit_bom_version = "6.1.3"
 
 plugins {
@@ -66,14 +66,27 @@ kotlin {
     jvmToolchain(21)
 }
 
+configurations.matching { it.name in setOf("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath") }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-coroutines")) {
+            useVersion(coroutines_version)
+            because("ktor 1.6.8 bruker ExperimentalCoroutineDispatcher, som er fjernet i coroutines 1.9.0")
+        }
+    }
+}
+
 dependencies {
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
     implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("io.ktor:ktor-html-builder:$ktor_version")
     implementation("io.ktor:ktor-jackson:$ktor_version")
-    implementation("io.ktor:ktor-auth:$ktor_version")
-    implementation("io.ktor:ktor-auth-jwt:$ktor_version")
+    implementation("io.ktor:ktor-auth:$ktor_version") {
+        exclude(group = "junit", module = "junit") // via json-simple, not used at runtime
+    }
+    implementation("io.ktor:ktor-auth-jwt:$ktor_version") {
+        exclude(group = "junit", module = "junit") // via json-simple, not used at runtime
+    }
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-apache:$ktor_version")
     implementation("io.ktor:ktor-client-auth-basic-jvm:$ktor_version")
@@ -123,10 +136,8 @@ dependencies {
     testImplementation("org.amshove.kluent:kluent:$kluent_version") {
         exclude(group = "com.nhaarman.mockitokotlin2")
     }
-    testImplementation("junit:junit:$junit_version")
     testImplementation(platform("org.junit:junit-bom:$junit_bom_version"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

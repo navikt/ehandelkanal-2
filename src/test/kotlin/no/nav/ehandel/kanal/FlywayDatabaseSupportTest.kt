@@ -3,7 +3,7 @@ package no.nav.ehandel.kanal
 import org.amshove.kluent.shouldContain
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.internal.database.DatabaseTypeRegister
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class FlywayDatabaseSupportTest {
 

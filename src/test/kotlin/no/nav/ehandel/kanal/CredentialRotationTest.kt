@@ -6,7 +6,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 import no.nav.ehandel.kanal.db.rotateCredentials
 import org.amshove.kluent.shouldBeEqualTo
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 private const val URL = "jdbc:h2:mem:credential-rotation;DB_CLOSE_DELAY=-1"
 

@@ -80,15 +80,15 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 
 | Dependency | Ønsket mål-versjon | Faktisk satt til | Blokkert av | Følges opp når |
 |---|---|---|---|---|
-| jackson-databind / jackson-module-kotlin / jackson-datatype-joda | 2.22.2 | 2.19.4 | `jackson-module-kotlin` ≥2.20 krever Kotlin-stdlib 2.0+/2.1+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
-| mockk | 1.14.11 | 1.13.12 (uendret) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| jackson-databind / jackson-module-kotlin / jackson-datatype-joda | 2.22.2 | ✅ 2.22.3 i Fase 5 steg 1 (fra 2.19.4) | `jackson-module-kotlin` ≥2.20 krever Kotlin-stdlib 2.0+/2.1+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| mockk | 1.14.11 | ✅ 1.14.11 i Fase 5 steg 2 (fra 1.13.12) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | com.github.ben-manes.versions (plugin) | 0.64.0 | ✅ 0.64.0 i Fase 4 steg 3a (ny plugin-id `io.github.ben-manes.versions`) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | shadow-plugin | 8.1.1 | ✅ `com.gradleup.shadow` 9.2.2 i Fase 4 steg 2, 9.6.1 i steg 4 (Gradle 9.7.1) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | junit-vintage-engine | 6.1.3 | ✅ 6.1.3 i Fase 4 steg 3b (via `junit-bom`) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
-| exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | 0.53.0 (fra 0.41.1) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
-| kotlin-result | 2.3.1 | 2.0.1 (fra 1.1.6) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | ✅ 1.5.0 i Fase 5 steg 3 (coroutines låst til 1.8.1 pga. Ktor 1.6.8) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| kotlin-result | 2.3.1 | ✅ 2.3.1 i Fase 5 steg 4 (fra 2.0.1) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | camel-test (JUnit 4, `CamelTestSupport`) | camel-test-junit5 | ✅ camel-test-junit5 3.22.4 i Fase 4 steg 3b | `XmlDetectorTest` og `InboundSbdhRemoverTest` var JUnit 4-tester og ble kjørt av junit-vintage | Sammen med junit-vintage i Fase 4 (Camel 4 fjerner JUnit 4-støtten helt) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
@@ -680,6 +680,7 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
     `com.googlecode.json-simple:json-simple:1.1.1`, som `ktor-auth` 1.6.8
     drar inn, og json-simple deklarerer JUnit som compile-avhengighet.
     Kandidat for `exclude` eller forsvinner med Ktor-oppgradering.
+    (Oppdatering: ekskludert i Fase 5 steg 8.)
 - Steg 4 (Gradle 8.14.5 → 9.7.1, shadow 9.2.2 → 9.6.1):
   - Versjonsvalg: Kotlin-plugin 2.4.20 støtter fullt ut Gradle 7.6.3–9.7.0
     (KGP-kompatibilitetstabellen). 9.7.1 er en patch på 9.7 og ble valgt
@@ -727,15 +728,318 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
 - jackson (databind/module-kotlin/datatype-joda) → 2.22.2 (eller nyeste
   tilgjengelige på det tidspunktet)
 - mockk → 1.14.11 (eller nyeste tilgjengelige)
-- exposed → 1.x (pakkene flyttes til `org.jetbrains.exposed.v1.*`)
-- kotlin-result → 2.3.1 (eller nyeste tilgjengelige)
-- Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og fjern
-  `junit-vintage-engine` og `junit:junit`. Berører blant annet:
-  - WireMock `@ClassRule` → `WireMockExtension` (`@RegisterExtension`) i
-    `RestArchiverTest`, `AccessPointClientTest` og `InboundIT`.
-  - `TemporaryFolder` → `@TempDir`.
-  - `@Before`/`@After`/`@BeforeClass`/`@AfterClass` → Jupiter-ekvivalenter.
-  - `org.junit.Assert.assertThrows` → `org.junit.jupiter.api.assertThrows`.
+- exposed → 1.x (pakkene flyttes til `org.jetbrains.exposed.v1.*`).
+  ✅ Gjort i steg 3. Coroutines er låst til 1.8.1 i prod, se steg 3.
+- Ktor 1.6.8 → nyere major (egen, stor oppgave). Krever migrering av
+  server (routing, `StatusPages`, `ContentNegotiation`, `respondHtml`) og
+  klient (`HttpClient(Apache)`, `JsonFeature`, `Auth`). Når Ktor ikke
+  lenger bruker `ExperimentalCoroutineDispatcher`, fjernes
+  coroutines-låsen i `build.gradle.kts`, slik at Exposed får versjonen den
+  er bygget mot (1.11.0). Fjern da også `exclude(junit)` på
+  `ktor-auth`/`ktor-auth-jwt` hvis json-simple ikke lenger er med.
+- ✅ kotlin-result 2.0.1 → 2.3.1 (steg 4)
+- ✅ Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og
+  fjern `junit-vintage-engine` og den direkte `junit:junit`-avhengigheten
+  (steg 5).
+- ✅ Ekskluder `junit:junit` 4.10 (via json-simple) fra prod (steg 8).
+- ✅ Flyway `initSql` erstattet (steg 6). Flyway foreslår en
+  `afterConnect`-callback, men den er ikke likeverdig for Postgres, se
+  steg 6. Løst med `SetRoleDataSource` i stedet.
+- Eksisterende feil, ikke tatt her: `V1.4__fix_report_sequence.sql` feiler
+  på en tom `report`-tabell (`setval('report_id_seq', 0, true)`: «value 0
+  is out of bounds»). Dev og prod er allerede på 1.4, så det treffer bare
+  nye miljøer (ny database). Kan ikke rettes i V1.4 (sjekksummen er
+  endret i dev/prod), men må tas i en ny migrering eller med
+  `COALESCE(MAX(id), 1), MAX(id) IS NOT NULL` hvis et nytt miljø trengs.
+- Oppfølging (eksisterende, utenfor planen): 🔴 SFTP mot ebasys verifiserer
+  ikke vertsnøkkelen. `ebasysInbound`/`ebasysInboundUnknownFiles` i
+  `Inbound.kt` setter verken `knownHostsFile` eller
+  `strictHostKeyChecking`, og camel-ftp 3.22.4 har `StrictHostKeyChecking=no`
+  som standard. Da godtar JSch hvilken som helst vertsnøkkel (mulig MITM).
+  Sett i dev-loggen 2026-09-29: `Known host file not configured, using user
+  known host file: //.ssh/known_hosts` (`user.home` er `/` i containeren,
+  og filen finnes ikke). Ikke en regresjon, samme oppførsel før
+  oppgraderingene. Forslag: legg ebasys-vertsnøkkelen i en Nais-secret, og
+  sett `knownHostsFile=<sti>` (eller `knownHostsUri`) og
+  `strictHostKeyChecking=yes` på begge endepunktene. Verifiser i dev.
+- ✅ HikariCP `keepaliveTime = 0` eksplisitt i `initRemote` (steg 7).
+
+- Fase 5 kjøres på egen branch (`chore/OEBS-2320-dependency-upgrades-fase5`).
+  Fase 4 er merget til dev (#56).
+- Steg 1 (jackson 2.19.4 → 2.22.3):
+  - Release notes gjennomgått for 2.20, 2.21 og 2.22:
+    - Ingen «Changes, behavior» i noen av dem.
+    - 2.20: `jackson-annotations` har ikke lenger patch-nummer (`2.22`,
+      ikke `2.22.3`). Databind fjernet de gamle
+      `PropertyNamingStrategy`-implementasjonene (deprecated siden 2.12).
+    - `jackson-module-kotlin`: 2.20 krever Kotlin 2.0.21, 2.21 krever
+      Kotlin 2.1 og fjernet `MissingKotlinParameterException` og den gamle
+      StrictNullChecks-motoren. Vi er på Kotlin 2.4.20.
+  - Ingenting av det som er fjernet brukes, verken av oss eller av Ktor
+    1.6.8. `ktor-jackson` og `ktor-client-jackson` er sjekket med `javap`,
+    og de bruker bare `readValue`, `writeValue`, `writeValueAsString`,
+    `TypeFactory.constructType`, `jacksonObjectMapper` og
+    `registerKotlinModule`.
+  - Resolusjon: alle Jackson-artefakter står på 2.22.3 (annotations 2.22),
+    også de transitive fra Ktor, Camel og Flyway. `jackson-module-kotlin`
+    ber om `kotlin-reflect` 2.1.21, som løftes til 2.4.20. Ingen Jackson 3
+    (`tools.jackson`) på classpath.
+  - Testdekning: serverens eneste JSON-svar, `HttpErrorResponse` fra
+    `StatusPages`, hadde ingen test. Det objektet inneholder Ktors
+    `HttpStatusCode` og serialiseres via Kotlin-modulen. Ny
+    `ObjectMapperTest` (Jupiter) bruker prod-`objectMapper` og dekker:
+    - `HttpErrorResponse` med alle felter og med null-felter utelatt
+      (`NON_NULL`);
+    - Joda `DateTime` (epoch-millis);
+    - `readTree`, slik `RestArchiver` og `EntraIdTokenProvider` bruker den.
+
+    Testen var grønn på 2.19.4 før oppgraderingen. Mutasjonssjekk:
+    `NON_NULL` → `ALWAYS` gir 1 feilende test. `ArchiveRequestTest` og
+    `RestArchiverTest` dekker serialiseringen mot arkivet.
+  - Fat-JAR: `jackson-databind` 2.22.3, og service-filene for
+    `databind.Module` (Joda, Kotlin), `ObjectCodec` og `JsonFactory` er
+    slått sammen riktig.
+  - Funn, ikke endret: `RestArchiver` konfigurerer
+    `JacksonSerializer { objectMapper }`. Lambdaen er en konfigurasjonsblokk
+    på Ktors egen `jacksonObjectMapper()`, så klienten bruker ikke den
+    delte `objectMapper`. Det er uendret oppførsel, og `ArchiveRequestTest`
+    tester nettopp med `jacksonObjectMapper()`.
+  - 65/65 tester grønne (61 + 4 nye).
+
+- Steg 2 (mockk 1.13.12 → 1.14.11):
+  - Release notes gjennomgått for 1.13.13–1.14.11. Relevant for oss:
+    - 1.13.13: `unmockkAll` kjøres etter hver JUnit 5-test, men bare via
+      `MockKExtension`, som vi ikke bruker.
+    - 1.14.7: JUnit 4 og 5 er nå `compileOnly` i mockk. Vi deklarerer JUnit
+      selv, så ingenting forsvinner fra testklassestien.
+    - Byte Buddy 1.14.17 → 1.18.2 og objenesis 3.3 → 3.4 (bare test).
+  - Vi bruker bare `mockk { every { … } returns … }` og `relaxed = true`
+    (`AccessPointClientTest` og `InboundIT`). Ingen API-endringer der.
+  - Funn: mockk 1.14.11 løfter `kotlinx-coroutines` fra 1.8.1 til 1.10.2,
+    men bare på testklassestien. Prod får 1.8.1 fra `exposed-core` 0.53.0.
+    Da ville `InboundIT` og `RestArchiverTest` kjørt prod-koden (Ktor-
+    klienten) med en annen coroutines-versjon enn prod.
+    - Vi valgte å låse testklassestiene til prod-versjonen:
+      `val coroutines_version = "1.8.1"` og
+      `resolutionStrategy.eachDependency { useVersion(coroutines_version) }`
+      for alle `kotlinx-coroutines-*` på `testCompileClasspath` og
+      `testRuntimeClasspath`. Det dekker også `kotlinx-coroutines-debug`,
+      som bare mockk drar inn.
+    - Prod-klassestien er uendret (verifisert med diff av
+      `runtimeClasspath`).
+    - 🔴 `coroutines_version` må oppdateres når Exposed oppgraderes,
+      ellers tester vi mot en annen versjon enn prod. (Oppdatering: i
+      steg 3 ble låsen i stedet utvidet til prod, se der.)
+    - Avvik som fantes fra før og ikke er endret: WireMock løfter `guava`
+      (30.0 → 32.1.2) og `error_prone_annotations` på testklassestien, og
+      `junit` er 4.13.2 i test mot 4.10 i prod (via json-simple, se Fase 4
+      steg 3b; junit er fjernet fra prod i steg 8). En full låsing med `consistentResolution` ville tvunget
+      guava ned til 30.0 for WireMock, så det ble ikke valgt.
+  - Mutasjonssjekk: når `getToken()`-mocken i `AccessPointClientTest`
+    returnerer feil token, feiler 4/4 tester (WireMock matcher på
+    `Authorization`). Mockene virker med den nye versjonen.
+  - 65/65 tester grønne.
+
+- Steg 3 (Exposed 0.53.0 → 1.5.0):
+  - Kodeendringer (bare imports):
+    - `org.jetbrains.exposed.sql.*` → `org.jetbrains.exposed.v1.core.*`
+      (`Table`, `ResultRow`, `SortOrder`) og `…v1.jdbc.*` (`Database`,
+      `insert`, `selectAll`, `select`, `deleteAll`,
+      `transactions.transaction`).
+    - `…sql.jodatime.date` → `…v1.jodatime.date`.
+    - `between` og `select(kolonne)` må nå importeres eksplisitt
+      (`v1.core.between`, `v1.jdbc.select`), fordi `SqlExpressionBuilder`
+      er deprecated.
+    - Kompilerer uten advarsler.
+  - Breaking changes 0.54 → 1.5 gjennomgått. Det som kunne treffe oss:
+    - Transaksjonshåndteringen er stack-basert i stedet for trådlokal
+      (1.0-rc-3), og `transaction()` har fått `db` som første parameter.
+      Vi kaller `transaction { }` uten argumenter, og hver kodesti har
+      én `Database.connect`. `ReportTest` er grønn.
+    - `insert` sender ikke lenger standardverdier implisitt (1.0-rc-1).
+      `Report.insert` setter alle kolonner utenom `id` (autoIncrement).
+    - Joda `DateColumnType` har fått nytt navn internt
+      (`JodaLocalDateColumnType`). `date()`-funksjonen er uendret.
+    - `exposed-dao` og `exposed-java-time` brukes ikke i koden, men er
+      beholdt og oppgradert.
+  - 🔴 Funn: coroutines-konflikt med Ktor 1.6.8.
+    - Exposed 1.5.0 løfter `kotlinx-coroutines` i prod fra 1.8.1 til
+      1.11.0.
+    - `ktor-client-core` 1.6.8 (`ClosableBlockingDispatcher`, brukt av
+      `ApacheEngine`) bruker `kotlinx.coroutines.scheduling.
+      ExperimentalCoroutineDispatcher`, som er fjernet i coroutines 1.9.0.
+    - Verifisert: med coroutines 1.11.0 feiler alle 5 HTTP-testene
+      (`RestArchiverTest`, `AccessPointClientTest`) med
+      `NoClassDefFoundError`. Prod ville ikke nådd aksesspunktet eller
+      arkivet.
+    - Coroutines-kravet per Exposed-versjon: 0.54 = 1.8.1, 0.55–0.57 =
+      1.9.0, 0.61 = 1.10.1, 1.0–1.2 = 1.10.2, 1.3–1.5 = 1.11.0.
+    - Valgt løsning: Exposed 1.5.0, med coroutines låst til 1.8.1 på alle
+      fire klassestier (`compileClasspath`, `runtimeClasspath`,
+      `testCompileClasspath`, `testRuntimeClasspath`) med
+      `eachDependency { useVersion(coroutines_version) }`. Låsen fra
+      steg 2 er utvidet fra bare test til også prod. Den fjernes når Ktor
+      oppgraderes (egen oppgave over).
+    - Bytekodesjekk (japicmp og et skript som leser konstant-poolen i
+      alle 38 963 klassene i fat-JAR-en): med coroutines 1.8.1 finnes
+      alle referansene fra Exposed 1.5.0, Ktor og øvrige biblioteker til
+      `kotlinx/coroutines/*`. De eneste manglende er
+      `kotlinx-coroutines-reactor`/`-reactive` fra valgfrie
+      Spring-klasser, som ikke er på klassestien og ikke brukes (samme
+      som før).
+    - Restrisiko: Exposed kjører på en eldre coroutines-versjon enn den
+      er bygget mot. Vi bruker ikke `suspendTransaction` eller
+      coroutine-API-ene i Exposed, bare blokkerende `transaction { }`
+      inne i `withContext(dispatcher)`.
+  - Prod-klassestien ellers: `joda-time` 2.12.7 → 2.14.3 (tidssonedata)
+    og ny `kotlinx-datetime-jvm` 0.7.1-0.6.x-compat (via exposed-core).
+  - Mutasjonssjekk: uten `.withDistinct()` i
+    `getAllUniqueDaysWithEntries` feiler 1 test i `ReportTest`.
+  - Merk: `./gradlew test` skriver den tynne `jar`-en til samme filnavn
+    som fat-JAR-en. CI kjører `build shadowJar`, så `shadowJar` blir
+    sist, men lokale analyser av `build/libs` må kjøres etter
+    `shadowJar`.
+  - 65/65 tester grønne.
+  - Verifiseres i dev: oppstart (Flyway og Hikari), `/report` (HTML og
+    CSV-nedlasting), og en Invoice via vefasrest (DB-insert og
+    juridisk logg via Apache-klienten).
+
+- **Steg 4: kotlin-result 2.0.1 → 2.3.1**
+  - Breaking endringer i 2.1–2.3 som ikke treffer oss:
+    - 2.1.0: direkte bruk av `Result.value`/`.error` krever opt-in
+      (`UnsafeResultValueAccess`/`UnsafeResultErrorAccess`). Vi bruker
+      bare `Ok`, `Err`, `andThen`, `getOrElse` og `getErrorOrElse`.
+    - 2.2.0: `mapResult*`/`fold`/`onSuccess`/`onFailure` ble omdøpt til
+      `try*`/`onOk`/`onErr`. `onSuccess`/`onFailure` i
+      `StandardBusinessDocumentGenerator` er `kotlin.Result.fold`, ikke
+      kotlin-result.
+    - 2.3.0: returverdi-sjekken gir bare advarsler med
+      `-Xreturn-value-checker`, som vi ikke har slått på.
+  - Kjerneartefakten avhenger bare av `kotlin-stdlib` (2.3.10, løftes til
+    2.4.20). Den trekker ikke inn coroutines, det gjør bare
+    `kotlin-result-coroutines`, som vi ikke bruker.
+  - Runtime-klassestien er uendret bortsett fra kotlin-result selv.
+  - Kompilerer uten nye advarsler.
+  - Mutasjonssjekk: når det andre `andThen`-steget i
+    `StandardBusinessDocumentGenerator` alltid returnerer `Err`, feiler
+    2 av 6 tester i `StandardBusinessDocumentGeneratorTest`.
+  - 65/65 tester grønne.
+
+- **Steg 5: JUnit 4 → JUnit Jupiter (16 testklasser)**
+  - `@Test`/`@Before`/`@After`/`@BeforeClass`/`@AfterClass` →
+    `org.junit.jupiter.api.Test`/`@BeforeEach`/`@AfterEach`/`@BeforeAll`/
+    `@AfterAll`. `@BeforeAll`/`@AfterAll` i `companion object` med
+    `@JvmStatic` fungerer som før.
+  - `org.junit.Assert.assertThrows` →
+    `org.junit.jupiter.api.Assertions.assertThrows` (samme signatur).
+  - `ConfigurationTest`: `@get:Rule TemporaryFolder` → `@TempDir lateinit
+    var tempDir: File`, og `newFile(...)` → `tempDir.resolve(...)`. Hver
+    test får fortsatt en ny, tom katalog.
+  - WireMock i `RestArchiverTest`, `AccessPointClientTest` og `InboundIT`:
+    `@ClassRule WireMockRule` → privat `WireMockServer` i
+    `companion object`, startet i `@BeforeAll` og stoppet i `@AfterAll`
+    (samme mønster som `VaultClientTest`). Valgt framfor
+    `WireMockExtension` fordi den (3.0.1) kaller `resetToDefaultMappings()`
+    før hver test, og stubs som settes opp i `@BeforeAll` ville da blitt
+    slettet. `WireMockRule` kalte `WireMock.configureFor("localhost",
+    port)` ved start, så vi gjør det samme i `RestArchiverTest` og
+    `InboundIT`, som bruker statisk `stubFor`/`verify`.
+    `AccessPointClientTest` bruker bare instans-API-et.
+  - Fjernet `junit:junit` (direkte) og `junit-vintage-engine` fra
+    `build.gradle.kts`. Runtime-klassestien er uendret. På testklassestien
+    forsvinner bare `junit-vintage-engine`.
+  - `junit:junit` 4.13.2 ligger fortsatt transitivt på testklassestien
+    via `kluent` (bruker `org.junit.ComparisonFailure` o.l. internt, så den
+    kan ikke ekskluderes), `ktor-server-test-host` og json-simple. Merk:
+    en ny test med `org.junit.Test` kompilerer derfor, men blir ikke
+    kjørt (ingen vintage-motor). Bruk alltid `org.junit.jupiter.api.Test`.
+  - Verifisert at nøyaktig de samme 65 testcasene kjøres (sammenlignet
+    per klasse og per navn før og etter; Jupiter legger bare til `()` i
+    navnet).
+  - Mutasjonssjekk: uten `WireMock.configureFor(...)` i
+    `RestArchiverTest` feiler klassen i `@BeforeAll` (statisk `stubFor`
+    går mot standardporten).
+  - 65/65 tester grønne.
+
+- **Steg 6: Flyway `initSql` → `SetRoleDataSource`** 🔴
+  - `initSql("SET ROLE \"<db>-admin\"")` i `initRemote` sørger for at
+    tabeller og sekvenser fra migreringer eies av admin-rollen og ikke av
+    den midlertidige Vault-brukeren. Flyway 13 logger at `initSql` er
+    deprecated og foreslår en `afterConnect`-callback.
+  - Hvorfor `afterConnect` ikke fungerer (Flyway 13.8.0-kildekoden):
+    - `PostgreSQLConnection` lagrer `originalRole = SELECT CURRENT_USER`
+      når Flyway pakker inn JDBC-tilkoblingen, og
+      `restoreOriginalState()` kjører `SET ROLE '<originalRole>'`.
+    - `restoreOriginalState()` kalles før hver migrering
+      (`DbMigrate`), før hver callback (`DefaultCallbackExecutor`) og før
+      skriving til `flyway_schema_history` (`JdbcTableSchemaHistory`).
+    - `initSql` kjøres som `connectionInitializer` på den rå
+      JDBC-tilkoblingen *før* innpakningen, så `originalRole` blir
+      admin-rollen. En `afterConnect`-callback kjøres *etter*, så
+      `originalRole` blir Vault-brukeren, og rollen nullstilles til den før
+      hver migrering.
+  - Løsning: `db/SetRoleDataSource.kt`, en `DataSource`-wrapper
+    (delegerer til `PGSimpleDataSource`) som kjører `SET ROLE "<rolle>"`
+    på hver ny tilkobling før Flyway får den. Samme tidspunkt som
+    `initSql`, også for den første tilkoblingen Flyway bruker til å finne
+    databasetypen. Lukker tilkoblingen hvis `SET ROLE` feiler.
+  - Eneste bivirkning: Flyway setter ikke lenger
+    `ApplicationName=Flyway by Redgate` og `assumeMinServerVersion` (det
+    gjør bare Flyways egen `DriverDataSource` når vi gir url/bruker/
+    passord). Påvirker bare navnet i `pg_stat_activity`.
+  - Verifisert mot Postgres 17 i Docker (engangstest, ikke committet) med
+    samme oppsett som Vault: `NOLOGIN`-rolle `ek-admin` som eier
+    databasen, og innloggingsbruker `IN ROLE "ek-admin"`. Ekte migreringer
+    V1–V1.3, eier av `report`, `report_id_seq` og `flyway_schema_history`:
+    - `initSql`: `ek-admin`
+    - `SetRoleDataSource`: `ek-admin`
+    - `afterConnect`-callback: Vault-brukeren (feil)
+  - `SetRoleDataSourceTest` (mockk): `SET ROLE` på hver tilkobling
+    (begge `getConnection`-variantene), statement lukkes, og tilkoblingen
+    lukkes hvis `SET ROLE` feiler.
+  - Mutasjonssjekk: uten `withRole()` i `getConnection()` feiler 2 av 3
+    enhetstester, og Docker-testen gir Vault-brukeren som eier.
+  - 68/68 tester grønne.
+  - Verifiseres i dev: oppstart uten `initSql is deprecated`, og
+    `Schema "public" is up to date`. Eierskap kan først sees ved neste nye
+    migrering (`\dt`/`\ds` i databasen skal vise `<db>-admin`).
+
+- **Steg 7: HikariCP `keepaliveTime = 0` i `initRemote`**
+  - Fra HikariCP 6.2.1 er standard `keepaliveTime` 2 min (tidligere 0).
+    Poolen i `initRemote` har `maxLifetime = 30001`, så
+    `HikariConfig.validate()` (7.1.0, linje ~1115) logget `keepaliveTime is
+    greater than or equal to maxLifetime, disabling it` og satte verdien
+    til 0 ved hver oppstart (sett i dev 2026-09-29).
+  - Satt `keepaliveTime = 0` eksplisitt. Den faktiske konfigurasjonen er
+    den samme, bare advarselen forsvinner. Verifisert med jshell mot
+    HikariCP-7.1.0.jar og samme poolverdier: før = advarsel og
+    `keepaliveTime=0`, etter = ingen advarsel og `keepaliveTime=0`.
+  - `initLocal` (H2) er ikke endret. Den bruker standard `maxLifetime`
+    (30 min), så keepalive på 2 min er aktiv der uten advarsel.
+  - Ingen ny enhetstest: poolkonfigurasjonen bygges inline i
+    `initRemote` med Vault-oppslag, og en test ville bare sjekket en
+    konstant. Effekten er verifisert med jshell som beskrevet over.
+  - 68/68 tester grønne.
+  - Verifiseres i dev: advarselen er borte ved oppstart.
+
+- **Steg 8: ekskluder `junit:junit` fra prod**
+  - `ktor-auth` og `ktor-auth-jwt` 1.6.8 drar inn
+    `com.googlecode.json-simple:json-simple:1.1.1`, som deklarerer
+    `junit:junit:4.10` (og dermed `hamcrest-core` 1.1) som
+    compile-avhengighet.
+  - Bytekodesjekk av fat-JAR-en før endringen: ingen klasser utenfor
+    `org/junit`, `junit/` og `org/hamcrest` refererer til JUnit eller
+    Hamcrest, verken i constant pool (`org/junit/`, `junit/framework/`,
+    `org/hamcrest/`) eller som strenger med punktnotasjon (refleksjon).
+  - `exclude(group = "junit", module = "junit")` på `ktor-auth` og
+    `ktor-auth-jwt`. Ikke global exclude: kluent bruker JUnit 4 internt og
+    får den fortsatt via sin egen sti på testklassestien.
+  - Runtime-klassestien mister bare `junit:junit` 4.10 og
+    `org.hamcrest:hamcrest-core` 1.1. Testklassestien er uendret.
+  - Fat-JAR-en: 312 oppføringer fjernet og 0 lagt til (JUnit- og
+    Hamcrest-klasser, Hamcrest-metadata i `META-INF/maven` og JUnits
+    `LICENSE.txt` på rotnivå).
+  - 68/68 tester grønne.
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
