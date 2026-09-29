@@ -737,6 +737,26 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   coroutines-låsen i `build.gradle.kts`, slik at Exposed får versjonen den
   er bygget mot (1.11.0). Fjern da også `exclude(junit)` på
   `ktor-auth`/`ktor-auth-jwt` hvis json-simple ikke lenger er med.
+  Startes først etter at Fase 1–5 er prodsatt og stabile (se
+  «Prodsetting»). Tas på egen branch fra oppdatert dev.
+  Venter på Ktor-oppgaven (bestemt 2026-09-29):
+  - WireMock 3.0.1 → 3.13.2 (minor, bare test). Ingen kjent blokkering,
+    men sjekk Jetty og Jackson på testklassestien og guava-avviket mot
+    prod.
+  - Dependabot: `all-gradle-dependencies` samler alt i én PR
+    (`open-pull-requests-limit: 1`). Camel 4, JAXB 4 og logstash 9
+    knekker bygget, så hele gruppe-PR-en blokkeres, også trygge patcher.
+    Legg inn `ignore` for `version-update:semver-major` på
+    `org.apache.camel:*`, `org.glassfish.jaxb:jaxb-runtime`,
+    `jakarta.xml.bind:jakarta.xml.bind-api` og
+    `net.logstash.logback:logstash-logback-encoder`. Fjern hver regel når
+    den tilhørende oppgaven tas.
+  - Avhengighetskjeden etter Ktor: Jackson 3 og logstash 9, deretter
+    difi/JAXB 4 (`javax.xml.bind` → `jakarta.xml.bind`, ingen etterfølger
+    for `commons-ubl21`), deretter Camel 4 og IBM MQ Jakarta-klient
+    (`javax.jms` → `jakarta.jms`, 🔴 MQ kan bare testes i prod).
+  - 🔴 Camel 3.x er end-of-life og får ikke sikkerhetsrettinger. Camel
+    4-oppgaven bør ikke skyves langt ut.
 - ✅ kotlin-result 2.0.1 → 2.3.1 (steg 4)
 - ✅ Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og
   fjern `junit-vintage-engine` og den direkte `junit:junit`-avhengigheten
@@ -1048,6 +1068,57 @@ Fase 3, slik at Fase 3 kunne merges til dev først.
 Kjør `./gradlew clean test` etter hver av disse også, selv om de er
 "lavrisiko" — de er nettopp utsatt fordi de har en (nå oppfylt) avhengighet
 til verktøykjeden.
+
+## Prodsetting
+
+Status 2026-09-29: Fase 1–5 er bare i dev. `master` (prod) står på innholdet
+fra #34.
+
+- Fase 5 er merget til dev (#58).
+- `master` og dev hadde divergert: #37 («Java version update», temurin 21 og
+  `jvmToolchain(21)`) ble merget rett til `master` og ga konflikt i
+  `Dockerfile` og `build.gradle.kts` mot dev (der #39, #42 og #43 har
+  erstattet den). Løst ved å revertere #37 på `master` (#60). Nå er det
+  ingen konflikt fra dev til `master`, og et merge-resultat er identisk
+  med dev.
+- Hendelse: revert-PR-en (#60) ble merget uten `[skip ci]`, så workflowen
+  kjørte «Deploy to NAIS prod» (2026-09-29 16:13). Konsekvensen er trolig
+  ingen: kjøringen for #37 ble avbrutt (cancelled), så #37 ble aldri
+  deployet, og prod kjørte allerede #34-innholdet. #60 har identisk
+  innhold med #34, men imaget er bygget på nytt fra
+  `ghcr.io/navikt/ehandelkanal-2/java:11`, som kan ha endret seg. Sjekk at
+  prod-poden er frisk (oppstart, Flyway, Hikari, SFTP, vefasrest-innboks).
+  Lærdom: all push til `master` deployer til prod-fss. Bruk `[skip ci]` i
+  merge-meldingen for endringer på `master` som ikke skal ut.
+
+Gjenstår:
+1. Verifiser Fase 5 i dev:
+   - oppstart uten advarslene om `initSql` og `keepaliveTime`, og
+     Flyway «up to date»;
+   - `/report` (HTML og CSV), som er Exposed 1.5.0 sin første kjøring mot
+     ekte Postgres;
+   - en Invoice hele veien: DB-insert, juridisk logg og SFTP til ebasys.
+2. Prodsett før Ktor, gjerne i to steg for å isolere feil:
+   - A: til og med #43 (`396628c`: Java 21, Chainguard-image, TZ). Endrer
+     bare kjøremiljøet. Lag en release-branch fra `396628c` og lag PR til
+     `master`.
+   - B: resten av dev (#45–#58, alle avhengighetsoppgraderingene).
+   - Alternativt alt i én prodsetting. Det er ingen nye DB-migreringer
+     mellom `master` og dev, så tilbakerulling er bare å redeploye
+     forrige image.
+3. Følg med i prod etter hvert steg (🔴 = kan ikke testes i dev):
+   - 🔴 den første OrderResponse og den første Catalogue over IBM MQ 10.
+     Reserveplan ved MQ-feil: `Multi-Release: false` i manifestet;
+   - 🔴 `APP_PROFILE=remote` er nytt i `.nais/naiserator.yaml`: prod leser
+     nå Vault-properties før ressursfilen. Sjekk at stien og nøklene finnes
+     i prod-fss;
+   - oppstart (Flyway «up to date», Hikari) og Vault-rotasjon av
+     DB-credentials etter lease-tiden;
+   - Invoice hele veien (DB, juridisk logg, ebasys) og `/report`.
+4. Tilbakerulling: kjør workflowen på nytt på forrige commit på `master`,
+   eller revert merge-commiten. Ingen DB-endringer å rulle tilbake.
+5. Start Ktor-oppgaven når prod har vært stabil en stund. Hvor lenge
+   avhenger av hvor ofte det kommer MQ-meldinger.
 
 ## Testing per steg (gjelder for alle commits)
 - `./gradlew clean test` — full testsuite.
