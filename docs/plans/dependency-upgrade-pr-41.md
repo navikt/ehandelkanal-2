@@ -80,7 +80,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 
 | Dependency | Ønsket mål-versjon | Faktisk satt til | Blokkert av | Følges opp når |
 |---|---|---|---|---|
-| jackson-databind / jackson-module-kotlin / jackson-datatype-joda | 2.22.2 | 2.19.4 | `jackson-module-kotlin` ≥2.20 krever Kotlin-stdlib 2.0+/2.1+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| jackson-databind / jackson-module-kotlin / jackson-datatype-joda | 2.22.2 | ✅ 2.22.3 i Fase 5 steg 1 (fra 2.19.4) | `jackson-module-kotlin` ≥2.20 krever Kotlin-stdlib 2.0+/2.1+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | mockk | 1.14.11 | 1.13.12 (uendret) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | com.github.ben-manes.versions (plugin) | 0.64.0 | ✅ 0.64.0 i Fase 4 steg 3a (ny plugin-id `io.github.ben-manes.versions`) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | shadow-plugin | 8.1.1 | ✅ `com.gradleup.shadow` 9.2.2 i Fase 4 steg 2, 9.6.1 i steg 4 (Gradle 9.7.1) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
@@ -748,6 +748,48 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   samme oppførsel som før HikariCP-oppgraderingen (keepalive av). Sett
   `keepaliveTime = 0` eksplisitt for å fjerne advarselen uten å endre
   oppførsel.
+
+- Fase 5 kjøres på egen branch (`chore/OEBS-2320-dependency-upgrades-fase5`).
+  Fase 4 er merget til dev (#56).
+- Steg 1 (jackson 2.19.4 → 2.22.3):
+  - Release notes gjennomgått for 2.20, 2.21 og 2.22:
+    - Ingen «Changes, behavior» i noen av dem.
+    - 2.20: `jackson-annotations` har ikke lenger patch-nummer (`2.22`,
+      ikke `2.22.3`). Databind fjernet de gamle
+      `PropertyNamingStrategy`-implementasjonene (deprecated siden 2.12).
+    - `jackson-module-kotlin`: 2.20 krever Kotlin 2.0.21, 2.21 krever
+      Kotlin 2.1 og fjernet `MissingKotlinParameterException` og den gamle
+      StrictNullChecks-motoren. Vi er på Kotlin 2.4.20.
+  - Ingenting av det som er fjernet brukes, verken av oss eller av Ktor
+    1.6.8. `ktor-jackson` og `ktor-client-jackson` er sjekket med `javap`,
+    og de bruker bare `readValue`, `writeValue`, `writeValueAsString`,
+    `TypeFactory.constructType`, `jacksonObjectMapper` og
+    `registerKotlinModule`.
+  - Resolusjon: alle Jackson-artefakter står på 2.22.3 (annotations 2.22),
+    også de transitive fra Ktor, Camel og Flyway. `jackson-module-kotlin`
+    ber om `kotlin-reflect` 2.1.21, som løftes til 2.4.20. Ingen Jackson 3
+    (`tools.jackson`) på classpath.
+  - Testdekning: serverens eneste JSON-svar, `HttpErrorResponse` fra
+    `StatusPages`, hadde ingen test. Det objektet inneholder Ktors
+    `HttpStatusCode` og serialiseres via Kotlin-modulen. Ny
+    `ObjectMapperTest` (Jupiter) bruker prod-`objectMapper` og dekker:
+    - `HttpErrorResponse` med alle felter og med null-felter utelatt
+      (`NON_NULL`);
+    - Joda `DateTime` (epoch-millis);
+    - `readTree`, slik `RestArchiver` og `EntraIdTokenProvider` bruker den.
+
+    Testen var grønn på 2.19.4 før oppgraderingen. Mutasjonssjekk:
+    `NON_NULL` → `ALWAYS` gir 1 feilende test. `ArchiveRequestTest` og
+    `RestArchiverTest` dekker serialiseringen mot arkivet.
+  - Fat-JAR: `jackson-databind` 2.22.3, og service-filene for
+    `databind.Module` (Joda, Kotlin), `ObjectCodec` og `JsonFactory` er
+    slått sammen riktig.
+  - Funn, ikke endret: `RestArchiver` konfigurerer
+    `JacksonSerializer { objectMapper }`. Lambdaen er en konfigurasjonsblokk
+    på Ktors egen `jacksonObjectMapper()`, så klienten bruker ikke den
+    delte `objectMapper`. Det er uendret oppførsel, og `ArchiveRequestTest`
+    tester nettopp med `jacksonObjectMapper()`.
+  - 65/65 tester grønne (61 + 4 nye).
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
