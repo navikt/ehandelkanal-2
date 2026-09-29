@@ -736,6 +736,18 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   - `TemporaryFolder` → `@TempDir`.
   - `@Before`/`@After`/`@BeforeClass`/`@AfterClass` → Jupiter-ekvivalenter.
   - `org.junit.Assert.assertThrows` → `org.junit.jupiter.api.assertThrows`.
+- Flyway `initSql` → `afterConnect`-callback i `Database.kt` (`initRemote`,
+  `SET ROLE "<db>-admin"`). Flyway logger `initSql is deprecated` to ganger
+  ved hver oppstart (sett i dev 2026-09-29). 🔴 `SET ROLE` sørger for riktig
+  eier på tabeller fra migreringer, så verifiser at nye migreringer
+  fortsatt får admin-rollen som eier.
+- HikariCP `keepaliveTime`: fra HikariCP 6.2.1 er `keepaliveTime` = 2 min
+  som standard (tidligere 0). Poolen i `Database.kt` har `maxLifetime = 30001`, så HikariCP
+  skrur av keepalive og logger `keepaliveTime is greater than or equal to
+  maxLifetime, disabling it` ved oppstart (sett i dev 2026-09-29). Det gir
+  samme oppførsel som før HikariCP-oppgraderingen (keepalive av). Sett
+  `keepaliveTime = 0` eksplisitt for å fjerne advarselen uten å endre
+  oppførsel.
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
