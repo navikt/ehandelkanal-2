@@ -84,12 +84,12 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | mockk | 1.14.11 | 1.13.12 (uendret) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | com.github.ben-manes.versions (plugin) | 0.64.0 | ✅ 0.64.0 i Fase 4 steg 3a (ny plugin-id `io.github.ben-manes.versions`) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | shadow-plugin | 8.1.1 | 7.1.2 (uendret, allerede siste 7.x-versjon) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
-| junit-vintage-engine | 6.1.3 | 5.11.4 (fra 5.10.2) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
+| junit-vintage-engine | 6.1.3 | ✅ 6.1.3 i Fase 4 steg 3b (via `junit-bom`) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
 | exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | 0.53.0 (fra 0.41.1) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | kotlin-result | 2.3.1 | 2.0.1 (fra 1.1.6) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
-| camel-test (JUnit 4, `CamelTestSupport`) | camel-test-junit5 | camel-test 3.14.10 (deprecated) | `XmlDetectorTest` og `InboundSbdhRemoverTest` er JUnit 4-tester og kjøres av junit-vintage | Sammen med junit-vintage i Fase 4 (Camel 4 fjerner JUnit 4-støtten helt) |
+| camel-test (JUnit 4, `CamelTestSupport`) | camel-test-junit5 | ✅ camel-test-junit5 3.22.4 i Fase 4 steg 3b | `XmlDetectorTest` og `InboundSbdhRemoverTest` var JUnit 4-tester og ble kjørt av junit-vintage | Sammen med junit-vintage i Fase 4 (Camel 4 fjerner JUnit 4-støtten helt) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -648,6 +648,38 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   - Rapporten viser også beta-, milestone- og RC-versjoner som «oppdateringer».
     Det er standardoppførsel (ingen `rejectVersionIf`) og er ikke endret.
   - 61/61 tester grønne.
+- Steg 3b (JUnit 5.11.4 → 6.1.3, camel-test → camel-test-junit5):
+  - JUnit 6 krever Java 17 og Kotlin 2.2. Vi har Java 21 og Kotlin 2.4.20.
+  - JUnit 6 deprecater vintage-motoren (JUnit 4-støtten). Den logger en
+    INFO-melding så lenge det finnes JUnit 4-tester, og er bare ment som
+    en midlertidig bro under migrering til Jupiter.
+    - Alle 18 testklassene var JUnit 4. Vi valgte å migrere bare de to
+      `CamelTestSupport`-testene nå.
+    - Resten av migreringen fra JUnit 4 til Jupiter er lagt som egen
+      oppgave i Fase 5.
+  - Endringer:
+    - `junit_vintage_version` → `junit_bom_version = "6.1.3"`.
+      `junit-bom` styrer Jupiter, vintage og launcher (alle 6.1.3).
+    - Lagt til `testImplementation("org.junit.jupiter:junit-jupiter")`.
+    - `camel-test` → `camel-test-junit5` (3.22.4). Den drar inn Jupiter
+      5.9.1, som løftes til 6.1.3 av BOM-en. Testene er grønne.
+    - `XmlDetectorTest` og `InboundSbdhRemoverTest`:
+      `org.apache.camel.test.junit4.CamelTestSupport` →
+      `org.apache.camel.test.junit5.CamelTestSupport` og `org.junit.Test`
+      → `org.junit.jupiter.api.Test`. Samme API
+      (`createRouteBuilder`/`bindToRegistry`), ingen andre endringer.
+  - Verifisering:
+    - 61/61 tester grønne. Jupiter kjører de 5 migrerte testene (4 + 1),
+      vintage de øvrige 56.
+    - Mutasjonssjekk: med en gyldig SBDH-fil som input i `not XML` feiler
+      testen med `Expected: <false> but was: <true>`.
+    - Et første forsøk med `<ok/>` som input feilet ikke. Det er riktig
+      oppførsel: `XML=true` krever gyldig SBDH, ikke bare XML.
+  - Eksisterende funn, ikke nytt: fat-JAR-en inneholder `junit:junit:4.10`
+    (260 entries). Den kommer transitivt via
+    `com.googlecode.json-simple:json-simple:1.1.1`, som `ktor-auth` 1.6.8
+    drar inn, og json-simple deklarerer JUnit som compile-avhengighet.
+    Kandidat for `exclude` eller forsvinner med Ktor-oppgradering.
 
 ### Fase 5 — Oppfølging av utsatte oppgraderinger (samlesteg)
 Når Kotlin-pluginet (Fase 3) og Gradle wrapper (Fase 4) er oppgradert, går vi
@@ -658,6 +690,13 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
 - mockk → 1.14.11 (eller nyeste tilgjengelige)
 - exposed → 1.x (pakkene flyttes til `org.jetbrains.exposed.v1.*`)
 - kotlin-result → 2.3.1 (eller nyeste tilgjengelige)
+- Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og fjern
+  `junit-vintage-engine` og `junit:junit`. Berører blant annet:
+  - WireMock `@ClassRule` → `WireMockExtension` (`@RegisterExtension`) i
+    `RestArchiverTest`, `AccessPointClientTest` og `InboundIT`.
+  - `TemporaryFolder` → `@TempDir`.
+  - `@Before`/`@After`/`@BeforeClass`/`@AfterClass` → Jupiter-ekvivalenter.
+  - `org.junit.Assert.assertThrows` → `org.junit.jupiter.api.assertThrows`.
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av

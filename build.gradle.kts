@@ -29,7 +29,7 @@ val wiremock_version = "3.0.1"
 val mockk_version = "1.13.12"
 val kluent_version = "1.73"
 val junit_version = "4.13.2"
-val junit_vintage_version = "5.11.4"
+val junit_bom_version = "6.1.3"
 
 plugins {
     application
@@ -114,7 +114,7 @@ dependencies {
 
     runtimeOnly("org.flywaydb:flyway-database-postgresql:$flyway_version")
 
-    testImplementation("org.apache.camel:camel-test:$camel_version")
+    testImplementation("org.apache.camel:camel-test-junit5:$camel_version")
     testImplementation("org.wiremock:wiremock:$wiremock_version")
     testImplementation("io.mockk:mockk:$mockk_version")
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version") {
@@ -124,7 +124,8 @@ dependencies {
         exclude(group = "com.nhaarman.mockitokotlin2")
     }
     testImplementation("junit:junit:$junit_version")
-    testImplementation(platform("org.junit:junit-bom:$junit_vintage_version"))
+    testImplementation(platform("org.junit:junit-bom:$junit_bom_version"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
