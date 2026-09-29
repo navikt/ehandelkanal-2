@@ -4,7 +4,7 @@ import java.sql.DriverManager
 import no.nav.ehandel.kanal.db.Database
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeEqualTo
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class DatabaseInitLocalTest {
 

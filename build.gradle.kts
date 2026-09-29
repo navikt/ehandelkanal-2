@@ -29,7 +29,6 @@ val result_version = "2.3.1"
 val wiremock_version = "3.0.1"
 val mockk_version = "1.14.11"
 val kluent_version = "1.73"
-val junit_version = "4.13.2"
 val junit_bom_version = "6.1.3"
 
 plugins {
@@ -133,10 +132,8 @@ dependencies {
     testImplementation("org.amshove.kluent:kluent:$kluent_version") {
         exclude(group = "com.nhaarman.mockitokotlin2")
     }
-    testImplementation("junit:junit:$junit_version")
     testImplementation(platform("org.junit:junit-bom:$junit_bom_version"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -12,8 +12,8 @@ import org.amshove.kluent.shouldContainSame
 import org.jetbrains.exposed.v1.jdbc.deleteAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.joda.time.DateTime
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ReportTest {
 
@@ -32,7 +32,7 @@ class ReportTest {
         fakturaDato = DateTime(2024, 1, 5, 0, 0)
     )
 
-    @Before
+    @BeforeEach
     fun setUp() {
         Database.initLocal()
         transaction { ReportTable.deleteAll() }

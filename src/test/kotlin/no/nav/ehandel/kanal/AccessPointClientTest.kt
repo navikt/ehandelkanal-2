@@ -12,7 +12,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.http.ContentTypeHeader
-import com.github.tomakehurst.wiremock.junit.WireMockRule
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -42,9 +41,9 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldContain
 import org.apache.camel.Exchange
 import org.apache.camel.Message
-import org.junit.BeforeClass
-import org.junit.ClassRule
-import org.junit.Test
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 private const val MOCK_PORT = 20000
 private const val MOCK_SERVER_PATH = "vefasrest"
@@ -70,7 +69,7 @@ class AccessPointClientTest {
     @Test
     fun `get inbox message headers`() {
         val url = "/$MOCK_SERVER_PATH/inbox/hent-uleste-meldinger"
-        wireMockRule.accessPointStub(
+        wireMockServer.accessPointStub(
             url = url,
             method = HttpMethod.Get,
             acceptHeaderValue = ContentType.Application.Json,
@@ -84,7 +83,7 @@ class AccessPointClientTest {
     @Test
     fun `download message payload`() {
         val url = "/$MOCK_SERVER_PATH/messages/xml-document/1"
-        wireMockRule.accessPointStub(
+        wireMockServer.accessPointStub(
             url = url,
             method = HttpMethod.Get,
             acceptHeaderValue = ContentType.Application.Xml,
@@ -97,7 +96,7 @@ class AccessPointClientTest {
     @Test
     fun `mark message as read`() {
         val url = "/$MOCK_SERVER_PATH/inbox/marker-som-lest/1"
-        wireMockRule.accessPointStub(
+        wireMockServer.accessPointStub(
             url = url,
             method = HttpMethod.Put,
             acceptHeaderValue = ContentType.Text.Plain,
@@ -108,15 +107,20 @@ class AccessPointClientTest {
     }
 
     companion object {
-        @ClassRule
-        @JvmField
-        val wireMockRule = WireMockRule(wireMockConfig().port(MOCK_PORT).notifier(Slf4jNotifier(true)))
+        private val wireMockServer = WireMockServer(wireMockConfig().port(MOCK_PORT).notifier(Slf4jNotifier(true)))
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun setUp() {
+            wireMockServer.start()
             System.setProperty("vefasrest.inbox.url", MOCK_SERVER_URL + "inbox/")
             System.setProperty("vefasrest.messages.url", MOCK_SERVER_URL + "messages/")
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun tearDown() {
+            wireMockServer.stop()
         }
     }
 }

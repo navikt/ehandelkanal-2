@@ -7,8 +7,8 @@ import no.nav.ehandel.kanal.camel.routes.mqInbound
 import org.amshove.kluent.shouldBeEqualTo
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.support.DefaultRegistry
-import org.junit.After
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 
 class EndpointUriTest {
 
@@ -16,7 +16,7 @@ class EndpointUriTest {
 
     private fun String.withScheme(scheme: String) = replaceFirst(Regex("^s?ftp://"), "$scheme://")
 
-    @After
+    @AfterEach
     fun tearDown() {
         context.stop()
     }

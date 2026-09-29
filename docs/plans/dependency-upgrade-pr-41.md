@@ -737,13 +737,9 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   er bygget mot (1.11.0). Fjerner trolig også `junit:junit:4.10` fra
   fat-JAR-en (via `ktor-auth` → json-simple).
 - ✅ kotlin-result 2.0.1 → 2.3.1 (steg 4)
-- Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og fjern
-  `junit-vintage-engine` og `junit:junit`. Berører blant annet:
-  - WireMock `@ClassRule` → `WireMockExtension` (`@RegisterExtension`) i
-    `RestArchiverTest`, `AccessPointClientTest` og `InboundIT`.
-  - `TemporaryFolder` → `@TempDir`.
-  - `@Before`/`@After`/`@BeforeClass`/`@AfterClass` → Jupiter-ekvivalenter.
-  - `org.junit.Assert.assertThrows` → `org.junit.jupiter.api.assertThrows`.
+- ✅ Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og
+  fjern `junit-vintage-engine` og den direkte `junit:junit`-avhengigheten
+  (steg 5).
 - Flyway `initSql` → `afterConnect`-callback i `Database.kt` (`initRemote`,
   `SET ROLE "<db>-admin"`). Flyway logger `initSql is deprecated` to ganger
   ved hver oppstart (sett i dev 2026-09-29). 🔴 `SET ROLE` sørger for riktig
@@ -916,6 +912,42 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   - Mutasjonssjekk: når det andre `andThen`-steget i
     `StandardBusinessDocumentGenerator` alltid returnerer `Err`, feiler
     2 av 6 tester i `StandardBusinessDocumentGeneratorTest`.
+  - 65/65 tester grønne.
+
+- **Steg 5: JUnit 4 → JUnit Jupiter (16 testklasser)**
+  - `@Test`/`@Before`/`@After`/`@BeforeClass`/`@AfterClass` →
+    `org.junit.jupiter.api.Test`/`@BeforeEach`/`@AfterEach`/`@BeforeAll`/
+    `@AfterAll`. `@BeforeAll`/`@AfterAll` i `companion object` med
+    `@JvmStatic` fungerer som før.
+  - `org.junit.Assert.assertThrows` →
+    `org.junit.jupiter.api.Assertions.assertThrows` (samme signatur).
+  - `ConfigurationTest`: `@get:Rule TemporaryFolder` → `@TempDir lateinit
+    var tempDir: File`, og `newFile(...)` → `tempDir.resolve(...)`. Hver
+    test får fortsatt en ny, tom katalog.
+  - WireMock i `RestArchiverTest`, `AccessPointClientTest` og `InboundIT`:
+    `@ClassRule WireMockRule` → privat `WireMockServer` i
+    `companion object`, startet i `@BeforeAll` og stoppet i `@AfterAll`
+    (samme mønster som `VaultClientTest`). Valgt framfor
+    `WireMockExtension` fordi den (3.0.1) kaller `resetToDefaultMappings()`
+    før hver test, og stubs som settes opp i `@BeforeAll` ville da blitt
+    slettet. `WireMockRule` kalte `WireMock.configureFor("localhost",
+    port)` ved start, så vi gjør det samme i `RestArchiverTest` og
+    `InboundIT`, som bruker statisk `stubFor`/`verify`.
+    `AccessPointClientTest` bruker bare instans-API-et.
+  - Fjernet `junit:junit` (direkte) og `junit-vintage-engine` fra
+    `build.gradle.kts`. Runtime-klassestien er uendret. På testklassestien
+    forsvinner bare `junit-vintage-engine`.
+  - `junit:junit` 4.13.2 ligger fortsatt transitivt på testklassestien
+    via `kluent` (bruker `org.junit.ComparisonFailure` o.l. internt, så den
+    kan ikke ekskluderes), `ktor-server-test-host` og json-simple. Merk:
+    en ny test med `org.junit.Test` kompilerer derfor, men blir ikke
+    kjørt (ingen vintage-motor). Bruk alltid `org.junit.jupiter.api.Test`.
+  - Verifisert at nøyaktig de samme 65 testcasene kjøres (sammenlignet
+    per klasse og per navn før og etter; Jupiter legger bare til `()` i
+    navnet).
+  - Mutasjonssjekk: uten `WireMock.configureFor(...)` i
+    `RestArchiverTest` feiler klassen i `@BeforeAll` (statisk `stubFor`
+    går mot standardporten).
   - 65/65 tester grønne.
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20

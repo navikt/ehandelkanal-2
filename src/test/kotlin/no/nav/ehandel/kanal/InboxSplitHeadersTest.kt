@@ -7,15 +7,15 @@ import org.amshove.kluent.shouldContainSame
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.mock.MockEndpoint
 import org.apache.camel.impl.DefaultCamelContext
-import org.junit.After
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 
 class InboxSplitHeadersTest {
 
     private val camelContext = DefaultCamelContext()
     private val threadPool = Executors.newFixedThreadPool(6)
 
-    @After
+    @AfterEach
     fun tearDown() {
         camelContext.stop()
         threadPool.shutdown()

@@ -11,10 +11,10 @@ import com.bettercloud.vault.VaultException
 import no.nav.ehandel.kanal.db.createVaultClient
 import no.nav.ehandel.kanal.db.readSecret
 import org.amshove.kluent.shouldBeEqualTo
-import org.junit.AfterClass
-import org.junit.Assert.assertThrows
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 private const val CREDS_PATH = "postgresql/preprod-fss/creds/ehandelkanal-user"
 private const val FORBIDDEN_PATH = "postgresql/preprod-fss/creds/ehandelkanal-admin"
@@ -24,7 +24,7 @@ class VaultClientTest {
     companion object {
         private val server = WireMockServer(wireMockConfig().dynamicPort())
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun setup() {
             server.start()
@@ -55,7 +55,7 @@ class VaultClientTest {
             )
         }
 
-        @AfterClass
+        @AfterAll
         @JvmStatic
         fun teardown() {
             server.stop()

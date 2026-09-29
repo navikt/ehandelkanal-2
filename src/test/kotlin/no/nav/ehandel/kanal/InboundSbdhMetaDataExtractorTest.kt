@@ -18,7 +18,7 @@ import org.apache.camel.Exchange
 import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.support.DefaultExchange
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 private val camelContext = DefaultCamelContext()
 

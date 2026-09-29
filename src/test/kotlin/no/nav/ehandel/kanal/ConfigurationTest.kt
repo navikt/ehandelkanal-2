@@ -4,10 +4,9 @@ import com.natpryce.konfig.Key
 import com.natpryce.konfig.stringType
 import java.io.File
 import org.amshove.kluent.shouldBeEqualTo
-import org.junit.After
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 
 private val ebasysUrl = Key("ebasys.url", stringType)
 private const val RESOURCE_EBASYS_URL = "ftp://localhost:20000/ftpeFaktura"
@@ -16,10 +15,10 @@ private const val SYSTEM_PROPERTY_EBASYS_URL = "ftp://sysprop.example.invalid/ft
 
 class ConfigurationTest {
 
-    @get:Rule
-    val tempFolder = TemporaryFolder()
+    @TempDir
+    lateinit var tempDir: File
 
-    @After
+    @AfterEach
     fun tearDown() {
         System.clearProperty(ebasysUrl.name)
     }
@@ -46,7 +45,7 @@ class ConfigurationTest {
     }
 
     private fun vaultProperties(): File =
-        tempFolder.newFile("application.properties").apply {
+        tempDir.resolve("application.properties").apply {
             writeText(
                 """
                 ebasys.url=$VAULT_EBASYS_URL
