@@ -543,6 +543,48 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   og full build+test etter hvert steg.
 - Sjekk kompatibilitetsmatrise for Kotlin-plugin, shadow-plugin og
   flyway-plugin mot hver Gradle-major.
+- Fase 4 kjøres på egen branch (`chore/OEBS-2320-dependency-upgrades-fase4`).
+  Fase 3 er merget til dev (#54).
+- Rekkefølge:
+  1. Gradle 7.6.4 → 8.14.5.
+  2. shadow-plugin til en versjon som støtter Gradle 9 (rydder
+     deprecations).
+  3. ben-manes 0.64.0, og junit-vintage 6.x med `camel-test-junit5`.
+  4. Gradle 8.14.5 → 9.x.
+- Steg 1 (7.6.4 → 8.14.5):
+  - Wrapper oppgradert med `./gradlew wrapper --gradle-version 8.14.5`
+    (kjørt to ganger, slik at også `gradlew`-skriptene og wrapper-JAR-en
+    oppdateres). `gradleVersion` i `tasks.withType<Wrapper>` er oppdatert
+    tilsvarende.
+  - `gradle-wrapper.jar` er verifisert mot Gradles offisielle SHA-256
+    (`7d3a4ac4…6172`).
+  - `distributionSha256Sum` er lagt til i `gradle-wrapper.properties` og i
+    `tasks.withType<Wrapper>`, slik at den ikke forsvinner neste gang
+    `./gradlew wrapper` kjøres. Wrapperen nekter nå å bruke en Gradle-zip
+    med feil sjekksum. Det er verifisert med en ren `GRADLE_USER_HOME`:
+    riktig sum laster ned og starter, og feil sum stopper med «Expected
+    checksum». Ved neste Gradle-oppgradering må både versjon og sum
+    oppdateres (se https://gradle.org/release-checksums/).
+  - Ingen endring nødvendig for Kotlin-plugin 2.4.20, flyway-plugin 13.8.0
+    eller ben-manes 0.51.0. `dependencyUpdates` kjører.
+  - Gradle 8 advarer om «automatic loading of test framework
+    implementation dependencies» (fjernes i Gradle 9). Rettet ved å
+    deklarere `junit-platform-launcher` eksplisitt, og ved å hente
+    vintage-engine og launcher via `junit-bom` slik at versjonene alltid
+    er like (1.11.4/5.11.4).
+  - `jar` og `shadowJar` skriver fortsatt til samme fil (`archiveClassifier
+    = ""`), og `build/libs` inneholder én fat-JAR med `Main-Class`. Det er
+    viktig fordi Dockerfile kopierer `build/libs/*.jar`. Service-filene for
+    Camel (`TypeConverterLoader`) og Flyway (`Plugin` med PostgreSQL) er
+    slått sammen korrekt.
+  - Gjenværende deprecations kommer fra shadow 7.1.2 (`Convention`,
+    `setFileMode`, `ConfigureUtil`, `JavaPluginConvention`,
+    `ApplicationPluginConvention`, `getMode`). Disse fjernes i Gradle 9 og
+    løses i steg 2.
+  - Toolchain-advarselen fra 7.6.4 («no java toolchain repositories») er
+    borte. CI bruker `setup-java` med JDK 21, så toolchain-en trenger
+    aldri å lastes ned.
+  - 61/61 tester grønne.
 
 ### Fase 5 — Oppfølging av utsatte oppgraderinger (samlesteg)
 Når Kotlin-pluginet (Fase 3) og Gradle wrapper (Fase 4) er oppgradert, går vi
@@ -551,7 +593,12 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
 - jackson (databind/module-kotlin/datatype-joda) → 2.22.2 (eller nyeste
   tilgjengelige på det tidspunktet)
 - mockk → 1.14.11 (eller nyeste tilgjengelige)
-- com.github.ben-manes.versions-plugin → 0.64.0 (eller nyeste tilgjengelige)
+- exposed → 1.x (pakkene flyttes til `org.jetbrains.exposed.v1.*`)
+- kotlin-result → 2.3.1 (eller nyeste tilgjengelige)
+
+Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
+(Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
+Fase 3, slik at Fase 3 kunne merges til dev først.
 
 Kjør `./gradlew clean test` etter hver av disse også, selv om de er
 "lavrisiko" — de er nettopp utsatt fordi de har en (nå oppfylt) avhengighet
