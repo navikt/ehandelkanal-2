@@ -81,7 +81,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | Dependency | Ønsket mål-versjon | Faktisk satt til | Blokkert av | Følges opp når |
 |---|---|---|---|---|
 | jackson-databind / jackson-module-kotlin / jackson-datatype-joda | 2.22.2 | ✅ 2.22.3 i Fase 5 steg 1 (fra 2.19.4) | `jackson-module-kotlin` ≥2.20 krever Kotlin-stdlib 2.0+/2.1+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
-| mockk | 1.14.11 | 1.13.12 (uendret) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| mockk | 1.14.11 | ✅ 1.14.11 i Fase 5 steg 2 (fra 1.13.12) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | com.github.ben-manes.versions (plugin) | 0.64.0 | ✅ 0.64.0 i Fase 4 steg 3a (ny plugin-id `io.github.ben-manes.versions`) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | shadow-plugin | 8.1.1 | ✅ `com.gradleup.shadow` 9.2.2 i Fase 4 steg 2, 9.6.1 i steg 4 (Gradle 9.7.1) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | junit-vintage-engine | 6.1.3 | ✅ 6.1.3 i Fase 4 steg 3b (via `junit-bom`) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
@@ -727,7 +727,9 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
 - jackson (databind/module-kotlin/datatype-joda) → 2.22.2 (eller nyeste
   tilgjengelige på det tidspunktet)
 - mockk → 1.14.11 (eller nyeste tilgjengelige)
-- exposed → 1.x (pakkene flyttes til `org.jetbrains.exposed.v1.*`)
+- exposed → 1.x (pakkene flyttes til `org.jetbrains.exposed.v1.*`).
+  Oppdater `coroutines_version` i `build.gradle.kts` til den versjonen
+  Exposed 1.x drar inn i prod (se steg 2).
 - kotlin-result → 2.3.1 (eller nyeste tilgjengelige)
 - Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og fjern
   `junit-vintage-engine` og `junit:junit`. Berører blant annet:
@@ -790,6 +792,39 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
     delte `objectMapper`. Det er uendret oppførsel, og `ArchiveRequestTest`
     tester nettopp med `jacksonObjectMapper()`.
   - 65/65 tester grønne (61 + 4 nye).
+
+- Steg 2 (mockk 1.13.12 → 1.14.11):
+  - Release notes gjennomgått for 1.13.13–1.14.11. Relevant for oss:
+    - 1.13.13: `unmockkAll` kjøres etter hver JUnit 5-test, men bare via
+      `MockKExtension`, som vi ikke bruker.
+    - 1.14.7: JUnit 4 og 5 er nå `compileOnly` i mockk. Vi deklarerer JUnit
+      selv, så ingenting forsvinner fra testklassestien.
+    - Byte Buddy 1.14.17 → 1.18.2 og objenesis 3.3 → 3.4 (bare test).
+  - Vi bruker bare `mockk { every { … } returns … }` og `relaxed = true`
+    (`AccessPointClientTest` og `InboundIT`). Ingen API-endringer der.
+  - Funn: mockk 1.14.11 løfter `kotlinx-coroutines` fra 1.8.1 til 1.10.2,
+    men bare på testklassestien. Prod får 1.8.1 fra `exposed-core` 0.53.0.
+    Da ville `InboundIT` og `RestArchiverTest` kjørt prod-koden (Ktor-
+    klienten) med en annen coroutines-versjon enn prod.
+    - Vi valgte å låse testklassestiene til prod-versjonen:
+      `val coroutines_version = "1.8.1"` og
+      `resolutionStrategy.eachDependency { useVersion(coroutines_version) }`
+      for alle `kotlinx-coroutines-*` på `testCompileClasspath` og
+      `testRuntimeClasspath`. Det dekker også `kotlinx-coroutines-debug`,
+      som bare mockk drar inn.
+    - Prod-klassestien er uendret (verifisert med diff av
+      `runtimeClasspath`).
+    - 🔴 `coroutines_version` må oppdateres når Exposed oppgraderes,
+      ellers tester vi mot en annen versjon enn prod.
+    - Avvik som fantes fra før og ikke er endret: WireMock løfter `guava`
+      (30.0 → 32.1.2) og `error_prone_annotations` på testklassestien, og
+      `junit` er 4.13.2 i test mot 4.10 i prod (via json-simple, se Fase 4
+      steg 3b). En full låsing med `consistentResolution` ville tvunget
+      guava ned til 30.0 for WireMock, så det ble ikke valgt.
+  - Mutasjonssjekk: når `getToken()`-mocken i `AccessPointClientTest`
+    returnerer feil token, feiler 4/4 tester (WireMock matcher på
+    `Authorization`). Mockene virker med den nye versjonen.
+  - 65/65 tester grønne.
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av

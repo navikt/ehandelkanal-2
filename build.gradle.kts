@@ -24,9 +24,10 @@ val flyway_version = "13.8.0"
 val h2_version = "2.5.252"
 val postgres_version = "42.7.13"
 val exposed_version = "0.53.0"
+val coroutines_version = "1.8.1"
 val result_version = "2.0.1"
 val wiremock_version = "3.0.1"
-val mockk_version = "1.13.12"
+val mockk_version = "1.14.11"
 val kluent_version = "1.73"
 val junit_version = "4.13.2"
 val junit_bom_version = "6.1.3"
@@ -64,6 +65,15 @@ repositories {
 
 kotlin {
     jvmToolchain(21)
+}
+
+configurations.matching { it.name == "testCompileClasspath" || it.name == "testRuntimeClasspath" }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-coroutines")) {
+            useVersion(coroutines_version)
+            because("tester skal kjøre med samme coroutines-versjon som prod (styres av exposed)")
+        }
+    }
 }
 
 dependencies {
