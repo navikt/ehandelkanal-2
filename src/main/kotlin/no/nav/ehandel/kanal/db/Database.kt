@@ -14,6 +14,7 @@ import no.nav.ehandel.kanal.db.Vault.suggestedRefreshIntervalInMillis
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.postgresql.ds.PGSimpleDataSource
 
 private val logger = KotlinLogging.logger { }
 private val dispatcher: CoroutineContext = Executors.newFixedThreadPool(5).asCoroutineDispatcher()
@@ -70,9 +71,17 @@ object Database {
                 databaseName = DatabaseProps.name,
                 role = Role.ADMIN
             )
-            dataSource(DatabaseProps.url, credentials.username, credentials.password)
+            dataSource(
+                SetRoleDataSource(
+                    delegate = PGSimpleDataSource().apply {
+                        setURL(DatabaseProps.url)
+                        user = credentials.username
+                        password = credentials.password
+                    },
+                    role = "${DatabaseProps.name}-${Role.ADMIN}" // required for assigning proper owners for the tables
+                )
+            )
             locations("classpath:db/migration/common", "classpath:db/migration/postgresql")
-            initSql("SET ROLE \"${DatabaseProps.name}-${Role.ADMIN}\"") // required for assigning proper owners for the tables
             load().migrate()
         }
         val initialCredentials = getNewCredentials(

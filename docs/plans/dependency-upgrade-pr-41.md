@@ -740,11 +740,15 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
 - ✅ Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og
   fjern `junit-vintage-engine` og den direkte `junit:junit`-avhengigheten
   (steg 5).
-- Flyway `initSql` → `afterConnect`-callback i `Database.kt` (`initRemote`,
-  `SET ROLE "<db>-admin"`). Flyway logger `initSql is deprecated` to ganger
-  ved hver oppstart (sett i dev 2026-09-29). 🔴 `SET ROLE` sørger for riktig
-  eier på tabeller fra migreringer, så verifiser at nye migreringer
-  fortsatt får admin-rollen som eier.
+- ✅ Flyway `initSql` erstattet (steg 6). Flyway foreslår en
+  `afterConnect`-callback, men den er ikke likeverdig for Postgres, se
+  steg 6. Løst med `SetRoleDataSource` i stedet.
+- Eksisterende feil, ikke tatt her: `V1.4__fix_report_sequence.sql` feiler
+  på en tom `report`-tabell (`setval('report_id_seq', 0, true)`: «value 0
+  is out of bounds»). Dev og prod er allerede på 1.4, så det treffer bare
+  nye miljøer (ny database). Kan ikke rettes i V1.4 (sjekksummen er
+  endret i dev/prod), men må tas i en ny migrering eller med
+  `COALESCE(MAX(id), 1), MAX(id) IS NOT NULL` hvis et nytt miljø trengs.
 - HikariCP `keepaliveTime`: fra HikariCP 6.2.1 er `keepaliveTime` = 2 min
   som standard (tidligere 0). Poolen i `Database.kt` har `maxLifetime = 30001`, så HikariCP
   skrur av keepalive og logger `keepaliveTime is greater than or equal to
@@ -949,6 +953,49 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
     `RestArchiverTest` feiler klassen i `@BeforeAll` (statisk `stubFor`
     går mot standardporten).
   - 65/65 tester grønne.
+
+- **Steg 6: Flyway `initSql` → `SetRoleDataSource`** 🔴
+  - `initSql("SET ROLE \"<db>-admin\"")` i `initRemote` sørger for at
+    tabeller og sekvenser fra migreringer eies av admin-rollen og ikke av
+    den midlertidige Vault-brukeren. Flyway 13 logger at `initSql` er
+    deprecated og foreslår en `afterConnect`-callback.
+  - Hvorfor `afterConnect` ikke fungerer (Flyway 13.8.0-kildekoden):
+    - `PostgreSQLConnection` lagrer `originalRole = SELECT CURRENT_USER`
+      når Flyway pakker inn JDBC-tilkoblingen, og
+      `restoreOriginalState()` kjører `SET ROLE '<originalRole>'`.
+    - `restoreOriginalState()` kalles før hver migrering
+      (`DbMigrate`), før hver callback (`DefaultCallbackExecutor`) og før
+      skriving til `flyway_schema_history` (`JdbcTableSchemaHistory`).
+    - `initSql` kjøres som `connectionInitializer` på den rå
+      JDBC-tilkoblingen *før* innpakningen, så `originalRole` blir
+      admin-rollen. En `afterConnect`-callback kjøres *etter*, så
+      `originalRole` blir Vault-brukeren, og rollen nullstilles til den før
+      hver migrering.
+  - Løsning: `db/SetRoleDataSource.kt`, en `DataSource`-wrapper
+    (delegerer til `PGSimpleDataSource`) som kjører `SET ROLE "<rolle>"`
+    på hver ny tilkobling før Flyway får den. Samme tidspunkt som
+    `initSql`, også for den første tilkoblingen Flyway bruker til å finne
+    databasetypen. Lukker tilkoblingen hvis `SET ROLE` feiler.
+  - Eneste bivirkning: Flyway setter ikke lenger
+    `ApplicationName=Flyway by Redgate` og `assumeMinServerVersion` (det
+    gjør bare Flyways egen `DriverDataSource` når vi gir url/bruker/
+    passord). Påvirker bare navnet i `pg_stat_activity`.
+  - Verifisert mot Postgres 17 i Docker (engangstest, ikke committet) med
+    samme oppsett som Vault: `NOLOGIN`-rolle `ek-admin` som eier
+    databasen, og innloggingsbruker `IN ROLE "ek-admin"`. Ekte migreringer
+    V1–V1.3, eier av `report`, `report_id_seq` og `flyway_schema_history`:
+    - `initSql`: `ek-admin`
+    - `SetRoleDataSource`: `ek-admin`
+    - `afterConnect`-callback: Vault-brukeren (feil)
+  - `SetRoleDataSourceTest` (mockk): `SET ROLE` på hver tilkobling
+    (begge `getConnection`-variantene), statement lukkes, og tilkoblingen
+    lukkes hvis `SET ROLE` feiler.
+  - Mutasjonssjekk: uten `withRole()` i `getConnection()` feiler 2 av 3
+    enhetstester, og Docker-testen gir Vault-brukeren som eier.
+  - 68/68 tester grønne.
+  - Verifiseres i dev: oppstart uten `initSql is deprecated`, og
+    `Schema "public" is up to date`. Eierskap kan først sees ved neste nye
+    migrering (`\dt`/`\ds` i databasen skal vise `<db>-admin`).
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
