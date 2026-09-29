@@ -124,7 +124,9 @@ dependencies {
         exclude(group = "com.nhaarman.mockitokotlin2")
     }
     testImplementation("junit:junit:$junit_version")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junit_vintage_version")
+    testImplementation(platform("org.junit:junit-bom:$junit_vintage_version"))
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks {
@@ -178,7 +180,8 @@ tasks {
 //
 //}
     withType<Wrapper> {
-        gradleVersion = "7.6.4"
+        gradleVersion = "8.14.5"
+        distributionSha256Sum = "6f74b601422d6d6fc4e1f9a1ab6522f642c2fdcbc15ae33ebd30ba3d7198e854"
         distributionType = Wrapper.DistributionType.BIN
     }
     named("distZip")  { dependsOn("shadowJar") }
