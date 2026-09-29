@@ -37,7 +37,7 @@ plugins {
     //id("org.jmailen.kotlinter") version "5.2.0"
     id("com.github.ben-manes.versions") version "0.51.0"
     id("org.flywaydb.flyway") version "13.8.0"
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.gradleup.shadow") version "9.2.2"
 }
 
 // kotlinter {
@@ -130,11 +130,18 @@ dependencies {
 }
 
 tasks {
-    create("printVersion") {
-        println(project.version)
+    register("printVersion") {
+        val projectVersion = project.version
+        doLast {
+            println(projectVersion)
+        }
     }
     withType<ShadowJar> {
         archiveClassifier.set("")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        filesMatching("META-INF/services/**") {
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
         mergeServiceFiles()
     }
     withType<Test> {

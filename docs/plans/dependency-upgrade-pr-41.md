@@ -585,6 +585,57 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
     borte. CI bruker `setup-java` med JDK 21, så toolchain-en trenger
     aldri å lastes ned.
   - 61/61 tester grønne.
+- Steg 2 (shadow 7.1.2 → `com.gradleup.shadow` 9.2.2):
+  - Pluginet har flyttet til GradleUp og fått ny plugin-id. Pakken for
+    `ShadowJar` er uendret.
+  - Versjonsvalget:
+    - shadow ≥ 9.3.0 krever Gradle 9.0, og ≥ 9.5.0 krever Gradle 9.2.
+      9.6.1 feilet på 8.14.5 med `NoSuchMethodError` i
+      `addVariantsFromConfiguration`.
+    - Gradle 9 kan heller ikke tas først, fordi shadow 7.1.2 bruker
+      API-er som fjernes i Gradle 9.
+    - Derfor 9.2.2 nå (krever Gradle ≥ 8.11), og bump til nyeste 9.x
+      sammen med Gradle 9 i steg 4.
+  - 🔴 `duplicatesStrategy`: shadow 9 bruker `EXCLUDE` som standard. Da
+    blir duplikate service-filer forkastet før `mergeServiceFiles()` ser
+    dem. Uten tiltak ville Camel sin `TypeConverterLoader` og Flyway sin
+    PostgreSQL-plugin stille forsvunnet fra fat-JAR-en, og prod ville
+    feilet ved oppstart.
+    - Satt `duplicatesStrategy = EXCLUDE` eksplisitt (første fil vinner,
+      som i 7.x).
+    - Satt `filesMatching("META-INF/services/**") { duplicatesStrategy =
+      INCLUDE }`, slik at service-filene slås sammen.
+  - Fat-JAR sammenlignet med snapshot fra 7.1.2:
+    - 45 154 → 45 165 entries, ingen duplikater.
+    - Nye entries er bare katalogoppføringer under `META-INF/services/`.
+    - `META-INF/versions/9/module-info.class` er borte (shadow 9 utelater
+      den som standard, og den har ingen betydning på classpath).
+    - Ingen service-linjer er tapt, verken for Camel, Flyway eller JAXB.
+      Den nye sammenslåingen fjerner bare kommentarlinjer og like linjer.
+  - `Multi-Release: true` er nå satt i manifestet. Shadow 7 mistet dette
+    attributtet, så versjonerte klasser i `META-INF/versions/N/` ble
+    ignorert. Nå brukes de på Java 21, slik bibliotekene er ment å kjøre
+    på vanlig classpath. Det berører:
+    - JSch: Ed25519/Ed448 via JDK og Unix domain sockets. Vår RSA-
+      tilkobling berøres ikke.
+    - BouncyCastle, transitivt via IBM MQ. `Jms.kt` har ikke TLS, så
+      sannsynligvis ubrukt på vår sti.
+    - 5 JAXB-klasser.
+
+    Vi valgte å beholde det. Verifiseres i dev:
+    - Invoice via vefasrest dekker JAXB-parsing og SFTP-skriving. Sjekk
+      også at `Testing FTP connection` logges ved oppstart.
+    - OrderResponse via vefasrest dekker MQ. Bare OrderResponse og
+      Catalogue går til MQ, og JMS-tilkoblingen åpnes først ved sending.
+      Se etter `Inbound EHF sent via MQ to internal systems`.
+    - Hvis noe feiler, kan `Multi-Release: false` settes i manifestet
+      uten å rulle tilbake shadow.
+  - `create("printVersion") { println(...) }` er endret til
+    `register(...) { doLast { ... } }`. `create` var deprecated, og
+    versjonen ble skrevet ut ved konfigurasjon av hvert eneste
+    Gradle-kall. Tasken brukes ikke i CI.
+  - Ingen Gradle-deprecations igjen med `--warning-mode all`. 61/61 tester
+    grønne.
 
 ### Fase 5 — Oppfølging av utsatte oppgraderinger (samlesteg)
 Når Kotlin-pluginet (Fase 3) og Gradle wrapper (Fase 4) er oppgradert, går vi
