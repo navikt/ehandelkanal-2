@@ -9,8 +9,8 @@ import no.nav.ehandel.kanal.services.report.CsvValues
 import no.nav.ehandel.kanal.services.report.Report
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldContainSame
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.deleteAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.joda.time.DateTime
 import org.junit.Before
 import org.junit.Test

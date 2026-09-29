@@ -23,7 +23,7 @@ val vault_driver_version = "5.1.0"
 val flyway_version = "13.8.0"
 val h2_version = "2.5.252"
 val postgres_version = "42.7.13"
-val exposed_version = "0.53.0"
+val exposed_version = "1.5.0"
 val coroutines_version = "1.8.1"
 val result_version = "2.0.1"
 val wiremock_version = "3.0.1"
@@ -67,11 +67,11 @@ kotlin {
     jvmToolchain(21)
 }
 
-configurations.matching { it.name == "testCompileClasspath" || it.name == "testRuntimeClasspath" }.configureEach {
+configurations.matching { it.name in setOf("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-coroutines")) {
             useVersion(coroutines_version)
-            because("tester skal kjøre med samme coroutines-versjon som prod (styres av exposed)")
+            because("ktor 1.6.8 bruker ExperimentalCoroutineDispatcher, som er fjernet i coroutines 1.9.0")
         }
     }
 }

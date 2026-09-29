@@ -1,7 +1,7 @@
 package no.nav.ehandel.kanal.db
 
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.jodatime.date
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.jodatime.date
 
 object ReportTable : Table() {
     val id = integer("id").autoIncrement()
