@@ -518,6 +518,22 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
     `kotlin-stdlib-jdk7`/`jdk8:1.8.0` er tomme kompatibilitets-JAR-er
     siden Kotlin 1.8, så det blir ikke duplikate klasser.
   - 61/61 tester grønne.
+- Steg 2 (2.0.21 → 2.4.20):
+  - K2 kompilerte uten feil eller nye advarsler i koden.
+  - KGP 2.4.x støtter Gradle 7.6.3 og nyere, så 7.6.4 fungerer. KGP
+    advarer om at Kotlin 2.5.0 krever Gradle ≥ 8.14.4. Det tas i Fase 4.
+  - `kotlin-reflect` ble værende på 1.9.25 (transitivt via
+    `jackson-module-kotlin`), mens stdlib var 2.4.20. En eldre
+    `kotlin-reflect` kan feile på metadata fra nyere kompilator. Lagt til
+    `implementation(kotlin("reflect"))`, slik at den følger plugin-
+    versjonen (2.4.20).
+    - Main bruker Jackson bare til serialisering (`ArchiveRequest`,
+      Ktor-svar) og `readTree`, ikke til deserialisering til Kotlin-
+      klasser. `ArchiveRequestTest` dekker serialiseringen.
+  - Bytekode versjon 65 (Java 21). 61/61 tester grønne.
+  - Oppfølgingene i «Utsatt til senere» som var blokkert av Kotlin 2.x
+    (Exposed, kotlin-result, jackson, mockk) kan nå tas. Hver tas som eget
+    steg.
 
 ### Fase 4 — Byggeverktøy sist
 **Gradle wrapper: 7.6.4 → 9.7.1**

@@ -33,7 +33,7 @@ val junit_vintage_version = "5.11.4"
 
 plugins {
     application
-    kotlin("jvm") version "2.0.21"
+    kotlin("jvm") version "2.4.20"
     //id("org.jmailen.kotlinter") version "5.2.0"
     id("com.github.ben-manes.versions") version "0.51.0"
     id("org.flywaydb.flyway") version "13.8.0"
@@ -68,6 +68,7 @@ kotlin {
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
     implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("io.ktor:ktor-html-builder:$ktor_version")
     implementation("io.ktor:ktor-jackson:$ktor_version")
