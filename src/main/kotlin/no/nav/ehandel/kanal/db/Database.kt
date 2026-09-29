@@ -98,6 +98,7 @@ object Database {
             idleTimeout = 10001
             connectionTimeout = 1000
             maxLifetime = 30001
+            keepaliveTime = 0
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             validate()

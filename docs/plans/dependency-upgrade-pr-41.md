@@ -749,13 +749,18 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   nye miljøer (ny database). Kan ikke rettes i V1.4 (sjekksummen er
   endret i dev/prod), men må tas i en ny migrering eller med
   `COALESCE(MAX(id), 1), MAX(id) IS NOT NULL` hvis et nytt miljø trengs.
-- HikariCP `keepaliveTime`: fra HikariCP 6.2.1 er `keepaliveTime` = 2 min
-  som standard (tidligere 0). Poolen i `Database.kt` har `maxLifetime = 30001`, så HikariCP
-  skrur av keepalive og logger `keepaliveTime is greater than or equal to
-  maxLifetime, disabling it` ved oppstart (sett i dev 2026-09-29). Det gir
-  samme oppførsel som før HikariCP-oppgraderingen (keepalive av). Sett
-  `keepaliveTime = 0` eksplisitt for å fjerne advarselen uten å endre
-  oppførsel.
+- Oppfølging (eksisterende, utenfor planen): 🔴 SFTP mot ebasys verifiserer
+  ikke vertsnøkkelen. `ebasysInbound`/`ebasysInboundUnknownFiles` i
+  `Inbound.kt` setter verken `knownHostsFile` eller
+  `strictHostKeyChecking`, og camel-ftp 3.22.4 har `StrictHostKeyChecking=no`
+  som standard. Da godtar JSch hvilken som helst vertsnøkkel (mulig MITM).
+  Sett i dev-loggen 2026-09-29: `Known host file not configured, using user
+  known host file: //.ssh/known_hosts` (`user.home` er `/` i containeren,
+  og filen finnes ikke). Ikke en regresjon, samme oppførsel før
+  oppgraderingene. Forslag: legg ebasys-vertsnøkkelen i en Nais-secret, og
+  sett `knownHostsFile=<sti>` (eller `knownHostsUri`) og
+  `strictHostKeyChecking=yes` på begge endepunktene. Verifiser i dev.
+- ✅ HikariCP `keepaliveTime = 0` eksplisitt i `initRemote` (steg 7).
 
 - Fase 5 kjøres på egen branch (`chore/OEBS-2320-dependency-upgrades-fase5`).
   Fase 4 er merget til dev (#56).
@@ -996,6 +1001,24 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   - Verifiseres i dev: oppstart uten `initSql is deprecated`, og
     `Schema "public" is up to date`. Eierskap kan først sees ved neste nye
     migrering (`\dt`/`\ds` i databasen skal vise `<db>-admin`).
+
+- **Steg 7: HikariCP `keepaliveTime = 0` i `initRemote`**
+  - Fra HikariCP 6.2.1 er standard `keepaliveTime` 2 min (tidligere 0).
+    Poolen i `initRemote` har `maxLifetime = 30001`, så
+    `HikariConfig.validate()` (7.1.0, linje ~1115) logget `keepaliveTime is
+    greater than or equal to maxLifetime, disabling it` og satte verdien
+    til 0 ved hver oppstart (sett i dev 2026-09-29).
+  - Satt `keepaliveTime = 0` eksplisitt. Den faktiske konfigurasjonen er
+    den samme, bare advarselen forsvinner. Verifisert med jshell mot
+    HikariCP-7.1.0.jar og samme poolverdier: før = advarsel og
+    `keepaliveTime=0`, etter = ingen advarsel og `keepaliveTime=0`.
+  - `initLocal` (H2) er ikke endret. Den bruker standard `maxLifetime`
+    (30 min), så keepalive på 2 min er aktiv der uten advarsel.
+  - Ingen ny enhetstest: poolkonfigurasjonen bygges inline i
+    `initRemote` med Vault-oppslag, og en test ville bare sjekket en
+    konstant. Effekten er verifisert med jshell som beskrevet over.
+  - 68/68 tester grønne.
+  - Verifiseres i dev: advarselen er borte ved oppstart.
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
