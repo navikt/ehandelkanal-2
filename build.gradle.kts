@@ -37,7 +37,7 @@ plugins {
     //id("org.jmailen.kotlinter") version "5.2.0"
     id("io.github.ben-manes.versions") version "0.64.0"
     id("org.flywaydb.flyway") version "13.8.0"
-    id("com.gradleup.shadow") version "9.2.2"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 // kotlinter {
@@ -144,6 +144,8 @@ tasks {
             duplicatesStrategy = DuplicatesStrategy.INCLUDE
         }
         mergeServiceFiles()
+        @Suppress("DEPRECATION")
+        enableKotlinModuleRemapping = false
     }
     withType<Test> {
         useJUnitPlatform()
@@ -188,8 +190,8 @@ tasks {
 //
 //}
     withType<Wrapper> {
-        gradleVersion = "8.14.5"
-        distributionSha256Sum = "6f74b601422d6d6fc4e1f9a1ab6522f642c2fdcbc15ae33ebd30ba3d7198e854"
+        gradleVersion = "9.7.1"
+        distributionSha256Sum = "acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a"
         distributionType = Wrapper.DistributionType.BIN
     }
     named("distZip")  { dependsOn("shadowJar") }

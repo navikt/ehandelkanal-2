@@ -83,7 +83,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | jackson-databind / jackson-module-kotlin / jackson-datatype-joda | 2.22.2 | 2.19.4 | `jackson-module-kotlin` ≥2.20 krever Kotlin-stdlib 2.0+/2.1+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | mockk | 1.14.11 | 1.13.12 (uendret) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | com.github.ben-manes.versions (plugin) | 0.64.0 | ✅ 0.64.0 i Fase 4 steg 3a (ny plugin-id `io.github.ben-manes.versions`) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
-| shadow-plugin | 8.1.1 | 7.1.2 (uendret, allerede siste 7.x-versjon) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
+| shadow-plugin | 8.1.1 | ✅ `com.gradleup.shadow` 9.2.2 i Fase 4 steg 2, 9.6.1 i steg 4 (Gradle 9.7.1) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | junit-vintage-engine | 6.1.3 | ✅ 6.1.3 i Fase 4 steg 3b (via `junit-bom`) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
@@ -680,6 +680,45 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
     `com.googlecode.json-simple:json-simple:1.1.1`, som `ktor-auth` 1.6.8
     drar inn, og json-simple deklarerer JUnit som compile-avhengighet.
     Kandidat for `exclude` eller forsvinner med Ktor-oppgradering.
+- Steg 4 (Gradle 8.14.5 → 9.7.1, shadow 9.2.2 → 9.6.1):
+  - Versjonsvalg: Kotlin-plugin 2.4.20 støtter fullt ut Gradle 7.6.3–9.7.0
+    (KGP-kompatibilitetstabellen). 9.7.1 er en patch på 9.7 og ble valgt
+    fremfor 9.8.0, som er utenfor støttet område og bare dager gammel.
+  - Rekkefølge: shadow 9.6.1 lar seg ikke laste på Gradle 8.14.5
+    (`NoSuchMethodError` i `addVariantsFromConfiguration`). Wrapperen ble
+    derfor oppgradert først med shadow 9.2.2, og shadow ble bumpet etterpå.
+  - Wrapper:
+    - `./gradlew wrapper --gradle-version 9.7.1
+      --gradle-distribution-sha256-sum …` kjørt to ganger.
+    - `gradle-wrapper.jar` er verifisert mot Gradles offisielle SHA-256
+      (`7a9ce74c…2c5d`).
+    - `distributionSha256Sum` (`acd53f1e…d20a`) er oppdatert både i
+      `gradle-wrapper.properties` og i `tasks.withType<Wrapper>`.
+      Nedlastingen av 9.7.1 gikk gjennom sjekksumkontrollen.
+    - Nye felter i `gradle-wrapper.properties`: `retries=0` og
+      `retryBackOffMs=500` (standardverdier fra Gradle 9).
+    - `gradlew`/`gradlew.bat` er regenerert. Den tomme
+      `CLASSPATH`-variabelen er fjernet, fordi wrapperen startes med
+      `-jar`.
+  - Shadow 9.5+ legger til `KotlinModuleMetadataTransformer` som standard
+    og advarer (56 linjer) om at den ikke fungerer sammen med `EXCLUDE`.
+    Transformeren trengs bare ved relocation, og vi relocater ikke.
+    - Satt `enableKotlinModuleRemapping = false` (med
+      `@Suppress("DEPRECATION")`). Flagget fjernes i shadow 10, og da er
+      remapping av som standard, så linjen må slettes ved neste major.
+    - Verifisert at alle 56 `.kotlin_module`-filer er byte-identiske med
+      og uten remapping, og at advarslene er borte.
+  - Fat-JAR sammenlignet med steg 3b (Gradle 8.14.5, shadow 9.2.2):
+    samme 42 851 fil-entries, identiske `META-INF/services/*` og identisk
+    manifest (inkl. `Multi-Release: true`). Én JAR i `build/libs`.
+  - Ingen Gradle-deprecations i CI-kommandoen
+    (`--warning-mode all clean build shadowJar`). `printVersion` og
+    `dependencyUpdates` kjører uten advarsler.
+  - Kjent, ikke blokkerende: flyway-pluginet 13.8.0 kaller
+    `Project.getProperties`, som er deprecated og feiler i Gradle 10. Det
+    slår bare ut når `flyway*`-tasks kjøres manuelt, ikke i CI. Følges opp
+    ved neste flyway-plugin-oppgradering.
+  - 61/61 tester grønne.
 
 ### Fase 5 — Oppfølging av utsatte oppgraderinger (samlesteg)
 Når Kotlin-pluginet (Fase 3) og Gradle wrapper (Fase 4) er oppgradert, går vi
