@@ -87,7 +87,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | junit-vintage-engine | 6.1.3 | ✅ 6.1.3 i Fase 4 steg 3b (via `junit-bom`) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
-| exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | 0.53.0 (fra 0.41.1) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | ✅ 1.5.0 i Fase 5 steg 3 (coroutines låst til 1.8.1 pga. Ktor 1.6.8) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | kotlin-result | 2.3.1 | 2.0.1 (fra 1.1.6) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | camel-test (JUnit 4, `CamelTestSupport`) | camel-test-junit5 | ✅ camel-test-junit5 3.22.4 i Fase 4 steg 3b | `XmlDetectorTest` og `InboundSbdhRemoverTest` var JUnit 4-tester og ble kjørt av junit-vintage | Sammen med junit-vintage i Fase 4 (Camel 4 fjerner JUnit 4-støtten helt) |
 
@@ -728,8 +728,14 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   tilgjengelige på det tidspunktet)
 - mockk → 1.14.11 (eller nyeste tilgjengelige)
 - exposed → 1.x (pakkene flyttes til `org.jetbrains.exposed.v1.*`).
-  Oppdater `coroutines_version` i `build.gradle.kts` til den versjonen
-  Exposed 1.x drar inn i prod (se steg 2).
+  ✅ Gjort i steg 3. Coroutines er låst til 1.8.1 i prod, se steg 3.
+- Ktor 1.6.8 → nyere major (egen, stor oppgave). Krever migrering av
+  server (routing, `StatusPages`, `ContentNegotiation`, `respondHtml`) og
+  klient (`HttpClient(Apache)`, `JsonFeature`, `Auth`). Når Ktor ikke
+  lenger bruker `ExperimentalCoroutineDispatcher`, fjernes
+  coroutines-låsen i `build.gradle.kts`, slik at Exposed får versjonen den
+  er bygget mot (1.11.0). Fjerner trolig også `junit:junit:4.10` fra
+  fat-JAR-en (via `ktor-auth` → json-simple).
 - kotlin-result → 2.3.1 (eller nyeste tilgjengelige)
 - Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og fjern
   `junit-vintage-engine` og `junit:junit`. Berører blant annet:
@@ -815,7 +821,8 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
     - Prod-klassestien er uendret (verifisert med diff av
       `runtimeClasspath`).
     - 🔴 `coroutines_version` må oppdateres når Exposed oppgraderes,
-      ellers tester vi mot en annen versjon enn prod.
+      ellers tester vi mot en annen versjon enn prod. (Oppdatering: i
+      steg 3 ble låsen i stedet utvidet til prod, se der.)
     - Avvik som fantes fra før og ikke er endret: WireMock løfter `guava`
       (30.0 → 32.1.2) og `error_prone_annotations` på testklassestien, og
       `junit` er 4.13.2 i test mot 4.10 i prod (via json-simple, se Fase 4
@@ -825,6 +832,70 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
     returnerer feil token, feiler 4/4 tester (WireMock matcher på
     `Authorization`). Mockene virker med den nye versjonen.
   - 65/65 tester grønne.
+
+- Steg 3 (Exposed 0.53.0 → 1.5.0):
+  - Kodeendringer (bare imports):
+    - `org.jetbrains.exposed.sql.*` → `org.jetbrains.exposed.v1.core.*`
+      (`Table`, `ResultRow`, `SortOrder`) og `…v1.jdbc.*` (`Database`,
+      `insert`, `selectAll`, `select`, `deleteAll`,
+      `transactions.transaction`).
+    - `…sql.jodatime.date` → `…v1.jodatime.date`.
+    - `between` og `select(kolonne)` må nå importeres eksplisitt
+      (`v1.core.between`, `v1.jdbc.select`), fordi `SqlExpressionBuilder`
+      er deprecated.
+    - Kompilerer uten advarsler.
+  - Breaking changes 0.54 → 1.5 gjennomgått. Det som kunne treffe oss:
+    - Transaksjonshåndteringen er stack-basert i stedet for trådlokal
+      (1.0-rc-3), og `transaction()` har fått `db` som første parameter.
+      Vi kaller `transaction { }` uten argumenter, og hver kodesti har
+      én `Database.connect`. `ReportTest` er grønn.
+    - `insert` sender ikke lenger standardverdier implisitt (1.0-rc-1).
+      `Report.insert` setter alle kolonner utenom `id` (autoIncrement).
+    - Joda `DateColumnType` har fått nytt navn internt
+      (`JodaLocalDateColumnType`). `date()`-funksjonen er uendret.
+    - `exposed-dao` og `exposed-java-time` brukes ikke i koden, men er
+      beholdt og oppgradert.
+  - 🔴 Funn: coroutines-konflikt med Ktor 1.6.8.
+    - Exposed 1.5.0 løfter `kotlinx-coroutines` i prod fra 1.8.1 til
+      1.11.0.
+    - `ktor-client-core` 1.6.8 (`ClosableBlockingDispatcher`, brukt av
+      `ApacheEngine`) bruker `kotlinx.coroutines.scheduling.
+      ExperimentalCoroutineDispatcher`, som er fjernet i coroutines 1.9.0.
+    - Verifisert: med coroutines 1.11.0 feiler alle 5 HTTP-testene
+      (`RestArchiverTest`, `AccessPointClientTest`) med
+      `NoClassDefFoundError`. Prod ville ikke nådd aksesspunktet eller
+      arkivet.
+    - Coroutines-kravet per Exposed-versjon: 0.54 = 1.8.1, 0.55–0.57 =
+      1.9.0, 0.61 = 1.10.1, 1.0–1.2 = 1.10.2, 1.3–1.5 = 1.11.0.
+    - Valgt løsning: Exposed 1.5.0, med coroutines låst til 1.8.1 på alle
+      fire klassestier (`compileClasspath`, `runtimeClasspath`,
+      `testCompileClasspath`, `testRuntimeClasspath`) med
+      `eachDependency { useVersion(coroutines_version) }`. Låsen fra
+      steg 2 er utvidet fra bare test til også prod. Den fjernes når Ktor
+      oppgraderes (egen oppgave over).
+    - Bytekodesjekk (japicmp og et skript som leser konstant-poolen i
+      alle 38 963 klassene i fat-JAR-en): med coroutines 1.8.1 finnes
+      alle referansene fra Exposed 1.5.0, Ktor og øvrige biblioteker til
+      `kotlinx/coroutines/*`. De eneste manglende er
+      `kotlinx-coroutines-reactor`/`-reactive` fra valgfrie
+      Spring-klasser, som ikke er på klassestien og ikke brukes (samme
+      som før).
+    - Restrisiko: Exposed kjører på en eldre coroutines-versjon enn den
+      er bygget mot. Vi bruker ikke `suspendTransaction` eller
+      coroutine-API-ene i Exposed, bare blokkerende `transaction { }`
+      inne i `withContext(dispatcher)`.
+  - Prod-klassestien ellers: `joda-time` 2.12.7 → 2.14.3 (tidssonedata)
+    og ny `kotlinx-datetime-jvm` 0.7.1-0.6.x-compat (via exposed-core).
+  - Mutasjonssjekk: uten `.withDistinct()` i
+    `getAllUniqueDaysWithEntries` feiler 1 test i `ReportTest`.
+  - Merk: `./gradlew test` skriver den tynne `jar`-en til samme filnavn
+    som fat-JAR-en. CI kjører `build shadowJar`, så `shadowJar` blir
+    sist, men lokale analyser av `build/libs` må kjøres etter
+    `shadowJar`.
+  - 65/65 tester grønne.
+  - Verifiseres i dev: oppstart (Flyway og Hikari), `/report` (HTML og
+    CSV-nedlasting), og en Invoice via vefasrest (DB-insert og
+    juridisk logg via Apache-klienten).
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
