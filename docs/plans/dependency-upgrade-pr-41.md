@@ -85,7 +85,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | com.github.ben-manes.versions (plugin) | 0.64.0 | ✅ 0.64.0 i Fase 4 steg 3a (ny plugin-id `io.github.ben-manes.versions`) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | shadow-plugin | 8.1.1 | ✅ `com.gradleup.shadow` 9.2.2 i Fase 4 steg 2, 9.6.1 i steg 4 (Gradle 9.7.1) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | junit-vintage-engine | 6.1.3 | ✅ 6.1.3 i Fase 4 steg 3b (via `junit-bom`) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
-| logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
+| logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson 3 kan ligge ved siden av Jackson 2 (egen pakke), så full Jackson 3-migrering trengs ikke. Planlagt før Ktor, se rekkefølgen i Fase 5 |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
 | exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | ✅ 1.5.0 i Fase 5 steg 3 (coroutines låst til 1.8.1 pga. Ktor 1.6.8) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | kotlin-result | 2.3.1 | ✅ 2.3.1 i Fase 5 steg 4 (fra 2.0.1) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
@@ -498,8 +498,9 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   - 61/61 tester grønne. Eneste deprecation er `CamelTestSupport`, som er
     utsatt.
   - Camel 4 (Jakarta, Java 17, Spring 6) er ikke med i denne planen. Den
-    krever `jakarta.jms` (IBM MQ-klient) og henger sammen med JAXB/difi-
-    oppgaven i «Utsatt til senere».
+    krever `jakarta.jms` (IBM MQ-klient). Den er ikke avhengig av
+    JAXB/difi-oppgaven, fordi vi ikke bruker `camel-jaxb` (avklart
+    2026-09-29, se rekkefølgen i Fase 5).
 
 **Kotlin-plugin (jvm): 1.9.24 → 2.4.20**
 - **Rødsone / verktøykjede**: Kotlin 2.0 introduserer K2-kompilatoren.
@@ -739,24 +740,46 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   `ktor-auth`/`ktor-auth-jwt` hvis json-simple ikke lenger er med.
   Startes først etter at Fase 1–5 er prodsatt og stabile (se
   «Prodsetting»). Tas på egen branch fra oppdatert dev.
-  Venter på Ktor-oppgaven (bestemt 2026-09-29):
-  - WireMock 3.0.1 → 3.13.2 (minor, bare test). Ingen kjent blokkering,
-    men sjekk Jetty og Jackson på testklassestien og guava-avviket mot
-    prod.
-  - Dependabot: `all-gradle-dependencies` samler alt i én PR
-    (`open-pull-requests-limit: 1`). Camel 4, JAXB 4 og logstash 9
-    knekker bygget, så hele gruppe-PR-en blokkeres, også trygge patcher.
-    Legg inn `ignore` for `version-update:semver-major` på
-    `org.apache.camel:*`, `org.glassfish.jaxb:jaxb-runtime`,
-    `jakarta.xml.bind:jakarta.xml.bind-api` og
-    `net.logstash.logback:logstash-logback-encoder`. Fjern hver regel når
-    den tilhørende oppgaven tas.
-  - Avhengighetskjeden etter Ktor: Jackson 3 og logstash 9, deretter
-    difi/JAXB 4 (`javax.xml.bind` → `jakarta.xml.bind`, ingen etterfølger
-    for `commons-ubl21`), deretter Camel 4 og IBM MQ Jakarta-klient
-    (`javax.jms` → `jakarta.jms`, 🔴 MQ kan bare testes i prod).
-  - 🔴 Camel 3.x er end-of-life og får ikke sikkerhetsrettinger. Camel
-    4-oppgaven bør ikke skyves langt ut.
+  Rekkefølge etter at Fase 1–5 er prodsatt (bestemt 2026-09-29): alt
+  unntatt Camel 4 tas før Ktor. Ingen av oppgavene avhenger teknisk av
+  Ktor eller av hverandre, så rekkefølgen er valgt for å isolere risiko.
+  Hver oppgave tas på egen branch og som egen prodsetting.
+  0. Dependabot: `all-gradle-dependencies` samler alt i én PR
+     (`open-pull-requests-limit: 1`). Camel 4, JAXB 4 og logstash 9
+     knekker bygget, så hele gruppe-PR-en blokkeres, også trygge patcher.
+     Legg inn `ignore` for `version-update:semver-major` på
+     `org.apache.camel:*`, `org.glassfish.jaxb:jaxb-runtime`,
+     `jakarta.xml.bind:jakarta.xml.bind-api` og
+     `net.logstash.logback:logstash-logback-encoder`. Fjern hver regel når
+     den tilhørende oppgaven er gjort. Kan gjøres når som helst.
+  1. WireMock 3.0.1 → 3.13.2 (minor, bare test). Tas før Ktor fordi
+     WireMock-testene skal bevise at `AccessPointClient`, `RestArchiver` og
+     Vault-klienten oppfører seg likt etter Ktor-migreringen. Da bør ikke
+     testverktøyet endres samtidig. Sjekk Jetty og Jackson på
+     testklassestien og guava-avviket mot prod.
+  2. logstash-logback-encoder 8.1 → 9.x. Den bruker Jackson 3
+     (`tools.jackson.*`), som ligger i egen pakke og kan ligge ved siden av
+     Jackson 2 (Ktor og appen). Full Jackson 3-migrering trengs ikke.
+     Verifiser at `jackson-annotations` (felles for 2 og 3) løses til en
+     versjon begge godtar, og at loggformatet i dev er uendret (felter,
+     `callId`, stacktraces). Gir to Jackson-versjoner i fat-JAR-en.
+  3. JAXB 2.3 → 4 (`javax.xml.bind` → `jakarta.xml.bind`). Stor oppgave:
+     difi `commons-sbdh`, `peppol-sbdh` og `commons-ubl21` er kompilert mot
+     `javax` og må erstattes (ingen kjent etterfølger for
+     `commons-ubl21`). De 11 genererte klassene i
+     `src/main/java/no/difi/vefasrest/model` og `JAXB`-bruken i Kotlin må
+     over til `jakarta`. Kan verifiseres fullt ut i dev (Invoice,
+     OrderResponse- og Catalogue-generering, SBDH).
+  4. Ktor (oppgaven over).
+  5. Camel 3.22 → 4 og IBM MQ Jakarta-klient (`com.ibm.mq.allclient` →
+     `com.ibm.mq.jakarta.client`, `javax.jms` → `jakarta.jms`). Avhenger
+     ikke av JAXB 4, siden vi ikke bruker `camel-jaxb`. Tas etter Ktor for
+     å ha ro i prod: 🔴 MQ kan bare verifiseres i prod og må prodsettes
+     alene.
+  🔴 Camel 3.x og Ktor 1.x er begge end-of-life og får ikke
+  sikkerhetsrettinger. Camel eksponerer mest (MQ, SFTP, access point),
+  så trinn 1–4 bør ikke trekke ut i tid. Er JAXB-oppgaven for stor,
+  vurder å flytte den etter Camel 4.
 - ✅ kotlin-result 2.0.1 → 2.3.1 (steg 4)
 - ✅ Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og
   fjern `junit-vintage-engine` og den direkte `junit:junit`-avhengigheten
@@ -1117,8 +1140,9 @@ Gjenstår:
    - Invoice hele veien (DB, juridisk logg, ebasys) og `/report`.
 4. Tilbakerulling: kjør workflowen på nytt på forrige commit på `master`,
    eller revert merge-commiten. Ingen DB-endringer å rulle tilbake.
-5. Start Ktor-oppgaven når prod har vært stabil en stund. Hvor lenge
-   avhenger av hvor ofte det kommer MQ-meldinger.
+5. Start neste oppgave (se rekkefølgen under Ktor-oppgaven i Fase 5) når
+   prod har vært stabil en stund. Hvor lenge avhenger av hvor ofte det
+   kommer MQ-meldinger.
 
 ## Testing per steg (gjelder for alle commits)
 - `./gradlew clean test` — full testsuite.
