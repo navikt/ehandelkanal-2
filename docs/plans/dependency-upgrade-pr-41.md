@@ -469,9 +469,37 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
       `keyExchangeProtocols` på sftp-endepunktet, slik at `ssh-rsa` kan
       skrus på igjen ved behov.
     - Må verifiseres ved deploy til dev. Prod-serveren kan avvike fra dev.
+    - Verifisert i dev 2026-09-29: FTP-testruten koblet til og listet
+      filer (`Testing FTP connection – …`), og appen ble `Application
+      ready`. Dev-serveren godtar altså algoritmene i mwiede JSch 0.2.1.
+      Prod er ikke verifisert.
   - Fat-JAR: `TypeConverterLoader` er korrekt slått sammen fra fem JAR-er.
   - 61/61 tester grønne. Ingen Camel-deprecations i main.
-- Steg 3b (3.14.10 → 3.22.4): gjenstår.
+- Steg 3a ble også verifisert med en melding gjennom vefasrest i dev
+  2026-09-29:
+  - Split og header-uttrekk ga `msgNo` og `messageUUID`.
+  - Nedlasting, SBDH-fjerning og DB-innsetting (Exposed) gikk gjennom.
+  - En fil skrevet etter deploy dukket opp i SFTP-listingen, så skriving
+    til Ebasys virker også.
+- Steg 3b (3.14.10 → 3.22.4):
+  - Ingen kodeendring.
+  - Upgrade-guiden for 3.21 → 3.22 sier «No changes expected». 3.22.3
+    endrer bare `readLock=changed` i camel-file, som vi ikke bruker.
+  - 3.18: konvertering fra InputStream til `byte[]` lukker strømmen. Det
+    påvirker oss ikke: `AccessPointClient` setter body som `ByteArray`,
+    og prosessorene leser den med `getBody<InputStream>()`, som gir en ny
+    strøm hver gang. `InboundIT` dekker flyten med ekte filer.
+  - 3.20: jsonpath `unpackArray` er av som standard. `InboxSplitHeadersTest`
+    er fortsatt grønn for 0, 1 og 2 meldinger.
+  - Transitivt:
+    - Spring 5.3.27 → 5.3.34.
+    - JSch (mwiede 0.2.1), json-path 2.8.0 og `javax.jms` er uendret.
+  - Fat-JAR: `TypeConverterLoader` er slått sammen fra fem JAR-er.
+  - 61/61 tester grønne. Eneste deprecation er `CamelTestSupport`, som er
+    utsatt.
+  - Camel 4 (Jakarta, Java 17, Spring 6) er ikke med i denne planen. Den
+    krever `jakarta.jms` (IBM MQ-klient) og henger sammen med JAXB/difi-
+    oppgaven i «Utsatt til senere».
 
 **Kotlin-plugin (jvm): 1.9.24 → 2.4.20**
 - **Rødsone / verktøykjede**: Kotlin 2.0 introduserer K2-kompilatoren.
@@ -480,6 +508,32 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 - Steg 2: 2.0.x → 2.4.20.
 - Kompiler hele prosjektet og kjør full testsuite etter hvert steg — K2 kan
   gi andre kompileringsfeil enn K1.
+- Steg 1 (1.9.24 → 2.0.21):
+  - K2 kompilerte hele prosjektet uten feil eller nye advarsler.
+  - `tasks.withType<KotlinCompile> { kotlinOptions { jvmTarget = "21" } }`
+    er fjernet. `kotlinOptions` er deprecated i 2.0 og blir en feil i 2.2,
+    og `kotlin { jvmToolchain(21) }` setter allerede `jvmTarget`. Bytekoden
+    er fortsatt versjon 65 (Java 21).
+  - `kotlin-stdlib` er 2.0.21 i hele runtime-classpathen. De transitive
+    `kotlin-stdlib-jdk7`/`jdk8:1.8.0` er tomme kompatibilitets-JAR-er
+    siden Kotlin 1.8, så det blir ikke duplikate klasser.
+  - 61/61 tester grønne.
+- Steg 2 (2.0.21 → 2.4.20):
+  - K2 kompilerte uten feil eller nye advarsler i koden.
+  - KGP 2.4.x støtter Gradle 7.6.3 og nyere, så 7.6.4 fungerer. KGP
+    advarer om at Kotlin 2.5.0 krever Gradle ≥ 8.14.4. Det tas i Fase 4.
+  - `kotlin-reflect` ble værende på 1.9.25 (transitivt via
+    `jackson-module-kotlin`), mens stdlib var 2.4.20. En eldre
+    `kotlin-reflect` kan feile på metadata fra nyere kompilator. Lagt til
+    `implementation(kotlin("reflect"))`, slik at den følger plugin-
+    versjonen (2.4.20).
+    - Main bruker Jackson bare til serialisering (`ArchiveRequest`,
+      Ktor-svar) og `readTree`, ikke til deserialisering til Kotlin-
+      klasser. `ArchiveRequestTest` dekker serialiseringen.
+  - Bytekode versjon 65 (Java 21). 61/61 tester grønne.
+  - Oppfølgingene i «Utsatt til senere» som var blokkert av Kotlin 2.x
+    (Exposed, kotlin-result, jackson, mockk) kan nå tas. Hver tas som eget
+    steg.
 
 ### Fase 4 — Byggeverktøy sist
 **Gradle wrapper: 7.6.4 → 9.7.1**

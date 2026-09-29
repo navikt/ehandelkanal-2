@@ -1,10 +1,9 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.integrasjon"
 version = "1.0.52-SNAPSHOT"
 
-val camel_version = "3.14.10"
+val camel_version = "3.22.4"
 val ibm_mq_version = "10.0.0.5"
 val jackson_version = "2.19.4"
 val konfig_version = "1.6.10.0"
@@ -34,7 +33,7 @@ val junit_vintage_version = "5.11.4"
 
 plugins {
     application
-    kotlin("jvm") version "1.9.24"
+    kotlin("jvm") version "2.4.20"
     //id("org.jmailen.kotlinter") version "5.2.0"
     id("com.github.ben-manes.versions") version "0.51.0"
     id("org.flywaydb.flyway") version "13.8.0"
@@ -69,6 +68,7 @@ kotlin {
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
     implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("io.ktor:ktor-html-builder:$ktor_version")
     implementation("io.ktor:ktor-jackson:$ktor_version")
@@ -180,11 +180,6 @@ tasks {
     withType<Wrapper> {
         gradleVersion = "7.6.4"
         distributionType = Wrapper.DistributionType.BIN
-    }
-    withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "21"
-        }
     }
     named("distZip")  { dependsOn("shadowJar") }
     named("distTar")  { dependsOn("shadowJar") }
