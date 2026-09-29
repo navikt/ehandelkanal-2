@@ -1,5 +1,4 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.integrasjon"
 version = "1.0.52-SNAPSHOT"
@@ -34,7 +33,7 @@ val junit_vintage_version = "5.11.4"
 
 plugins {
     application
-    kotlin("jvm") version "1.9.24"
+    kotlin("jvm") version "2.0.21"
     //id("org.jmailen.kotlinter") version "5.2.0"
     id("com.github.ben-manes.versions") version "0.51.0"
     id("org.flywaydb.flyway") version "13.8.0"
@@ -180,11 +179,6 @@ tasks {
     withType<Wrapper> {
         gradleVersion = "7.6.4"
         distributionType = Wrapper.DistributionType.BIN
-    }
-    withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "21"
-        }
     }
     named("distZip")  { dependsOn("shadowJar") }
     named("distTar")  { dependsOn("shadowJar") }

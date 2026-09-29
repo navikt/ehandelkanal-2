@@ -508,6 +508,16 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 - Steg 2: 2.0.x → 2.4.20.
 - Kompiler hele prosjektet og kjør full testsuite etter hvert steg — K2 kan
   gi andre kompileringsfeil enn K1.
+- Steg 1 (1.9.24 → 2.0.21):
+  - K2 kompilerte hele prosjektet uten feil eller nye advarsler.
+  - `tasks.withType<KotlinCompile> { kotlinOptions { jvmTarget = "21" } }`
+    er fjernet. `kotlinOptions` er deprecated i 2.0 og blir en feil i 2.2,
+    og `kotlin { jvmToolchain(21) }` setter allerede `jvmTarget`. Bytekoden
+    er fortsatt versjon 65 (Java 21).
+  - `kotlin-stdlib` er 2.0.21 i hele runtime-classpathen. De transitive
+    `kotlin-stdlib-jdk7`/`jdk8:1.8.0` er tomme kompatibilitets-JAR-er
+    siden Kotlin 1.8, så det blir ikke duplikate klasser.
+  - 61/61 tester grønne.
 
 ### Fase 4 — Byggeverktøy sist
 **Gradle wrapper: 7.6.4 → 9.7.1**
