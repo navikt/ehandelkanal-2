@@ -10,7 +10,6 @@ import no.nav.ehandel.kanal.db.dbQuery
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
@@ -22,7 +21,7 @@ object Report {
     suspend fun getAll(date: DateTime? = null) = dbQuery {
         logger.info("DB: Getting all report entries${if (date != null) " for date $date" else ""}")
         val rows = date?.let {
-            ReportTable.select {
+            ReportTable.selectAll().where {
                 ReportTable.receivedAt.between(
                     date.withTimeAtStartOfDay(),
                     date.withHourOfDay(23)
@@ -53,8 +52,7 @@ object Report {
     suspend fun getAllUniqueDaysWithEntries(): List<DateTime> = dbQuery {
         logger.info("DB: Getting all unique days with report entries")
         ReportTable
-            .slice(ReportTable.receivedAt)
-            .selectAll()
+            .select(ReportTable.receivedAt)
             .orderBy(ReportTable.receivedAt to SortOrder.DESC)
             .withDistinct()
             .map { it[ReportTable.receivedAt] }

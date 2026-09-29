@@ -87,6 +87,9 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | junit-vintage-engine | 6.1.3 | 5.11.4 (fra 5.10.2) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
+| exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | 0.53.0 (fra 0.41.1) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| kotlin-result | 2.3.1 | 2.0.1 (fra 1.1.6) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| camel-test (JUnit 4, `CamelTestSupport`) | camel-test-junit5 | camel-test 3.14.10 (deprecated) | `XmlDetectorTest` og `InboundSbdhRemoverTest` er JUnit 4-tester og kjøres av junit-vintage | Sammen med junit-vintage i Fase 4 (Camel 4 fjerner JUnit 4-støtten helt) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -152,6 +155,13 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
 - Steg 2: 6.3.3 → 7.1.0 — **fullført**, ingen kodeendring. 7.0 la til
   `HikariCredentialsProvider`; når den ikke er satt, brukes samme
   credentials-sti som i 6.x (verifisert i kildekoden). 40/40 tester grønne.
+- **Etterarbeid:** rotasjonsblokken i `runRenewCredentialsTask` er trukket ut
+  til `HikariDataSource.rotateCredentials(...)` og dekket av
+  `CredentialRotationTest` (H2 med to brukere; gammel bruker ugyldiggjøres
+  etter rotasjon). Verifisert med mutasjonssjekk: uten
+  `softEvictConnections()` feiler testen. Token-fornyingen i Vault
+  (`lookupSelf`/`renewSelf`) er dekket av `VaultTokenRenewalTest` (WireMock).
+  Dette erstatter å vente ~24 t på første credential-rotasjon i dev.
 - Sjekk minimum-Java-krav per major (nyere HikariCP kan kreve nyere JDK-baseline —
   vi er på JDK 21 så bør være greit, men bekreft).
 
@@ -258,13 +268,61 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   - **Flyway-oppgraderingen er ferdig.** Deploy til dev og verifiser
     `initRemote` mot PostgreSQL før neste dependency.
 
-**h2database: 1.4.200 → 2.5.250**
+  `ignoreMigrationPatterns("*:pending", "*:future")` avgjør hva som regnes
+  som valideringsfeil:
+  - `*:pending` — migreringer som finnes i koden, men ikke er kjørt ennå.
+    Uten dette ville hver nye migrering gitt valideringsfeil og tømt den
+    lokale databasen, i stedet for å bare kjøre den nye migreringen.
+  - `*:future` — migreringer i databasen som koden ikke kjenner (f.eks.
+    etter bytte til en eldre branch). Dette er Flyways standard, men må
+    settes eksplisitt fordi vi overstyrer mønsterlisten.
+
+  Dermed tømmes databasen bare ved ekte avvik, som endret checksum på en
+  migrering som allerede er kjørt — tilsvarende den gamle oppførselen.
+  `DatabaseInitLocalTest` utvidet med test for at pending migreringer ikke
+  sletter data. Schema-historikk fra 7.15.0 validerer med 11.20.3; begge
+  database-typer er med i fat-JAR. 46/46 tester grønne.
+- Steg 11 → 12 (11.20.3 → 12.11.0) — **fullført**, ingen kodeendring.
+  Java 17-bytekode (vi kjører 21), H2 fortsatt i core, PG-støtte uendret
+  (PG 17 innenfor støttet område). Schema-historikk fra 7.15.0 validerer med
+  12.11.0; begge database-typer er med i fat-JAR. 46/46 tester grønne.
+- Steg 12 → 13 (12.11.0 → 13.8.0, ikke 13.7.0 som først planlagt) —
+  **fullført**, ingen kodeendring. Samme API og DB-støtte som 12.
+  - `flyway-core` 13 drar inn `jackson-annotations:2.22` (resten av Jackson
+    er 2.19.4). Fra 2.20 versjoneres annotations uten patch og er
+    bakoverkompatible med eldre databind, så kombinasjonen er støttet.
+    Justeres naturlig når Jackson oppgraderes i Fase 5. Ingen Jackson 3
+    (`tools.jackson`) på classpath.
+  - CockroachDB er skilt ut i `flyway-database-cockroachdb`, som dras inn
+    transitivt av PG-modulen. Ingen endring nødvendig.
+  - Schema-historikk fra 7.15.0 validerer med 13.8.0; begge database-typer
+    er med i fat-JAR. 46/46 tester grønne.
+  - **Flyway-oppgraderingen er ferdig.** Deploy til dev og verifiser
+    `initRemote` mot PostgreSQL før neste dependency.
+
+**h2database: 1.4.200 → 2.5.252** (ikke 2.5.250 som først planlagt) — **fullført**, ingen kodeendring
 - **Rødsone / testinfrastruktur**: H2 2.x har strengere SQL-kompatibilitetsmodus
   (identifikatorer, reserverte ord, `MODE=`-innstillinger) — dette er testdatabasen,
   så alle DB-relaterte tester må kjøres grundig og eventuelt migreringsskript
   i `db/migration` justeres.
 - Ett steg er nok versjonsmessig (1.x → 2.x er én major), men testdekningen må
   utvides der testene i dag stoler på lempelig SQL-parsing.
+- Resultat: alle H2-migreringer (`common` + `h2/V1.3`) kjører på 2.5.252 i
+  `MODE=PostgreSQL`, og ingen skript måtte endres. `InboundIT` kjører
+  `Database.initLocal()` og `Report.insert` (tre inserts, `Entry successfully
+  inserted`). `DatabaseInitLocalTest` og `CredentialRotationTest` er grønne.
+  50/50 tester grønne.
+- H2 ligger i `implementation` og følger med i fat-JAR-en. Oppgraderingen
+  fjerner derfor også kjente sårbarheter i 1.4.200 (bl.a. CVE-2021-42392 og
+  CVE-2022-23221), selv om prod bare bruker PostgreSQL.
+- **Lokalt**: filformatet i H2 2.x er ikke kompatibelt med 1.4. Gamle
+  `./test.mv.db`/`./integrationtestdb.mv.db` må slettes før lokal kjøring
+  (filene er i `.gitignore`).
+
+**Etterarbeid (fra dev-logg etter Flyway 13)**
+- Flyway logger `initSql is deprecated` for `SET ROLE` i `initRemote`.
+  Virker fortsatt, men bør flyttes til en `afterConnect`-callback før
+  Flyway fjerner `initSql`.
 
 **exposed (core/dao/jdbc/java-time/jodatime): 0.41.1 → 1.5.0**
 - **Rødsone**: databasetilgangslag, kjernelogikk.
@@ -273,11 +331,45 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   (f.eks. siste 0.5x før 1.0) og oppgrader stegvis dit før hopp til 1.5.0.
 - Alle DB-repository-tester må kjøres og eventuelt utvides for å dekke
   endret query-bygging.
+- Steg 1 (0.41.1 → 0.53.0) — **fullført**. 0.53.0 er siste versjon bygget
+  med Kotlin 1.9. Resten er **utsatt** til etter Kotlin 2.x (se «Utsatt til
+  senere»).
+  - Breaking changes 0.42–0.53 gjennomgått. Ingen treffer vår bruk (bare
+    `Table`, `insert`, `select`/`selectAll`, jodatime `date`, `transaction`,
+    `Database.connect`). Det som var nærmest: endret jodatime-formattering
+    for `date` (0.48) og bevaring av store/små bokstaver i
+    nøkkelord-identifikatorer (0.46). Ingen av kolonnene våre er nøkkelord.
+  - Ny `ReportTest` (H2 via `initLocal`) dekker lesestiene som ikke var
+    testet: `getAll` med og uten dato (inkludert kl. 23:59),
+    `getAllUniqueDaysWithEntries` (distinkt, nyeste først),
+    `getAllAsCsvFile` (eksakt CSV) og lagring av `amount`. Grønn på 0.41.1
+    før bump, grønn på 0.53.0 etter.
+  - Deprecated DSL migrert for å forberede 1.0: `select { }` →
+    `selectAll().where { }` og `slice(col).selectAll()` → `select(col)`.
+  - 55/55 tester grønne. `InboundIT` kjører fortsatt `Report.insert` (tre
+    inserts).
+- Steg 2 (0.53.0 → 1.5.0) — **utsatt** til Kotlin-plugin 2.x. Da kreves
+  pakke-rename til `org.jetbrains.exposed.v1.*` og at `transaction` flyttes
+  til `exposed-jdbc`.
 
 **kotlin-result: 1.1.6 → 2.3.1**
 - Steg 1: 1.x → siste 1.1.x/2.0-forhåndsversjon om relevant
 - Steg 2: → 2.3.1 — sjekk endringer i `Result`-typen/ekstensjonsfunksjoner
   som brukes i feilhåndteringskoden (kjernelogikk).
+- Steg 1 (1.1.6 → 2.0.1) — **fullført**, ingen kodeendring. 2.0.1 er siste
+  versjon bygget med Kotlin 1.9. Resten er **utsatt** til etter Kotlin 2.x
+  (se «Utsatt til senere»).
+  - 2.0 gjør `Result` til en inline value class. `Ok`/`Err` kan ikke lenger
+    brukes som typer (`is Ok`, `as Err`), og flere deprecated funksjoner er
+    fjernet (`binding`, `getOr(verdi)`, `getErrorOr(verdi)`, `Result.of`,
+    `and`/`or` uten lambda). Koden bruker bare `Ok(...)`/`Err(...)` som
+    konstruktører pluss `getOrElse`, `andThen` og `getErrorOrElse`, som alle
+    er uendret.
+  - `StandardBusinessDocumentGeneratorTest` og `AccessPointClientTest`
+    dekker både Ok- og Err-stiene. 55/55 tester grønne.
+  - 2.x er et multiplatform-bibliotek, og Gradle velger JVM-varianten.
+    `Result`, `ResultKt` og `Failure` er med i fat-JAR-en.
+- Steg 2 (2.0.1 → 2.3.1) — **utsatt** til Kotlin-plugin 2.x.
 
 **camel-core/jms/ftp/jsonpath/test: 2.24.2 → 3.22.4**
 - **Rødsone / kjernelogikk**: dette er ruting-motoren for hele meldingsflyten.
@@ -285,9 +377,101 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   (se migreringsguide). Sjekk at `camel-jaxb`-bruk, JMS- og FTP-endepunkter,
   og eventuelle Spring-koordinater ikke er berørt.
 - Stegvis: 2.24 → siste 2.x → 3.0.x (mest brytende) → siste 3.22.x.
+  (3.0.x ble byttet ut med 3.1.0, se steg 2.)
 - Alle integrasjonstester (`AccessPointClientTest`, `AccessPointInboxSplitTest`,
   `RestArchiverTest` m.fl.) må kjøres etter hvert steg — disse tester trolig
   ruting/prosessering direkte.
+- Steg 1 (2.24.2 → 2.25.4, siste 2.x) — **fullført**, ingen kodeendring.
+  Transitive endringer: bare Spring 5.1.6 → 5.1.20 (patch, via `camel-jms`
+  og `camel-spring`). JSch og json-path er uendret. Ingen nye
+  deprecation-advarsler. 55/55 tester grønne.
+- Steg 2 (2.25.4 → 3.1.0, ikke 3.0.x som først planlagt) — **fullført**.
+  - Hvorfor 3.1.0: 3.0.x la til overloaden `process(Supplier<Processor>)`,
+    som gjorde alle `.process { }`-lambdaene våre tvetydige i Kotlin.
+    Overloaden ble fjernet igjen i 3.1.0. Å gå via 3.0.x hadde betydd å
+    skrive om ca. 20 lambdaer og så skrive dem tilbake.
+  - Ny `EndpointUriTest`, skrevet og grønn på 2.25.4 før bump. Den løser
+    opp de ekte Ebasys-URI-ene med både `ftp://` og `sftp://` (prod bruker
+    SFTP, testene FTP) og oppretter consumer for FTP-testruten. Den dekker
+    også MQ-URI-en. En mutasjonssjekk med en ukjent parameter gjør testen
+    rød. For å gjøre dette mulig er URI-verdiene i `Inbound.kt` endret fra
+    `private` til `internal`, og FTP-test-URI-en er trukket ut i
+    `ebasysConnectionTest`.
+  - På 3.1.0 feilet testen med `Unknown parameters=[{consumer.bridgeErrorHandler=true}]`.
+    I prod ville Camel-konteksten ikke startet. Rettet til
+    `bridgeErrorHandler=true`. `passiveMode` på `sftp` godtas fortsatt.
+  - Kodeendringer:
+    - `SimpleRegistry.put` → `org.apache.camel.support.DefaultRegistry.bind`
+      (`EhandelBootstrap`, `InboundIT`, `EndpointUriTest`).
+    - Ubrukte importer av `org.apache.camel.language.XPath`/`NamespacePrefix`
+      fjernet fra `AccessPointClient` (flyttet til `camel-xpath` i 3.x).
+    - `routeDefinitions[0].adviceWith(...)` →
+      `AdviceWithRouteBuilder.adviceWith(context, routeId) { }` (`InboundIT`).
+    - `DefaultExchange` → `org.apache.camel.support.DefaultExchange`.
+    - `JndiRegistry`/`createRegistry()` → `bindToRegistry(registry)`, og
+      `@Produce(uri = ...)`/`@EndpointInject(uri = ...)` → `value`
+      (`XmlDetectorTest`, `InboundSbdhRemoverTest`). Begge var deprecated
+      i 3.1.
+  - Transitivt: Spring 5.1.20 → 5.2.3 (minor). JSch 0.1.55 og json-path
+    2.4.0 er uendret. JMS er fortsatt `javax.jms`, så IBM MQ påvirkes ikke.
+  - Fat-JAR: Camel 3 finner type-convertere via
+    `META-INF/services/org/apache/camel/TypeConverterLoader`, som finnes i
+    fem JAR-er. `mergeServiceFiles()` (fra Flyway-steget) slår dem korrekt
+    sammen. Komponentfilene (`sftp`, `ftp`, `jms`, `timer` osv.) er med.
+  - Eksisterende, ikke nytt: `camel-core`/`camel-xml-jaxb` drar inn
+    `com.sun.xml.bind:jaxb-impl`/`jaxb-core:2.3.0` ved siden av vår
+    `jaxb-runtime:2.3.9`. Det var slik også på 2.24/2.25. Kandidat for
+    `exclude` i JAXB-oppgaven.
+  - 58/58 tester grønne, ingen deprecation-advarsler.
+- Steg 3 (3.1.0 → 3.22.4) er delt i to:
+  - Steg 3a: 3.1.0 → 3.14.10 (LTS).
+  - Steg 3b: 3.14.10 → 3.22.4.
+
+  Upgrade-guidene for 3.2–3.21 er gjennomgått. Relevante punkter for oss:
+  - 3.7: `AdviceWithRouteBuilder.adviceWith` er deprecated.
+  - 3.10: camel-jsonpath bruker Jackson som standard.
+  - 3.13: split av en `Map` splitter nå i entries.
+  - 3.17: camel-ftp bytter til JSch-forken `com.github.mwiede:jsch`.
+  - 3.18.3/3.20: jsonpath `unpackArray` er av som standard.
+  - 3.18: konvertering fra InputStream til `byte[]` lukker strømmen.
+- Steg 3a (3.1.0 → 3.14.10):
+  - Ny `InboxSplitHeadersTest`, grønn på 3.1.0 før bump. Den kjører
+    split (`$.meldinger[*]`) og header-uttrekk (msgNo/messageUUID) for 1,
+    2 og 0 meldinger. Den skal fange at ett enkelt element pakkes ut til
+    en `Map` og splittes i entries (3.13/3.20).
+  - `InboundIT` feilet 6 av 7 tester med `No bean could be found in the
+    registry for: accessPointClient`:
+    - Årsaken er at `DefaultRegistry.doStop()` lukker `SimpleRegistry`,
+      som tømmer alle bindinger.
+    - Testen stopper og starter den samme konteksten mellom hver test, så
+      bare første test fikk bønnen.
+    - Rettet ved å binde test-bønnene på nytt i `setUp()`
+      (`Registry.bindTestBeans()`).
+    - Prod påvirkes ikke, fordi konteksten der bare stoppes ved nedstenging.
+  - `AdviceWithRouteBuilder.adviceWith` → `AdviceWith.adviceWith`
+    (`InboundIT`).
+  - `CamelTestSupport` fra `camel-test` (JUnit 4) er deprecated og brukes i
+    `XmlDetectorTest` og `InboundSbdhRemoverTest`. Migrering til
+    `camel-test-junit5` er utsatt, se «Utsatt til senere».
+  - Transitivt:
+    - Spring 5.2.3 → 5.3.27.
+    - json-path 2.4.0 → 2.8.0.
+    - JMS er fortsatt `javax.jms`.
+  - **Rødsone – SFTP mot Ebasys:**
+    - JSch 0.1.55 er allerede byttet til `com.github.mwiede:jsch:0.2.1` i
+      3.14.10. Byttet er backportet fra 3.17.
+    - mwiede 0.2.x skrur av `ssh-rsa` (RSA med SHA-1) som standard.
+    - Ebasys-serveren har en RSA-vertsnøkkel. Hvis serveren bare støtter
+      `ssh-rsa`-signatur og ikke `rsa-sha2-256`/`rsa-sha2-512`, feiler
+      tilkoblingen.
+    - Da stopper FTP-testruten prosessen (`exitProcess(1)`) → crashloop.
+    - Camel 3.14.10 har `serverHostKeys`, `publicKeyAcceptedAlgorithms` og
+      `keyExchangeProtocols` på sftp-endepunktet, slik at `ssh-rsa` kan
+      skrus på igjen ved behov.
+    - Må verifiseres ved deploy til dev. Prod-serveren kan avvike fra dev.
+  - Fat-JAR: `TypeConverterLoader` er korrekt slått sammen fra fem JAR-er.
+  - 61/61 tester grønne. Ingen Camel-deprecations i main.
+- Steg 3b (3.14.10 → 3.22.4): gjenstår.
 
 **Kotlin-plugin (jvm): 1.9.24 → 2.4.20**
 - **Rødsone / verktøykjede**: Kotlin 2.0 introduserer K2-kompilatoren.

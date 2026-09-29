@@ -30,8 +30,6 @@ import no.nav.ehandel.kanal.common.singletons.httpClient
 import no.nav.ehandel.kanal.services.log.InboundLogger
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
-import org.apache.camel.language.NamespacePrefix
-import org.apache.camel.language.XPath
 
 private val LOGGER = KotlinLogging.logger { }
 

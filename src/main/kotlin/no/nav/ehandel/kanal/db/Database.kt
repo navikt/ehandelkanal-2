@@ -125,14 +125,16 @@ object Database {
         delay(data.initialDelay)
         while (condition()) {
             val credentials = getNewCredentials(data.mountPath, data.databaseName, data.role)
-            data.dataSource.apply {
-                hikariConfigMXBean.setUsername(credentials.username)
-                hikariConfigMXBean.setPassword(credentials.password)
-                hikariPoolMXBean.softEvictConnections()
-            }
+            data.dataSource.rotateCredentials(credentials.username, credentials.password)
             delay(suggestedRefreshIntervalInMillis(credentials.leaseDuration * 1000))
         }
     }
+}
+
+internal fun HikariDataSource.rotateCredentials(username: String, password: String) {
+    hikariConfigMXBean.setUsername(username)
+    hikariConfigMXBean.setPassword(password)
+    hikariPoolMXBean.softEvictConnections()
 }
 
 suspend fun <T> dbQuery(block: () -> T): T = withContext(dispatcher) {
