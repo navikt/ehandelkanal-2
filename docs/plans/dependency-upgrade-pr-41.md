@@ -88,7 +88,7 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
 | exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | ✅ 1.5.0 i Fase 5 steg 3 (coroutines låst til 1.8.1 pga. Ktor 1.6.8) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
-| kotlin-result | 2.3.1 | 2.0.1 (fra 1.1.6) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
+| kotlin-result | 2.3.1 | ✅ 2.3.1 i Fase 5 steg 4 (fra 2.0.1) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | camel-test (JUnit 4, `CamelTestSupport`) | camel-test-junit5 | ✅ camel-test-junit5 3.22.4 i Fase 4 steg 3b | `XmlDetectorTest` og `InboundSbdhRemoverTest` var JUnit 4-tester og ble kjørt av junit-vintage | Sammen med junit-vintage i Fase 4 (Camel 4 fjerner JUnit 4-støtten helt) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
@@ -736,7 +736,7 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   coroutines-låsen i `build.gradle.kts`, slik at Exposed får versjonen den
   er bygget mot (1.11.0). Fjerner trolig også `junit:junit:4.10` fra
   fat-JAR-en (via `ktor-auth` → json-simple).
-- kotlin-result → 2.3.1 (eller nyeste tilgjengelige)
+- ✅ kotlin-result 2.0.1 → 2.3.1 (steg 4)
 - Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og fjern
   `junit-vintage-engine` og `junit:junit`. Berører blant annet:
   - WireMock `@ClassRule` → `WireMockExtension` (`@RegisterExtension`) i
@@ -896,6 +896,27 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
   - Verifiseres i dev: oppstart (Flyway og Hikari), `/report` (HTML og
     CSV-nedlasting), og en Invoice via vefasrest (DB-insert og
     juridisk logg via Apache-klienten).
+
+- **Steg 4: kotlin-result 2.0.1 → 2.3.1**
+  - Breaking endringer i 2.1–2.3 som ikke treffer oss:
+    - 2.1.0: direkte bruk av `Result.value`/`.error` krever opt-in
+      (`UnsafeResultValueAccess`/`UnsafeResultErrorAccess`). Vi bruker
+      bare `Ok`, `Err`, `andThen`, `getOrElse` og `getErrorOrElse`.
+    - 2.2.0: `mapResult*`/`fold`/`onSuccess`/`onFailure` ble omdøpt til
+      `try*`/`onOk`/`onErr`. `onSuccess`/`onFailure` i
+      `StandardBusinessDocumentGenerator` er `kotlin.Result.fold`, ikke
+      kotlin-result.
+    - 2.3.0: returverdi-sjekken gir bare advarsler med
+      `-Xreturn-value-checker`, som vi ikke har slått på.
+  - Kjerneartefakten avhenger bare av `kotlin-stdlib` (2.3.10, løftes til
+    2.4.20). Den trekker ikke inn coroutines, det gjør bare
+    `kotlin-result-coroutines`, som vi ikke bruker.
+  - Runtime-klassestien er uendret bortsett fra kotlin-result selv.
+  - Kompilerer uten nye advarsler.
+  - Mutasjonssjekk: når det andre `andThen`-steget i
+    `StandardBusinessDocumentGenerator` alltid returnerer `Err`, feiler
+    2 av 6 tester i `StandardBusinessDocumentGeneratorTest`.
+  - 65/65 tester grønne.
 
 Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
 (Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
