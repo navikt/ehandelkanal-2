@@ -62,7 +62,7 @@ repositories {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(11)
 }
 
 dependencies {
@@ -176,7 +176,7 @@ tasks {
     }
     withType<KotlinCompile> {
         kotlinOptions {
-            jvmTarget = "21"
+            jvmTarget = "11"
         }
     }
     named("distZip")  { dependsOn("shadowJar") }
