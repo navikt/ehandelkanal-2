@@ -625,9 +625,14 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
     Vi valgte å beholde det. Verifiseres i dev:
     - Invoice via vefasrest dekker JAXB-parsing og SFTP-skriving. Sjekk
       også at `Testing FTP connection` logges ved oppstart.
-    - OrderResponse via vefasrest dekker MQ. Bare OrderResponse og
-      Catalogue går til MQ, og JMS-tilkoblingen åpnes først ved sending.
-      Se etter `Inbound EHF sent via MQ to internal systems`.
+    - OrderResponse og Catalogue er de eneste dokumenttypene som går til
+      MQ. Appen er ren inbound, og vi kan bare sende Invoice via
+      vefasrest i dev, så MQ-stien kan ikke verifiseres ende-til-ende.
+      Risikoen er vurdert som lav: MQ-koden er uendret, og
+      Multi-Release berører bare BouncyCastle, som ikke brukes uten TLS.
+      Vi godtar risikoen og følger med i prod-loggene etter deploy: se
+      etter `Inbound EHF sent via MQ to internal systems` og etter
+      JMS/MQ-exceptions (`JMSException`, `MQException`, `LinkageError`).
     - Hvis noe feiler, kan `Multi-Release: false` settes i manifestet
       uten å rulle tilbake shadow.
   - `create("printVersion") { println(...) }` er endret til
