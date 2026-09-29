@@ -29,15 +29,15 @@ val wiremock_version = "3.0.1"
 val mockk_version = "1.13.12"
 val kluent_version = "1.73"
 val junit_version = "4.13.2"
-val junit_vintage_version = "5.11.4"
+val junit_bom_version = "6.1.3"
 
 plugins {
     application
     kotlin("jvm") version "2.4.20"
     //id("org.jmailen.kotlinter") version "5.2.0"
-    id("com.github.ben-manes.versions") version "0.51.0"
+    id("io.github.ben-manes.versions") version "0.64.0"
     id("org.flywaydb.flyway") version "13.8.0"
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 // kotlinter {
@@ -114,7 +114,7 @@ dependencies {
 
     runtimeOnly("org.flywaydb:flyway-database-postgresql:$flyway_version")
 
-    testImplementation("org.apache.camel:camel-test:$camel_version")
+    testImplementation("org.apache.camel:camel-test-junit5:$camel_version")
     testImplementation("org.wiremock:wiremock:$wiremock_version")
     testImplementation("io.mockk:mockk:$mockk_version")
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version") {
@@ -124,16 +124,28 @@ dependencies {
         exclude(group = "com.nhaarman.mockitokotlin2")
     }
     testImplementation("junit:junit:$junit_version")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junit_vintage_version")
+    testImplementation(platform("org.junit:junit-bom:$junit_bom_version"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks {
-    create("printVersion") {
-        println(project.version)
+    register("printVersion") {
+        val projectVersion = project.version
+        doLast {
+            println(projectVersion)
+        }
     }
     withType<ShadowJar> {
         archiveClassifier.set("")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        filesMatching("META-INF/services/**") {
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
         mergeServiceFiles()
+        @Suppress("DEPRECATION")
+        enableKotlinModuleRemapping = false
     }
     withType<Test> {
         useJUnitPlatform()
@@ -178,7 +190,8 @@ tasks {
 //
 //}
     withType<Wrapper> {
-        gradleVersion = "7.6.4"
+        gradleVersion = "9.7.1"
+        distributionSha256Sum = "acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a"
         distributionType = Wrapper.DistributionType.BIN
     }
     named("distZip")  { dependsOn("shadowJar") }

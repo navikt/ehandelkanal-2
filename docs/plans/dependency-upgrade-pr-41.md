@@ -82,14 +82,14 @@ samme årsak. `./gradlew clean test`: BUILD SUCCESSFUL, 40/40 tester grønne.
 |---|---|---|---|---|
 | jackson-databind / jackson-module-kotlin / jackson-datatype-joda | 2.22.2 | 2.19.4 | `jackson-module-kotlin` ≥2.20 krever Kotlin-stdlib 2.0+/2.1+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | mockk | 1.14.11 | 1.13.12 (uendret) | mockk ≥1.13.13 krever Kotlin-stdlib 2.0+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
-| com.github.ben-manes.versions (plugin) | 0.64.0 | 0.51.0 (uendret) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
-| shadow-plugin | 8.1.1 | 7.1.2 (uendret, allerede siste 7.x-versjon) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
-| junit-vintage-engine | 6.1.3 | 5.11.4 (fra 5.10.2) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
+| com.github.ben-manes.versions (plugin) | 0.64.0 | ✅ 0.64.0 i Fase 4 steg 3a (ny plugin-id `io.github.ben-manes.versions`) | Krever Gradle ≥8.4 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
+| shadow-plugin | 8.1.1 | ✅ `com.gradleup.shadow` 9.2.2 i Fase 4 steg 2, 9.6.1 i steg 4 (Gradle 9.7.1) | Shadow ≥8.0 krever Gradle ≥8.0 | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
+| junit-vintage-engine | 6.1.3 | ✅ 6.1.3 i Fase 4 steg 3b (via `junit-bom`) | junit-vintage-engine ≥5.12.0 krever nyere `junit-platform-launcher` enn det Gradle 7.6.4 bundler internt («unaligned versions»-feil ved test-discovery) | Gradle wrapper oppgradert til 8.x+ (Fase 4) |
 | logstash-logback-encoder | 9.0 | 8.1 (fra 7.4) | 9.0 migrerer til Jackson 3 (`tools.jackson.*`-groupId), inkompatibelt med vår Jackson 2.19.4 (selv låst pga. Kotlin-stdlib-kobling) | Jackson oppgradert til 3.x, som igjen krever Kotlin-plugin 2.x (Fase 3/5) |
 | jaxb-runtime / jakarta.xml.bind-api | 4.0.x | 2.3.9 / 2.3.3 | `no.difi.commons:commons-ubl21:0.9.5`, `commons-sbdh:0.9.5` og `no.difi.vefa:peppol-sbdh:1.1.4` (alle siste versjoner) er kompilert mot `javax.xml.bind` – en jakarta-runtime gjenkjenner ikke annotasjonene deres. Oxalis-etterfølgere finnes for SBDH (`network.oxalis.vefa:peppol-sbdh` 4.x), men ingen for `commons-ubl21` | Egen oppgave: bytte difi-bibliotekene (Oxalis for SBDH, egne genererte UBL-klasser e.l.) – ikke en ren versjonsoppgradering |
 | exposed (core/dao/jdbc/java-time/jodatime) | 1.5.0 | 0.53.0 (fra 0.41.1) | Exposed 0.54–0.61 er bygget med Kotlin-stdlib 2.0, og 1.x med 2.2+/2.3 (1.0 flytter også pakkene til `org.jetbrains.exposed.v1.*`) | Kotlin-plugin oppgradert til 2.x (Fase 3) |
 | kotlin-result | 2.3.1 | 2.0.1 (fra 1.1.6) | kotlin-result ≥2.0.2 er bygget med Kotlin-stdlib 2.2+ | Kotlin-plugin oppgradert til 2.x (Fase 3) |
-| camel-test (JUnit 4, `CamelTestSupport`) | camel-test-junit5 | camel-test 3.14.10 (deprecated) | `XmlDetectorTest` og `InboundSbdhRemoverTest` er JUnit 4-tester og kjøres av junit-vintage | Sammen med junit-vintage i Fase 4 (Camel 4 fjerner JUnit 4-støtten helt) |
+| camel-test (JUnit 4, `CamelTestSupport`) | camel-test-junit5 | ✅ camel-test-junit5 3.22.4 i Fase 4 steg 3b | `XmlDetectorTest` og `InboundSbdhRemoverTest` var JUnit 4-tester og ble kjørt av junit-vintage | Sammen med junit-vintage i Fase 4 (Camel 4 fjerner JUnit 4-støtten helt) |
 
 ### Fase 2 — Én major-versjon å krysse (egen commit hver)
 | Dependency | Fra | Til | Breaking changes å sjekke |
@@ -543,6 +543,182 @@ Commit per rad, f.eks. `chore(deps): oppgrader ibm mq client til 10.0.0.5`.
   og full build+test etter hvert steg.
 - Sjekk kompatibilitetsmatrise for Kotlin-plugin, shadow-plugin og
   flyway-plugin mot hver Gradle-major.
+- Fase 4 kjøres på egen branch (`chore/OEBS-2320-dependency-upgrades-fase4`).
+  Fase 3 er merget til dev (#54).
+- Rekkefølge:
+  1. Gradle 7.6.4 → 8.14.5.
+  2. shadow-plugin til en versjon som støtter Gradle 9 (rydder
+     deprecations).
+  3. ben-manes 0.64.0, og junit-vintage 6.x med `camel-test-junit5`.
+  4. Gradle 8.14.5 → 9.x.
+- Steg 1 (7.6.4 → 8.14.5):
+  - Wrapper oppgradert med `./gradlew wrapper --gradle-version 8.14.5`
+    (kjørt to ganger, slik at også `gradlew`-skriptene og wrapper-JAR-en
+    oppdateres). `gradleVersion` i `tasks.withType<Wrapper>` er oppdatert
+    tilsvarende.
+  - `gradle-wrapper.jar` er verifisert mot Gradles offisielle SHA-256
+    (`7d3a4ac4…6172`).
+  - `distributionSha256Sum` er lagt til i `gradle-wrapper.properties` og i
+    `tasks.withType<Wrapper>`, slik at den ikke forsvinner neste gang
+    `./gradlew wrapper` kjøres. Wrapperen nekter nå å bruke en Gradle-zip
+    med feil sjekksum. Det er verifisert med en ren `GRADLE_USER_HOME`:
+    riktig sum laster ned og starter, og feil sum stopper med «Expected
+    checksum». Ved neste Gradle-oppgradering må både versjon og sum
+    oppdateres (se https://gradle.org/release-checksums/).
+  - Ingen endring nødvendig for Kotlin-plugin 2.4.20, flyway-plugin 13.8.0
+    eller ben-manes 0.51.0. `dependencyUpdates` kjører.
+  - Gradle 8 advarer om «automatic loading of test framework
+    implementation dependencies» (fjernes i Gradle 9). Rettet ved å
+    deklarere `junit-platform-launcher` eksplisitt, og ved å hente
+    vintage-engine og launcher via `junit-bom` slik at versjonene alltid
+    er like (1.11.4/5.11.4).
+  - `jar` og `shadowJar` skriver fortsatt til samme fil (`archiveClassifier
+    = ""`), og `build/libs` inneholder én fat-JAR med `Main-Class`. Det er
+    viktig fordi Dockerfile kopierer `build/libs/*.jar`. Service-filene for
+    Camel (`TypeConverterLoader`) og Flyway (`Plugin` med PostgreSQL) er
+    slått sammen korrekt.
+  - Gjenværende deprecations kommer fra shadow 7.1.2 (`Convention`,
+    `setFileMode`, `ConfigureUtil`, `JavaPluginConvention`,
+    `ApplicationPluginConvention`, `getMode`). Disse fjernes i Gradle 9 og
+    løses i steg 2.
+  - Toolchain-advarselen fra 7.6.4 («no java toolchain repositories») er
+    borte. CI bruker `setup-java` med JDK 21, så toolchain-en trenger
+    aldri å lastes ned.
+  - 61/61 tester grønne.
+- Steg 2 (shadow 7.1.2 → `com.gradleup.shadow` 9.2.2):
+  - Pluginet har flyttet til GradleUp og fått ny plugin-id. Pakken for
+    `ShadowJar` er uendret.
+  - Versjonsvalget:
+    - shadow ≥ 9.3.0 krever Gradle 9.0, og ≥ 9.5.0 krever Gradle 9.2.
+      9.6.1 feilet på 8.14.5 med `NoSuchMethodError` i
+      `addVariantsFromConfiguration`.
+    - Gradle 9 kan heller ikke tas først, fordi shadow 7.1.2 bruker
+      API-er som fjernes i Gradle 9.
+    - Derfor 9.2.2 nå (krever Gradle ≥ 8.11), og bump til nyeste 9.x
+      sammen med Gradle 9 i steg 4.
+  - 🔴 `duplicatesStrategy`: shadow 9 bruker `EXCLUDE` som standard. Da
+    blir duplikate service-filer forkastet før `mergeServiceFiles()` ser
+    dem. Uten tiltak ville Camel sin `TypeConverterLoader` og Flyway sin
+    PostgreSQL-plugin stille forsvunnet fra fat-JAR-en, og prod ville
+    feilet ved oppstart.
+    - Satt `duplicatesStrategy = EXCLUDE` eksplisitt (første fil vinner,
+      som i 7.x).
+    - Satt `filesMatching("META-INF/services/**") { duplicatesStrategy =
+      INCLUDE }`, slik at service-filene slås sammen.
+  - Fat-JAR sammenlignet med snapshot fra 7.1.2:
+    - 45 154 → 45 165 entries, ingen duplikater.
+    - Nye entries er bare katalogoppføringer under `META-INF/services/`.
+    - `META-INF/versions/9/module-info.class` er borte (shadow 9 utelater
+      den som standard, og den har ingen betydning på classpath).
+    - Ingen service-linjer er tapt, verken for Camel, Flyway eller JAXB.
+      Den nye sammenslåingen fjerner bare kommentarlinjer og like linjer.
+  - `Multi-Release: true` er nå satt i manifestet. Shadow 7 mistet dette
+    attributtet, så versjonerte klasser i `META-INF/versions/N/` ble
+    ignorert. Nå brukes de på Java 21, slik bibliotekene er ment å kjøre
+    på vanlig classpath. Det berører:
+    - JSch: Ed25519/Ed448 via JDK og Unix domain sockets. Vår RSA-
+      tilkobling berøres ikke.
+    - BouncyCastle, transitivt via IBM MQ. `Jms.kt` har ikke TLS, så
+      sannsynligvis ubrukt på vår sti.
+    - 5 JAXB-klasser.
+
+    Vi valgte å beholde det. Verifiseres i dev:
+    - Invoice via vefasrest dekker JAXB-parsing og SFTP-skriving. Sjekk
+      også at `Testing FTP connection` logges ved oppstart.
+    - OrderResponse og Catalogue er de eneste dokumenttypene som går til
+      MQ. Appen er ren inbound, og vi kan bare sende Invoice via
+      vefasrest i dev, så MQ-stien kan ikke verifiseres ende-til-ende.
+      Risikoen er vurdert som lav: MQ-koden er uendret, og
+      Multi-Release berører bare BouncyCastle, som ikke brukes uten TLS.
+      Vi godtar risikoen og følger med i prod-loggene etter deploy: se
+      etter `Inbound EHF sent via MQ to internal systems` og etter
+      JMS/MQ-exceptions (`JMSException`, `MQException`, `LinkageError`).
+    - Hvis noe feiler, kan `Multi-Release: false` settes i manifestet
+      uten å rulle tilbake shadow.
+  - `create("printVersion") { println(...) }` er endret til
+    `register(...) { doLast { ... } }`. `create` var deprecated, og
+    versjonen ble skrevet ut ved konfigurasjon av hvert eneste
+    Gradle-kall. Tasken brukes ikke i CI.
+  - Ingen Gradle-deprecations igjen med `--warning-mode all`. 61/61 tester
+    grønne.
+- Steg 3a (ben-manes 0.51.0 → 0.64.0):
+  - Plugin-id-en `com.github.ben-manes.versions` er deprecated i 0.64.0 og
+    er byttet til `io.github.ben-manes.versions`.
+  - `dependencyUpdates` kjører uten deprecations.
+  - Rapporten viser også beta-, milestone- og RC-versjoner som «oppdateringer».
+    Det er standardoppførsel (ingen `rejectVersionIf`) og er ikke endret.
+  - 61/61 tester grønne.
+- Steg 3b (JUnit 5.11.4 → 6.1.3, camel-test → camel-test-junit5):
+  - JUnit 6 krever Java 17 og Kotlin 2.2. Vi har Java 21 og Kotlin 2.4.20.
+  - JUnit 6 deprecater vintage-motoren (JUnit 4-støtten). Den logger en
+    INFO-melding så lenge det finnes JUnit 4-tester, og er bare ment som
+    en midlertidig bro under migrering til Jupiter.
+    - Alle 18 testklassene var JUnit 4. Vi valgte å migrere bare de to
+      `CamelTestSupport`-testene nå.
+    - Resten av migreringen fra JUnit 4 til Jupiter er lagt som egen
+      oppgave i Fase 5.
+  - Endringer:
+    - `junit_vintage_version` → `junit_bom_version = "6.1.3"`.
+      `junit-bom` styrer Jupiter, vintage og launcher (alle 6.1.3).
+    - Lagt til `testImplementation("org.junit.jupiter:junit-jupiter")`.
+    - `camel-test` → `camel-test-junit5` (3.22.4). Den drar inn Jupiter
+      5.9.1, som løftes til 6.1.3 av BOM-en. Testene er grønne.
+    - `XmlDetectorTest` og `InboundSbdhRemoverTest`:
+      `org.apache.camel.test.junit4.CamelTestSupport` →
+      `org.apache.camel.test.junit5.CamelTestSupport` og `org.junit.Test`
+      → `org.junit.jupiter.api.Test`. Samme API
+      (`createRouteBuilder`/`bindToRegistry`), ingen andre endringer.
+  - Verifisering:
+    - 61/61 tester grønne. Jupiter kjører de 5 migrerte testene (4 + 1),
+      vintage de øvrige 56.
+    - Mutasjonssjekk: med en gyldig SBDH-fil som input i `not XML` feiler
+      testen med `Expected: <false> but was: <true>`.
+    - Et første forsøk med `<ok/>` som input feilet ikke. Det er riktig
+      oppførsel: `XML=true` krever gyldig SBDH, ikke bare XML.
+  - Eksisterende funn, ikke nytt: fat-JAR-en inneholder `junit:junit:4.10`
+    (260 entries). Den kommer transitivt via
+    `com.googlecode.json-simple:json-simple:1.1.1`, som `ktor-auth` 1.6.8
+    drar inn, og json-simple deklarerer JUnit som compile-avhengighet.
+    Kandidat for `exclude` eller forsvinner med Ktor-oppgradering.
+- Steg 4 (Gradle 8.14.5 → 9.7.1, shadow 9.2.2 → 9.6.1):
+  - Versjonsvalg: Kotlin-plugin 2.4.20 støtter fullt ut Gradle 7.6.3–9.7.0
+    (KGP-kompatibilitetstabellen). 9.7.1 er en patch på 9.7 og ble valgt
+    fremfor 9.8.0, som er utenfor støttet område og bare dager gammel.
+  - Rekkefølge: shadow 9.6.1 lar seg ikke laste på Gradle 8.14.5
+    (`NoSuchMethodError` i `addVariantsFromConfiguration`). Wrapperen ble
+    derfor oppgradert først med shadow 9.2.2, og shadow ble bumpet etterpå.
+  - Wrapper:
+    - `./gradlew wrapper --gradle-version 9.7.1
+      --gradle-distribution-sha256-sum …` kjørt to ganger.
+    - `gradle-wrapper.jar` er verifisert mot Gradles offisielle SHA-256
+      (`7a9ce74c…2c5d`).
+    - `distributionSha256Sum` (`acd53f1e…d20a`) er oppdatert både i
+      `gradle-wrapper.properties` og i `tasks.withType<Wrapper>`.
+      Nedlastingen av 9.7.1 gikk gjennom sjekksumkontrollen.
+    - Nye felter i `gradle-wrapper.properties`: `retries=0` og
+      `retryBackOffMs=500` (standardverdier fra Gradle 9).
+    - `gradlew`/`gradlew.bat` er regenerert. Den tomme
+      `CLASSPATH`-variabelen er fjernet, fordi wrapperen startes med
+      `-jar`.
+  - Shadow 9.5+ legger til `KotlinModuleMetadataTransformer` som standard
+    og advarer (56 linjer) om at den ikke fungerer sammen med `EXCLUDE`.
+    Transformeren trengs bare ved relocation, og vi relocater ikke.
+    - Satt `enableKotlinModuleRemapping = false` (med
+      `@Suppress("DEPRECATION")`). Flagget fjernes i shadow 10, og da er
+      remapping av som standard, så linjen må slettes ved neste major.
+    - Verifisert at alle 56 `.kotlin_module`-filer er byte-identiske med
+      og uten remapping, og at advarslene er borte.
+  - Fat-JAR sammenlignet med steg 3b (Gradle 8.14.5, shadow 9.2.2):
+    samme 42 851 fil-entries, identiske `META-INF/services/*` og identisk
+    manifest (inkl. `Multi-Release: true`). Én JAR i `build/libs`.
+  - Ingen Gradle-deprecations i CI-kommandoen
+    (`--warning-mode all clean build shadowJar`). `printVersion` og
+    `dependencyUpdates` kjører uten advarsler.
+  - Kjent, ikke blokkerende: flyway-pluginet 13.8.0 kaller
+    `Project.getProperties`, som er deprecated og feiler i Gradle 10. Det
+    slår bare ut når `flyway*`-tasks kjøres manuelt, ikke i CI. Følges opp
+    ved neste flyway-plugin-oppgradering.
+  - 61/61 tester grønne.
 
 ### Fase 5 — Oppfølging av utsatte oppgraderinger (samlesteg)
 Når Kotlin-pluginet (Fase 3) og Gradle wrapper (Fase 4) er oppgradert, går vi
@@ -551,7 +727,19 @@ som da er blitt mulige, én commit per dependency som i de tidligere fasene:
 - jackson (databind/module-kotlin/datatype-joda) → 2.22.2 (eller nyeste
   tilgjengelige på det tidspunktet)
 - mockk → 1.14.11 (eller nyeste tilgjengelige)
-- com.github.ben-manes.versions-plugin → 0.64.0 (eller nyeste tilgjengelige)
+- exposed → 1.x (pakkene flyttes til `org.jetbrains.exposed.v1.*`)
+- kotlin-result → 2.3.1 (eller nyeste tilgjengelige)
+- Migrer de gjenværende 16 JUnit 4-testklassene til JUnit Jupiter og fjern
+  `junit-vintage-engine` og `junit:junit`. Berører blant annet:
+  - WireMock `@ClassRule` → `WireMockExtension` (`@RegisterExtension`) i
+    `RestArchiverTest`, `AccessPointClientTest` og `InboundIT`.
+  - `TemporaryFolder` → `@TempDir`.
+  - `@Before`/`@After`/`@BeforeClass`/`@AfterClass` → Jupiter-ekvivalenter.
+  - `org.junit.Assert.assertThrows` → `org.junit.jupiter.api.assertThrows`.
+
+Jackson, mockk, Exposed og kotlin-result ble frigjort av Kotlin 2.4.20
+(Fase 3). Vi valgte likevel å ta dem her i Fase 5 og ikke på slutten av
+Fase 3, slik at Fase 3 kunne merges til dev først.
 
 Kjør `./gradlew clean test` etter hver av disse også, selv om de er
 "lavrisiko" — de er nettopp utsatt fordi de har en (nå oppfylt) avhengighet
