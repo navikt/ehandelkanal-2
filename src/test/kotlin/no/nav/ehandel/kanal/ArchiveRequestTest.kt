@@ -5,7 +5,7 @@ import java.nio.charset.Charset
 import java.util.Base64
 import no.nav.ehandel.kanal.services.legalarchive.ArchiveRequest
 import org.amshove.kluent.shouldBeEqualTo
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class ArchiveRequestTest {
     val mapper = jacksonObjectMapper()

@@ -4,9 +4,9 @@ import org.apache.camel.CamelContext
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.mock.MockEndpoint
 import org.apache.camel.impl.DefaultCamelContext
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.concurrent.Executors
 
 /**
@@ -18,12 +18,12 @@ class AccessPointInboxSplitTest {
     private lateinit var camelContext: CamelContext
     private val threadPool = Executors.newFixedThreadPool(6)
 
-    @Before
+    @BeforeEach
     fun setUp() {
         camelContext = DefaultCamelContext()
     }
 
-    @After
+    @AfterEach
     fun tearDown() {
         camelContext.stop()
     }

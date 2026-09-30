@@ -17,8 +17,8 @@ import org.amshove.kluent.shouldNotThrow
 import org.apache.camel.Exchange
 import org.apache.camel.Exchange.FILE_NAME
 import org.apache.camel.impl.DefaultCamelContext
-import org.apache.camel.impl.DefaultExchange
-import org.junit.Test
+import org.apache.camel.support.DefaultExchange
+import org.junit.jupiter.api.Test
 
 private val camelContext = DefaultCamelContext()
 
@@ -110,6 +110,22 @@ class InboundSbdhMetaDataExtractorTest {
         val exchange = document.createExchangeWithBody();
         { InboundSbdhMetaDataExtractor.process(exchange) } shouldNotThrow AnyException
         exchange.getProperty(InboundSbdhMetaDataExtractor.CAMEL_XML_PROPERTY, Boolean::class.java).shouldBeTrue()
+    }
+
+    @Test
+    fun `filename should use Norwegian time when UTC and Oslo are on different dates`() {
+        val documentId = UUID.randomUUID().toString()
+        val document = createDocumentFromTemplate(
+            "9908:810418052",
+            documentId,
+            "Catalogue",
+            "Catalogue",
+            "2026-01-31T23:30:00Z"
+        )
+        val exchange = document.createExchangeWithBody()
+        InboundSbdhMetaDataExtractor.process(exchange)
+
+        exchange.getHeader<String>(FILE_NAME) shouldBeEqualTo "20260201-003000000-$documentId.xml"
     }
 
     private fun createDocumentFromTemplate(

@@ -13,8 +13,8 @@ import no.nav.ehandel.kanal.services.sbd.StandardBusinessDocumentGenerator
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeEmpty
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.slf4j.MDC
 
 class StandardBusinessDocumentGeneratorTest {
@@ -22,7 +22,7 @@ class StandardBusinessDocumentGeneratorTest {
     private val sbdGenerator = StandardBusinessDocumentGenerator()
     private val callId = randomUuid()
 
-    @Before
+    @BeforeEach
     fun setup() {
         MDC.put(MDC_CALL_ID, callId)
     }

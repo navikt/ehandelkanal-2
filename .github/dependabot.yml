@@ -1,0 +1,52 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    target-branch: "dev/ehandelkanal-2"
+    schedule:
+      interval: "daily"
+      time: "10:00"
+      timezone: "Europe/Oslo"
+    cooldown:
+      default-days: 7
+    groups:
+      all-gradle-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+    reviewers:
+      - navikt/oebs-java-dev
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    target-branch: "dev/ehandelkanal-2"
+    schedule:
+      interval: "daily"
+      time: "10:00"
+      timezone: "Europe/Oslo"
+    cooldown:
+      default-days: 7
+    groups:
+      all-docker-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+    reviewers:
+      - navikt/oebs-java-dev
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "dev/ehandelkanal-2"
+    schedule:
+      interval: "daily"
+      time: "10:00"
+      timezone: "Europe/Oslo"
+    cooldown:
+      default-days: 7
+    groups:
+      all-github-actions-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+    reviewers:
+      - navikt/oebs-java-dev
