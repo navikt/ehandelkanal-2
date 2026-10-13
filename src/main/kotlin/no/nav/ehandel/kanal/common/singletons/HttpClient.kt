@@ -6,7 +6,7 @@ import io.ktor.client.engine.apache.Apache
 val httpClient: HttpClient =
     HttpClient(Apache) {
         engine {
-            socketTimeout = 30_000
+            socketTimeout = 60_000
             connectTimeout = 30_000
             connectionRequestTimeout = 30_000
         }
