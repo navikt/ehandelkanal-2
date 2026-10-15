@@ -11,3 +11,6 @@ target/
 out/
 build/
 .gradle/
+
+# Kotlin
+.kotlin/

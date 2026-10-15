@@ -46,8 +46,8 @@ import no.nav.ehandel.kanal.routes.report
 import no.nav.ehandel.kanal.services.log.InboundLogger
 import org.apache.camel.CamelContext
 import org.apache.camel.impl.DefaultCamelContext
-import org.apache.camel.impl.SimpleRegistry
 import org.apache.camel.spi.Registry
+import org.apache.camel.support.DefaultRegistry
 import org.slf4j.event.Level
 
 private val logger = KotlinLogging.logger { }
@@ -93,7 +93,6 @@ fun main() = runBlocking {
             AccessPoint.readyToProcess.logAndSet(false)
             camelContext.stop()
             applicationState.fail()
-            // server.stop(5, 10, TimeUnit.SECONDS)
             server.stop(5000, 10_000)
         })
 
@@ -112,15 +111,15 @@ fun bootstrap(camelContext: CamelContext, server: ApplicationEngine) {
     server.start(wait = false)
 }
 
-fun defaultRegistry() = SimpleRegistry().apply {
+fun defaultRegistry() = DefaultRegistry().apply {
     val entraIdTokenProvider = EntraIdTokenProvider()
     val accessPointClient = AccessPointClient(entraIdTokenProvider)
 
-    put("accessPointClient", accessPointClient)
-    put("inboundLogger", InboundLogger)
-    put("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
-    put("inboundDataExtractor", InboundDataExtractor)
-    put("mqConnectionFactory", mqConnectionFactory)
+    bind("accessPointClient", accessPointClient)
+    bind("inboundLogger", InboundLogger)
+    bind("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
+    bind("inboundDataExtractor", InboundDataExtractor)
+    bind("mqConnectionFactory", mqConnectionFactory)
 }
 
 fun configureCamelContext(registry: Registry) = DefaultCamelContext(registry).apply {

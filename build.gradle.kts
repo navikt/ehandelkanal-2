@@ -1,42 +1,43 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.integrasjon"
 version = "1.0.52-SNAPSHOT"
 
-val camel_version = "2.24.2"
-val ibm_mq_version = "9.1.3.0"
-val jackson_version = "2.17.2"
+val camel_version = "3.22.4"
+val ibm_mq_version = "10.0.0.5"
+val jackson_version = "2.22.3"
 val konfig_version = "1.6.10.0"
 val difi_commons_sbdh_version = "0.9.5"
-val difi_peppol_sbdh_version = "1.1.3"
-val kotlin_logging_version = "1.7.6"
-val jaxb_api_version = "2.4.0-b180830.0359"
-val jaxb_runtime_version = "2.4.0-b180830.0438"
+val difi_peppol_sbdh_version = "1.1.4"
+val kotlin_logging_version = "3.0.5"
+val jaxb_api_version = "2.3.3"
+val jaxb_runtime_version = "2.3.9"
 val ktor_version = "1.6.8"
-val logstash_version = "7.4"
-val logback_version = "1.5.6"
-val prometheus_version = "0.8.0"
+val logstash_version = "8.1"
+val logback_version = "1.6.3"
+val prometheus_version = "0.16.0"
 val javax_activation_version = "1.2.0"
 val difi_commons_ubl_version = "0.9.5"
-val hikari_version = "5.1.0"
-val vault_driver_version = "3.1.0"
-val flyway_version = "7.15.0"
-val h2_version = "1.4.200"
-val postgres_version = "42.7.4"
-val exposed_version = "0.41.1"
-val result_version = "1.1.6"
-val wiremock_version = "2.35.1"
-val mockk_version = "1.13.12"
+val hikari_version = "7.1.0"
+val vault_driver_version = "5.1.0"
+val flyway_version = "13.8.0"
+val h2_version = "2.5.252"
+val postgres_version = "42.7.13"
+val exposed_version = "1.5.0"
+val coroutines_version = "1.8.1"
+val result_version = "2.3.1"
+val wiremock_version = "3.0.1"
+val mockk_version = "1.14.11"
 val kluent_version = "1.73"
+val junit_bom_version = "6.1.3"
 
 plugins {
     application
-    kotlin("jvm") version "1.9.24"
+    kotlin("jvm") version "2.4.20"
     //id("org.jmailen.kotlinter") version "5.2.0"
-    id("com.github.ben-manes.versions") version "0.51.0"
-    id("org.flywaydb.flyway") version "7.15.0"
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("io.github.ben-manes.versions") version "0.64.0"
+    id("org.flywaydb.flyway") version "13.8.0"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 // kotlinter {
@@ -62,16 +63,30 @@ repositories {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(21)
+}
+
+configurations.matching { it.name in setOf("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath") }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-coroutines")) {
+            useVersion(coroutines_version)
+            because("ktor 1.6.8 bruker ExperimentalCoroutineDispatcher, som er fjernet i coroutines 1.9.0")
+        }
+    }
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
     implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("io.ktor:ktor-html-builder:$ktor_version")
     implementation("io.ktor:ktor-jackson:$ktor_version")
-    implementation("io.ktor:ktor-auth:$ktor_version")
-    implementation("io.ktor:ktor-auth-jwt:$ktor_version")
+    implementation("io.ktor:ktor-auth:$ktor_version") {
+        exclude(group = "junit", module = "junit") // via json-simple, not used at runtime
+    }
+    implementation("io.ktor:ktor-auth-jwt:$ktor_version") {
+        exclude(group = "junit", module = "junit") // via json-simple, not used at runtime
+    }
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-apache:$ktor_version")
     implementation("io.ktor:ktor-client-auth-basic-jvm:$ktor_version")
@@ -96,7 +111,7 @@ dependencies {
     implementation("io.prometheus:simpleclient_hotspot:$prometheus_version")
     implementation("com.sun.activation:javax.activation:$javax_activation_version")
     implementation("org.glassfish.jaxb:jaxb-runtime:$jaxb_runtime_version")
-    implementation("javax.xml.bind:jaxb-api:$jaxb_api_version")
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:$jaxb_api_version")
     implementation("no.difi.commons:commons-ubl21:$difi_commons_ubl_version")
     implementation("com.zaxxer:HikariCP:$hikari_version")
     implementation("com.bettercloud:vault-java-driver:$vault_driver_version")
@@ -109,8 +124,11 @@ dependencies {
     implementation("com.michael-bull.kotlin-result:kotlin-result:$result_version")
     implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jodatime:$exposed_version")
-    testImplementation("org.apache.camel:camel-test:$camel_version")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:$wiremock_version")
+
+    runtimeOnly("org.flywaydb:flyway-database-postgresql:$flyway_version")
+
+    testImplementation("org.apache.camel:camel-test-junit5:$camel_version")
+    testImplementation("org.wiremock:wiremock:$wiremock_version")
     testImplementation("io.mockk:mockk:$mockk_version")
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
@@ -118,19 +136,31 @@ dependencies {
     testImplementation("org.amshove.kluent:kluent:$kluent_version") {
         exclude(group = "com.nhaarman.mockitokotlin2")
     }
-    testImplementation("junit:junit:4.13.2")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.2")
+    testImplementation(platform("org.junit:junit-bom:$junit_bom_version"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks {
-    create("printVersion") {
-        println(project.version)
+    register("printVersion") {
+        val projectVersion = project.version
+        doLast {
+            println(projectVersion)
+        }
     }
     withType<ShadowJar> {
         archiveClassifier.set("")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        filesMatching("META-INF/services/**") {
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
+        mergeServiceFiles()
+        @Suppress("DEPRECATION")
+        enableKotlinModuleRemapping = false
     }
     withType<Test> {
         useJUnitPlatform()
+        systemProperty("user.timezone", "Europe/Oslo")
         testLogging {
             events("passed", "skipped", "failed", "standardOut", "standardError")
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
@@ -171,13 +201,9 @@ tasks {
 //
 //}
     withType<Wrapper> {
-        gradleVersion = "7.6.4"
+        gradleVersion = "9.7.1"
+        distributionSha256Sum = "acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a"
         distributionType = Wrapper.DistributionType.BIN
-    }
-    withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "11"
-        }
     }
     named("distZip")  { dependsOn("shadowJar") }
     named("distTar")  { dependsOn("shadowJar") }

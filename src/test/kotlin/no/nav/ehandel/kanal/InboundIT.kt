@@ -1,5 +1,7 @@
 package no.nav.ehandel.kanal
 
+import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.exactly
@@ -15,7 +17,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.verify
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.http.ContentTypeHeader
-import com.github.tomakehurst.wiremock.junit.WireMockRule
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.server.engine.ApplicationEngine
@@ -27,7 +28,6 @@ import no.nav.ehandel.kanal.camel.processors.AccessPointClient
 import no.nav.ehandel.kanal.camel.processors.InboundDataExtractor
 import no.nav.ehandel.kanal.camel.processors.InboundSbdhMetaDataExtractor
 import no.nav.ehandel.kanal.services.log.InboundLogger
-import org.apache.camel.impl.SimpleRegistry
 import no.nav.ehandel.kanal.camel.routes.ACCESS_POINT_CLIENT
 import no.nav.ehandel.kanal.camel.routes.ACCESS_POINT_READ
 import no.nav.ehandel.kanal.camel.routes.INBOUND_EHF
@@ -38,15 +38,17 @@ import no.nav.ehandel.kanal.camel.routes.INBOX_QUEUE
 import no.nav.ehandel.kanal.common.constants.CamelHeader
 import no.nav.ehandel.kanal.db.Database
 import no.nav.ehandel.kanal.services.legalarchive.LEGAL_ARCHIVE_CAMEL_HEADER
-import org.apache.camel.builder.AdviceWithRouteBuilder
+import org.apache.camel.builder.AdviceWith
 import org.apache.camel.builder.NotifyBuilder
 import org.apache.camel.component.mock.MockEndpoint
+import org.apache.camel.spi.Registry
+import org.apache.camel.support.DefaultRegistry
 import org.h2.tools.DeleteDbFiles
-import org.junit.After
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.ClassRule
-import org.junit.Test
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 private const val juridiskLoggUrl = "/juridisklogg/api/rest/logg"
 private const val inboxCountUrl = "/vefasrest/inbox/count"
@@ -60,23 +62,21 @@ private val mockEntraIdTokenProvider: EntraIdTokenProvider = mockk {
 }
 
 // Create a test registry with mocked token provider
-private fun testRegistry() = SimpleRegistry().apply {
+private fun Registry.bindTestBeans() {
     val accessPointClient = AccessPointClient(mockEntraIdTokenProvider)
-    put("accessPointClient", accessPointClient)
-    put("inboundLogger", InboundLogger)
-    put("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
-    put("inboundDataExtractor", InboundDataExtractor)
-    put("mqConnectionFactory", mqConnectionFactory)
+    bind("accessPointClient", accessPointClient)
+    bind("inboundLogger", InboundLogger)
+    bind("inboundSbdhExtractor", InboundSbdhMetaDataExtractor)
+    bind("inboundDataExtractor", InboundDataExtractor)
+    bind("mqConnectionFactory", mqConnectionFactory)
 }
 
 private val server: ApplicationEngine = mockk(relaxed = true)
-private val camelContext = configureCamelContext(testRegistry()).apply {
-    routeDefinitions[0].adviceWith(this, object : AdviceWithRouteBuilder() {
-        override fun configure() {
-            mockEndpointsAndSkip("^(jms|ftp).*")
-            mockEndpoints("^(?!(jms|ftp)).*")
-        }
-    })
+private val camelContext = configureCamelContext(DefaultRegistry().apply { bindTestBeans() }).apply {
+    AdviceWith.adviceWith(this, routeDefinitions[0].id) {
+        it.mockEndpointsAndSkip("^(jms|ftp).*")
+        it.mockEndpoints("^(?!(jms|ftp)).*")
+    }
     removeRouteDefinition(getRouteDefinition(INBOUND_FTP_TEST_ROUTE))
 }
 
@@ -97,15 +97,16 @@ class InboundIT {
         ebasys, ebasysUnknownFiles, inboundMq, fileAreaCatalogue
     )
 
-    @Before
+    @BeforeEach
     fun setUp() {
+        camelContext.registry.bindTestBeans()
         camelContext.start()
     }
 
-    @After
+    @AfterEach
     fun tearDown() {
         verifyAccessPointRequests()
-        inboundWireMockRule.resetRequests()
+        inboundWireMockServer.resetRequests()
         camelContext.stop()
         DeleteDbFiles.execute("./", "integrationtestdb", true)
     }
@@ -281,13 +282,13 @@ class InboundIT {
     }
 
     companion object {
-        @ClassRule
-        @JvmField
-        val inboundWireMockRule = WireMockRule(wireMockConfig().port(20000).notifier(Slf4jNotifier(true)))
+        private val inboundWireMockServer = WireMockServer(wireMockConfig().port(20000).notifier(Slf4jNotifier(true)))
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun setUpClass() {
+            inboundWireMockServer.start()
+            WireMock.configureFor("localhost", inboundWireMockServer.port())
             stubFor(
                 get(urlEqualTo(inboxMessagesUrl))
                     .withHeader(HttpHeaders.Authorization, equalTo("Bearer mock-bearer-token"))
@@ -333,6 +334,12 @@ class InboundIT {
             )
             bootstrap(camelContext, server)
             Database.initLocal()
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun tearDownClass() {
+            inboundWireMockServer.stop()
         }
     }
 }

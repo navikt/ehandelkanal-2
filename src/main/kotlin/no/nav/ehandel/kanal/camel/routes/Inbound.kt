@@ -35,13 +35,15 @@ val INBOUND_EHF = RouteId("inboundEhf", "direct:inbound")
 val INBOUND_EHF_ERROR =
     RouteId("inboundEhfError", "direct:inboundEhfError")
 
-private val ebasysInbound = "${EbasysProps.url}?username=${EbasysProps.username}&password=${EbasysProps.password}" +
+internal val ebasysInbound = "${EbasysProps.url}?username=${EbasysProps.username}&password=${EbasysProps.password}" +
     "&binary=true&throwExceptionOnConnectFailed=true&tempFileName=\$simple{file:name}.inprogress&passiveMode=true"
-private val ebasysInboundUnknownFiles = "${EbasysProps.url}/${EbasysProps.unknownFileDirectory}?username=${EbasysProps.username}" +
+internal val ebasysInboundUnknownFiles = "${EbasysProps.url}/${EbasysProps.unknownFileDirectory}?username=${EbasysProps.username}" +
     "&password=${EbasysProps.password}&binary=true&throwExceptionOnConnectFailed=true" +
     "&tempFileName=\$simple{file:name}.inprogress&passiveMode=true&timeout=300000"
-private val fileAreaInboundLargeCatalogues = "${FileAreaProps.eFaktura}/katalog" // TODO: Tilgang til filomraadet
-private val mqInbound = "jms:queue:${QueueProps.inName}?connectionFactory=#mqConnectionFactory"
+private val fileAreaInboundLargeCatalogues = "${FileAreaProps.eFaktura}/katalog"
+internal val mqInbound = "jms:queue:${QueueProps.inName}?connectionFactory=#mqConnectionFactory"
+internal val ebasysConnectionTest =
+    "$ebasysInbound&initialDelay=0&delay=600000&noop=true&download=false&bridgeErrorHandler=true"
 
 private fun Exchange.shutdown(errorMessage: String) {
     LOGGER.error { errorMessage }
@@ -52,7 +54,7 @@ private fun Exchange.shutdown(errorMessage: String) {
 object Inbound : RouteBuilder() {
     override fun configure() {
         // Loop for testing FTP connection
-        from("$ebasysInbound&initialDelay=0&delay=600000&noop=true&download=false&consumer.bridgeErrorHandler=true")
+        from(ebasysConnectionTest)
             .startupOrder(1)
             .routeId(INBOUND_FTP_TEST_ROUTE)
             .onException(Exception::class.java)
@@ -180,7 +182,6 @@ object Inbound : RouteBuilder() {
                     .process { LOGGER.warn { "File too large - size ${it.getHeader<Long>(Exchange.FILE_LENGTH)
                         .humanReadableByteCount()}, sending to file area" }
                     }
-                    // TODO: Filearea
                     // .to(fileAreaInboundLargeCatalogues)
                     .to("$INBOUND_LOGGER_BEAN?method=sentToFileArea")
                 .otherwise()

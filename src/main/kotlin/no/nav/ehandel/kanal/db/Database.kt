@@ -12,8 +12,9 @@ import mu.KotlinLogging
 import no.nav.ehandel.kanal.DatabaseProps
 import no.nav.ehandel.kanal.db.Vault.suggestedRefreshIntervalInMillis
 import org.flywaydb.core.Flyway
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.postgresql.ds.PGSimpleDataSource
 
 private val logger = KotlinLogging.logger { }
 private val dispatcher: CoroutineContext = Executors.newFixedThreadPool(5).asCoroutineDispatcher()
@@ -45,8 +46,12 @@ object Database {
         Flyway.configure().run {
             dataSource(DatabaseProps.url, DatabaseProps.username, DatabaseProps.password)
             locations("classpath:db/migration/common", "classpath:db/migration/h2")
-            cleanOnValidationError(true)
-            load().migrate()
+            cleanDisabled(false)
+            ignoreMigrationPatterns("*:pending", "*:future")
+            load()
+        }.run {
+            if (!validateWithResult().validationSuccessful) clean()
+            migrate()
         }
         Database.connect(HikariDataSource(HikariConfig().apply {
             jdbcUrl = DatabaseProps.url
@@ -66,9 +71,17 @@ object Database {
                 databaseName = DatabaseProps.name,
                 role = Role.ADMIN
             )
-            dataSource(DatabaseProps.url, credentials.username, credentials.password)
+            dataSource(
+                SetRoleDataSource(
+                    delegate = PGSimpleDataSource().apply {
+                        setURL(DatabaseProps.url)
+                        user = credentials.username
+                        password = credentials.password
+                    },
+                    role = "${DatabaseProps.name}-${Role.ADMIN}" // required for assigning proper owners for the tables
+                )
+            )
             locations("classpath:db/migration/common", "classpath:db/migration/postgresql")
-            initSql("SET ROLE \"${DatabaseProps.name}-${Role.ADMIN}\"") // required for assigning proper owners for the tables
             load().migrate()
         }
         val initialCredentials = getNewCredentials(
@@ -85,6 +98,7 @@ object Database {
             idleTimeout = 10001
             connectionTimeout = 1000
             maxLifetime = 30001
+            keepaliveTime = 0
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             validate()
@@ -103,7 +117,7 @@ object Database {
         val path = "$mountPath/creds/$databaseName-$role"
         logger.debug("Getting database credentials for path '$path'")
         try {
-            val response = Vault.client.logical().read(path)
+            val response = Vault.client.readSecret(path)
             val username = checkNotNull(response.data["username"]) { "Username is not set in response from Vault" }
             val password = checkNotNull(response.data["password"]) { "Password is not set in response from Vault" }
             logger.debug("Got new credentials (username=$username, leaseDuration=${response.leaseDuration})")
@@ -121,14 +135,16 @@ object Database {
         delay(data.initialDelay)
         while (condition()) {
             val credentials = getNewCredentials(data.mountPath, data.databaseName, data.role)
-            data.dataSource.apply {
-                hikariConfigMXBean.setUsername(credentials.username)
-                hikariConfigMXBean.setPassword(credentials.password)
-                hikariPoolMXBean.softEvictConnections()
-            }
+            data.dataSource.rotateCredentials(credentials.username, credentials.password)
             delay(suggestedRefreshIntervalInMillis(credentials.leaseDuration * 1000))
         }
     }
+}
+
+internal fun HikariDataSource.rotateCredentials(username: String, password: String) {
+    hikariConfigMXBean.setUsername(username)
+    hikariConfigMXBean.setPassword(password)
+    hikariPoolMXBean.softEvictConnections()
 }
 
 suspend fun <T> dbQuery(block: () -> T): T = withContext(dispatcher) {
