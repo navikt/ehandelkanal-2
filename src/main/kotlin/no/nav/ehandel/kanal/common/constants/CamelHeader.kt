@@ -6,4 +6,5 @@ object CamelHeader {
     const val EHF_DOCUMENT_SENDER = "EHF_DOCUMENT_SENDER"
     const val TRACE_ID = "MSG_UUID"
     const val MSG_NO = "MSG_NO"
+    const val DOWNLOAD_COMPLETED = "DOWNLOAD_COMPLETED"
 }

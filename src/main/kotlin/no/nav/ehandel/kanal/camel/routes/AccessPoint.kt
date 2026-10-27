@@ -8,6 +8,8 @@ import no.nav.ehandel.kanal.common.constants.CamelHeader
 import no.nav.ehandel.kanal.common.extensions.getBody
 import no.nav.ehandel.kanal.common.extensions.getHeader
 import no.nav.ehandel.kanal.common.models.RouteId
+import no.nav.ehandel.kanal.services.inbox.inboxDownloadBackoff
+import org.apache.camel.Exchange
 import org.apache.camel.LoggingLevel
 import org.apache.camel.builder.RouteBuilder
 import org.slf4j.MDC
@@ -54,16 +56,29 @@ object AccessPoint : RouteBuilder() {
         from(INBOX_QUEUE.uri).routeId(INBOX_QUEUE.id)
             .onException(Exception::class.java)
                 .to("log:inboxQueue?level=INFO&showCaughtException=true&showStackTrace=true")
-                .process { LOGGER.info { "Exception during download, likely network issues - silently ignore and retry on next poll" } }
+                .process { exchange ->
+                    val msgNo = exchange.getIn().getHeader(CamelHeader.MSG_NO, String::class.java)
+                    val error = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Throwable::class.java)
+                    when {
+                        msgNo == null -> LOGGER.error(error) { "Exception while handling inbox message without MsgNo" }
+                        exchange.getIn().getHeader(CamelHeader.DOWNLOAD_COMPLETED) == null ->
+                            inboxDownloadBackoff.recordFailure(msgNo, error)
+                        else -> LOGGER.error(error) { "Exception after download of MsgNo $msgNo" }
+                    }
+                }
                 .handled(true)
             .end()
             .setHeader(CamelHeader.TRACE_ID, jsonpath("$.messageUUID"))
             .setHeader(CamelHeader.MSG_NO, jsonpath("$.msgNo"))
             .process { MDC.put("callId", it.getHeader(CamelHeader.TRACE_ID)) }
-            .to("$ACCESS_POINT_CLIENT?method=downloadMessagePayload(*, \${header.MSG_NO})")
-            .process { messagesReceivedTotal.inc() }
-            .to(INBOUND_EHF.uri)
-            .to(ACCESS_POINT_READ.uri)
+            .filter { inboxDownloadBackoff.shouldAttempt(it.getHeader(CamelHeader.MSG_NO)) }
+                .to("$ACCESS_POINT_CLIENT?method=downloadMessagePayload(*, \${header.MSG_NO})")
+                .process { inboxDownloadBackoff.clear(it.getHeader(CamelHeader.MSG_NO)) }
+                .setHeader(CamelHeader.DOWNLOAD_COMPLETED, constant(true))
+                .process { messagesReceivedTotal.inc() }
+                .to(INBOUND_EHF.uri)
+                .to(ACCESS_POINT_READ.uri)
+            .end()
             .process { MDC.clear() }
 
         // Separate route for marking message as read with redelivery in case of failures to prevent reprocessing a message

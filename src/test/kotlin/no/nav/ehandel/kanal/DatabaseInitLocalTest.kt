@@ -42,7 +42,7 @@ class DatabaseInitLocalTest {
             "INSERT INTO report (file_name, document_type, received_at, issued_at) " +
                 "VALUES ('keep.xml', 'Invoice', CURRENT_DATE, CURRENT_DATE)"
         )
-        update("""DELETE FROM "flyway_schema_history" WHERE "version" = '1.3'""")
+        update("""DELETE FROM "flyway_schema_history" WHERE "version" = '1.5'""")
 
         Database.initLocal()
 

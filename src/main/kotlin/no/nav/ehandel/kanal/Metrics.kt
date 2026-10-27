@@ -61,4 +61,28 @@ object Metrics {
         .name("xml_parsing_errors")
         .help("Number of messages that could not be JAXB unmarshalled")
         .register()
+
+    val downloadsFailed: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("downloads_failed")
+        .help("Number of failed payload downloads from the access point")
+        .register()
+
+    val downloadsDeferred: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("downloads_deferred")
+        .help("Number of downloads skipped because the message is in backoff")
+        .register()
+
+    val downloadAlertThresholdReached: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("download_alert_threshold_reached")
+        .help("Number of messages that reached the consecutive download failure alert threshold")
+        .register()
+
+    val downloadStateErrors: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("download_state_errors")
+        .help("Number of errors reading or writing download retry state")
+        .register()
 }
