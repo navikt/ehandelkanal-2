@@ -7,6 +7,10 @@ metadata:
     team: team-oebs
 spec:
   # image: {{ image }}
+  {{#if deployment_strategy}}
+  strategy:
+    type: {{deployment_strategy}}
+  {{/if}}
   env:
     - name: ENTRAID_TARGET_URL
       value: {{entraid_target_url}}

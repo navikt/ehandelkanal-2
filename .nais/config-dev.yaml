@@ -1,3 +1,4 @@
+deployment_strategy: Recreate
 ingresses: ["https://ehandelkanal-2.nais.preprod.local"]
 entraid_target_url: "api://dev-gcp.bankkommunikasjon.sokos-vefasrest/.default"
 vefasrest_message_url: "https://sokos-vefasrest-gcp.intern.dev.nav.no/api/messages"
