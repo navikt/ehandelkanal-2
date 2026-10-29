@@ -1,0 +1,159 @@
+name: Dependabot deploy verification
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify-deploy:
+    name: Verify dependabot deploy
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: dev-fss:team-oebs
+    concurrency:
+      group: ehandelkanal-2-dev-fss
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - name: Require Dependabot branch in this repository
+        env:
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          [[ "$HEAD_REPOSITORY" == "$GITHUB_REPOSITORY" ]] || { echo "::error::Dependabot deployment requires a branch in this repository"; exit 1; }
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Build and test
+        timeout-minutes: 30
+        run: ./gradlew --warning-mode all clean build shadowJar
+      - name: Build and push PR image
+        id: docker
+        uses: nais/docker-build-push@423a915c9b72edf2ba848b88171ccb0489e2a40a # v0
+        with:
+          team: team-oebs
+          platforms: linux/amd64
+          tag: dependabot-${{ github.event.pull_request.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Smoke test PR image
+        env:
+          IMAGE: ${{ steps.docker.outputs.image }}
+        run: .github/smoke/smoke-test-image.sh "$IMAGE"
+      - name: Locate verified main baseline
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          artifacts=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" |
+            jq '[.[].artifacts[] | select(.expired == false) |
+              select(.name == "dev-main-baseline" or .name == "dev-deploy-started" or .name == "dev-restored")]')
+          latest=$(jq -er 'max_by(.id)' <<< "$artifacts") || { echo "::error::No verified dev state exists; deploy main first"; exit 1; }
+          if [[ "$(jq -r '.name' <<< "$latest")" == dev-deploy-started ]]; then
+            echo "::error::A previous dev deployment was not recorded as restored. Run a successful main dev deployment before testing another PR."
+            exit 1
+          fi
+          if [[ "$(jq -r '.name' <<< "$latest")" == dev-restored ]]; then
+            restored_run=$(jq -er '.workflow_run.id' <<< "$latest")
+            restored_workflow=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/dependabot-deploy.yml" --jq '.id')
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$restored_run" |
+              jq -e --argjson workflow "$restored_workflow" --arg repo "$GITHUB_REPOSITORY" '
+                .workflow_id == $workflow and .event == "pull_request" and
+                .actor.login == "dependabot[bot]" and .head_repository.full_name == $repo
+              ' > /dev/null || { echo "::error::Dev restoration record is not from the Dependabot workflow"; exit 1; }
+          fi
+          baseline=$(jq -er 'map(select(.name == "dev-main-baseline")) | max_by(.id)' <<< "$artifacts") ||
+            { echo "::error::Main baseline is missing or expired; deploy main first"; exit 1; }
+          run_id=$(jq -er '.workflow_run.id' <<< "$baseline")
+          workflow_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/build-and-deploy.yml" --jq '.id')
+          run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")
+          jq -e --argjson workflow "$workflow_id" '
+            .workflow_id == $workflow and .head_branch == "main" and
+            (.event == "push" or .event == "workflow_dispatch")
+          ' <<< "$run" > /dev/null || { echo "::error::Baseline did not originate from the main deployment workflow"; exit 1; }
+          echo "artifact_id=$(jq -er '.id' <<< "$baseline")" >> "$GITHUB_OUTPUT"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "commit=$(jq -er '.head_sha' <<< "$run")" >> "$GITHUB_OUTPUT"
+      - name: Download verified main baseline
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ steps.baseline.outputs.artifact_id }}
+          run-id: ${{ steps.baseline.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: dev-main-baseline
+          merge-multiple: true
+      - name: Validate restoration baseline
+        id: restore-image
+        env:
+          BASELINE_COMMIT: ${{ steps.baseline.outputs.commit }}
+          BASELINE_RUN: ${{ steps.baseline.outputs.run_id }}
+        run: |
+          baseline=dev-main-baseline
+          jq -e --arg commit "$BASELINE_COMMIT" --arg run "$BASELINE_RUN" \
+            '.commit == $commit and .run_id == $run' "$baseline/deployment.json" > /dev/null ||
+            { echo "::error::Restoration metadata does not match the verified main run"; exit 1; }
+          image=$(jq -er '.image' "$baseline/deployment.json")
+          [[ "$image" =~ ^europe-north1-docker\.pkg\.dev/nais-management-233d/team-oebs/ehandelkanal-2:[^@[:space:]]+@sha256:[a-f0-9]{64}$ ]] ||
+            { echo "::error::Restoration image is not a canonical ehandelkanal-2 digest"; exit 1; }
+          test -s "$baseline/naiserator.yaml" && test -s "$baseline/config-dev.yaml" ||
+            { echo "::error::Restoration manifest or dev configuration is missing"; exit 1; }
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          printf 'Restore main commit: `%s`\n\nRestore image: `%s`\n' "$BASELINE_COMMIT" "$image" >> "$GITHUB_STEP_SUMMARY"
+      - name: Record dev deployment starting
+        id: starting
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dev-deploy-started
+          path: dev-main-baseline/deployment.json
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+      - name: Deploy PR to existing dev app
+        id: deploy
+        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        env:
+          CLUSTER: dev-fss
+          RESOURCE: dev-main-baseline/naiserator.yaml
+          VARS: dev-main-baseline/config-dev.yaml
+          WORKLOAD_IMAGE: ${{ steps.docker.outputs.image }}
+          ENVIRONMENT: dev-fss:team-oebs
+          WAIT: "true"
+          TIMEOUT: 15m
+      - name: Restore verified main deployment
+        if: always() && steps.starting.outcome == 'success'
+        id: restore
+        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        env:
+          CLUSTER: dev-fss
+          RESOURCE: dev-main-baseline/naiserator.yaml
+          VARS: dev-main-baseline/config-dev.yaml
+          WORKLOAD_IMAGE: ${{ steps.restore-image.outputs.image }}
+          ENVIRONMENT: dev-fss:team-oebs
+          WAIT: "true"
+          TIMEOUT: 15m
+      - name: Record restored dev state
+        if: always() && steps.restore.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dev-restored
+          path: dev-main-baseline/deployment.json
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+      - name: Report restoration failure
+        if: always() && steps.starting.outcome == 'success' && steps.restore.outcome != 'success'
+        env:
+          IMAGE: ${{ steps.restore-image.outputs.image }}
+        run: |
+          echo "::error::Dev restoration did not succeed. Restore the main image $IMAGE using the recorded baseline, or run a successful main dev deployment before further PR deployments."
+          exit 1

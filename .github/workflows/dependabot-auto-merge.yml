@@ -1,25 +1,49 @@
-name: Dependabot auto merge to dev
+name: Dependabot auto-merge
 
 on:
-  pull_request:
-    branches:
-      - 'dev/ehandelkanal-2'
+  schedule:
+    - cron: '0 7-13 * * 1-5'
+  workflow_dispatch:
 
 concurrency:
-  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  group: dependabot-auto-merge
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   auto-merge:
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Auto-merge Dependabot PR into dev after required checks pass
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        id: app-token
+        with:
+          app-id: ${{ vars.CLIENT_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-checks: read
+          permission-statuses: read
+      - name: Require all Dependabot PRs to target main
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          other_branches=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" |
+            jq '[.[][] | select(.user.login == "dependabot[bot]" and .base.ref != "main") | .number]')
+          if [[ "$(jq 'length' <<< "$other_branches")" != 0 ]]; then
+            echo "::error::Close or retarget Dependabot PRs on old branches before enabling auto-merge."
+            jq '.' <<< "$other_branches"
+            exit 1
+          fi
+      - name: Automerge Dependabot PRs
+        uses: navikt/automerge-dependabot@09f5db3dd1413c6de20825c6b6c3e1cb682c92de # v1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          blackout-periods: "Sat,Sun,May 1,May 17,Dec 24-Jan 3"
+          semver-filter: 'major,patch,minor,unknown'
+          auto-approve: true
+          merge-method: squash
