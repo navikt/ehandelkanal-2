@@ -160,6 +160,124 @@ Fjern master fra PR-filteret etter overgangen.
 **Rød sone — forstå dette grundig:** delte fakturakilder, databaseoppstart, PR-rettigheter,
 gjenoppretting og prod-godkjenning. Bruk bare avtalte testdata i dev.
 
+## Alarmer i FSS
+
+Alarmene bruker `PrometheusRule`, som i okonomimodell-api, med egne filer for
+[dev-fss](.nais/prometheusrule-dev.yaml) og [prod-fss](.nais/prometheusrule-prod.yaml).
+Reglene bruker dagens simpleclient-metrikker, ikke Spring/Micrometer-navn fra referansen.
+Cluster, namespace og app avgrenses i uttrykkene. Resultatene samles per app, ikke per pod.
+
+**AlertmanagerConfig settes opp av andre og er ikke del av dette repo-oppsettet.**
+Følgende labels er avtalen med den som setter opp rutingen:
+
+| Label | Dev | Prod |
+|---|---|---|
+| `namespace` | `team-oebs` | `team-oebs` |
+| `app` | `ehandelkanal-2` | `ehandelkanal-2` |
+| `env` | `dev-fss` | `prod-fss` |
+| `alert_type` | `custom` | `custom` |
+
+`alert_type=custom` velger bort standardruten. **Uten en fungerende egendefinert rute
+kan reglene evaluere uten at noen får Slack-varsel.** AlertmanagerConfig må matche avtalen
+over og bruke `httpConfig.proxyUrl: http://webproxy.nais:8088` i `slackConfigs` for FSS.
+Avtal mottakere, reaksjonstid og hvem som følger opp varsler utenfor arbeidstid.
+Anbefalt gruppering er `namespace`, `app`, `env` og `alertname`, med `sendResolved: true`.
+Grupper retries og flere pods; ikke send ett Slack-varsel per logglinje. Vurder å dempe
+sekundære varsler når appen er utilgjengelig, men ikke skjul arkiverings- eller leveringsfeil.
+
+### Utrulling og aktivering
+
+Workflowen **Validate and deploy FSS alerts** validerer reglene på PR-er, også mot master
+under overgangen. Endringer i alarmfilene på main deployer automatisk til dev-fss.
+Prod krever manuell kjøring på main med `deploy_prod=true`, vellykket dev-deploy og godkjenning
+i `prod-fss:team-oebs`. Workflowen endrer bare alarmregler, ikke app eller AlertmanagerConfig.
+`WAIT=false` brukes fordi reglene ikke har en app-utrulling å vente på; deploy er ikke
+bekreftelse på at uttrykkene gir data eller at Slack-rutingen virker.
+
+Før aktivering må ansvarlig for rutingen kontrollere følgende i begge FSS-miljøene:
+
+- Verifiser faktiske `cluster`-, `namespace`- og `container`-labels i Grafana, og at alle
+  metrikknavnene i reglene finnes. Kontroller også `kube_pod_container_status_last_terminated_reason`.
+- Kontroller at det ikke allerede finnes tilsvarende regler for appen som gir dobbeltvarsling.
+- Kontroller regelstatus og prøv hele varslingskjeden med en avtalt testalarm, inkludert resolved.
+  Ikke stopp prod-appen eller fremprovoser en fakturafeil for å teste rutingen.
+- Se over terskler og konsekvens sammen med driftsansvarlig før prod godkjennes.
+
+Lokalt kjøres `bash .github/smoke/test-alerts.sh` med Ruby og `promtool` på PATH.
+En annen promtool-sti kan gis som første argument. CI henter en fast versjon med verifisert
+SHA-256. Testene dekker utløsning, ventetid, counter-reset, fravær av data, miljøskille og opphør.
+
+### Terskler og betydning
+
+Dette er startverdier som må justeres etter normal drift. Dev har lengre ventetid ved
+utilgjengelighet og manglende målinger for å tåle `Recreate` og Dependabot-testing.
+
+| Alarm | Utløsning | Prod | Dev |
+|---|---|---|---|
+| `EhandelkanalUnavailable` | Ingen tilgjengelige replikaer | critical etter 5 min | warning etter 15 min |
+| `EhandelkanalMetricsMissing` | JVM-heap-målingen er fraværende | warning etter 10 min | warning etter 20 min |
+| `EhandelkanalHeapPressure` | Heap over 85 % i 10 min | warning | warning |
+| `EhandelkanalRepeatedRestarts` | Mer enn 3 restarter siste time | warning | warning |
+| `EhandelkanalOomKilled` | OOMKilled og restart siste 10 min | critical | warning |
+| `EhandelkanalLegalArchiveFailed` | Arkiv-retries er brukt opp siste 10 min | critical | warning |
+| `EhandelkanalManualDeliveryFailed` | Levering til feilmappen feilet etter retries siste 10 min | critical | warning |
+| `EhandelkanalReportWriteFailed` | Rapportlagring feilet etter retries siste 10 min | warning | warning |
+| `EhandelkanalManualProcessing` | Feilruten har levert til manuell behandling siste 10 min | warning | warning |
+| `EhandelkanalXmlParsingFailed` | XML-tolkning ved rapportuttrekk feilet siste 10 min | warning | warning |
+
+Hendelsesalarmene utløses ved økning større enn null, uten ekstra `for`-ventetid.
+En permanent arkiveringsfeil skal ikke skjules av lav trafikk eller en prosentgrense.
+At slike alarmer går til resolved betyr bare at hendelsen har falt ut av tidsvinduet,
+**ikke** at dokumentet er rettet eller arkivert. Fravær av målinger påvirkes også av
+Prometheus sin lookback-periode; feil i selve alarmmotoren må overvåkes av plattformen.
+
+### Driftsrutiner for alarmer
+
+Start med miljø og tidsrom fra alarmen. Kontroller deployment og logger i riktig FSS-cluster,
+ikke en GCP-instans. Bruk godkjent logg-/fagsystem for å finne berørte meldinger.
+
+| Type feil | Kontroller og følg opp |
+|---|---|
+| Utilgjengelig, restart eller OOM | Deployment, pod-events og forrige container-logg. FTP-test og Vault-/DB-bakgrunnsjobber kan stoppe appen. Se på minne og dokumentstørrelser før ressursendring. |
+| Målinger mangler | Pod, `/internal/prometheus`, scrape-target og datakilde. JVM-målingen skal finnes også når det ikke kommer dokumenter. |
+| Juridisk arkiv | Finn manglende arkivering og avklar videre oppfølging. Appen kan ha fortsatt levering etter arkivfeilen. Dokumenter over 20 MB hopper normalt over arkivet og utløser ikke denne telleren. |
+| Manuell levering feilet | Kontroller FTP, rettigheter, kapasitet og faktisk innhold i manuellBehandling. Avklar om dokumentet fortsatt er ulest. |
+| Rapportlagring | Kontroller PostgreSQL, credentials-fornyelse og resultatet av feilruten. Retries kan ta lang tid før telleren økes. |
+| Manuell behandling / XML | Undersøk formatfeil og behandle dokumentet etter avtalt rutine. XML-telleren dekker ikke alle mulige XML-/SBDH-feil, og feil-telleren dekker ikke alle manuelle løp. |
+
+**Rød sone — forstå dette grundig:** Levering til FTP/MQ/arkiv og markering som lest er
+ikke én atomisk operasjon. Ikke marker dokumenter lest, send fakturaer på nytt eller start
+parallell behandling uten å ha avklart leveringsstatus og duplikatfare. Slack-varsler og
+metrikklabeller skal ikke inneholde XML, body, headers, fakturanummer, leverandørdata eller token.
+
+### Målinger og oppsett som fortsatt bør forbedres
+
+Første versjon endrer ikke behandlingslogikk, readiness eller eksisterende tellere.
+Den dekker derfor ikke hele fakturaflyten:
+
+- Mål vellykket polling, pågående arbeid, behandlingsfremdrift og restansealder. Varsle om
+  stillstand med arbeid som venter, ikke om lav trafikk alene. Terskler må ta høyde for store batcher.
+- Mål vedvarende nedlastingsfeil og feil ved markering som lest. Sistnevnte kan gi ny behandling
+  av allerede leverte dokumenter. Bruk faste integrasjons-/operasjonslabels, ikke meldings-ID-er.
+- Skill leveringsresultat for MQ, FTP, arkiv og manuell behandling. Dagens `messages_successful`
+  økes før lest-markering og i enkelte avviksløp; den er ikke et ende-til-ende-SLO.
+- Registrer meldingstellerne ved oppstart og vurder hvordan første feil skal fanges opp.
+  `Metrics` initialiseres i dag ved første bruk. `increase` krever minst to observasjoner og
+  kan ikke oppdage en feil som allerede inngår i første scrape eller skjer mellom scrapes før restart.
+- Instrumenter HikariCP, vedvarende Vault-fornyelsesfeil og HTTP-klientresultater før slike
+  regler legges til. Referansens `hikaricp_connections_pending`, `logback_events_total` og
+  Spring HTTP-metrikker finnes ikke automatisk her.
+- Avklar store kataloger: filskrivingen er kommentert ut i `Inbound.kt`, mens løypa logger
+  vellykket levering til filområde. Dette må avklares som forretningslogikk, ikke løses med alarmtekst.
+- Gjennomgå readiness etter asynkron DB-initialisering. Ikke gjør liveness avhengig av alle
+  eksterne tjenester; det kan gi restartstormer uten å rette integrasjonsfeilen.
+- Fjern unødvendig body-/header-logging før eventuelle loggbaserte alarmer innføres.
+
+Kilder: [Nais-regelreferanse](https://docs.nais.io/observability/alerting/reference/prometheusrule/),
+[egendefinert ruting og FSS-proxy](https://docs.nais.io/observability/alerting/how-to/prometheus-advanced/),
+[varslingsstrategi](https://docs.nais.io/observability/alerting/) og
+[referanserepoets alarmregler](https://github.com/navikt/okonomimodell-api/blob/df141c348781c59463158f6bdf6f328661195eec/.nais/prometheusrule-dev.yaml).
+
 ## Dokumentasjon
 Det eksisterer ingen dokumentasjon på tjenesten utover denne readme-filen, så det bør gjøres oppdateringer her 
 ved endring av funksjonalitet. 

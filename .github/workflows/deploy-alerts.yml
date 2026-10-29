@@ -1,0 +1,105 @@
+name: Validate and deploy FSS alerts
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  push:
+    branches:
+      - main
+    paths:
+      - .nais/prometheusrule-*.yaml
+      - .nais/tests/**
+      - .github/smoke/test-alerts.sh
+      - .github/workflows/deploy-alerts.yml
+  workflow_dispatch:
+    inputs:
+      deploy_prod:
+        description: Deploy production alert rules after approval
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alerts-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    name: Validate alert rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install verified promtool
+        env:
+          PROMETHEUS_VERSION: 3.15.1
+          PROMETHEUS_SHA256: 6a726885328ad9efebbf36e876ce2fb6225468a71fd1e7ce3ba666d5f4d97a84
+        run: |
+          archive="prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz"
+          curl --fail --silent --show-error --location \
+            "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/${archive}" \
+            --output "$RUNNER_TEMP/$archive"
+          echo "$PROMETHEUS_SHA256  $RUNNER_TEMP/$archive" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/promtool"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/promtool" --strip-components=1 \
+            "prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool"
+          echo "$RUNNER_TEMP/promtool" >> "$GITHUB_PATH"
+      - name: Test alert rules
+        run: bash .github/smoke/test-alerts.sh
+
+  deploy-dev:
+    name: Deploy alerts to dev-fss
+    needs: validate
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: dev-fss:team-oebs
+    concurrency:
+      group: ehandelkanal-2-alerts-dev-fss
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Require current main revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          current=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          [[ "$current" == "$GITHUB_SHA" ]] || { echo "::error::Main has advanced; deploy the current main revision instead"; exit 1; }
+      - uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        env:
+          CLUSTER: dev-fss
+          RESOURCE: .nais/prometheusrule-dev.yaml
+          ENVIRONMENT: dev-fss:team-oebs
+          WAIT: "false"
+          TIMEOUT: 5m
+
+  deploy-prod:
+    name: Deploy alerts to prod-fss
+    needs: [validate, deploy-dev]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.deploy_prod
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: prod-fss:team-oebs
+    concurrency:
+      group: ehandelkanal-2-alerts-prod-fss
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        env:
+          CLUSTER: prod-fss
+          RESOURCE: .nais/prometheusrule-prod.yaml
+          ENVIRONMENT: prod-fss:team-oebs
+          WAIT: "false"
+          TIMEOUT: 5m
