@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install verified promtool
         env:
           PROMETHEUS_VERSION: 3.15.1
@@ -66,14 +66,14 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Require current main revision
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           current=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
           [[ "$current" == "$GITHUB_SHA" ]] || { echo "::error::Main has advanced; deploy the current main revision instead"; exit 1; }
-      - uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+      - uses: nais/deploy/actions/deploy@3944168fd20b7eea3818e97de3810f74b54c78ff # v2
         env:
           CLUSTER: dev-fss
           RESOURCE: .nais/prometheusrule-dev.yaml
@@ -95,8 +95,8 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: nais/deploy/actions/deploy@3944168fd20b7eea3818e97de3810f74b54c78ff # v2
         env:
           CLUSTER: prod-fss
           RESOURCE: .nais/prometheusrule-prod.yaml
