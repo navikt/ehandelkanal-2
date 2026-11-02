@@ -1,0 +1,170 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ehandelkanal-2
+  namespace: team-oebs
+  labels:
+    team: team-oebs
+spec:
+  groups:
+    - name: ehandelkanal-2-dev-fss
+      rules:
+        - alert: EhandelkanalUnavailable
+          expr: max(kube_deployment_status_replicas_available{cluster="dev-fss", namespace="team-oebs", deployment="ehandelkanal-2"}) == 0
+          for: 15m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "Ehandelkanal har ingen tilgjengelige replikaer i dev."
+            consequence: "Mottak og videresending kan være stanset."
+            action: "Kontroller pågående main-/Dependabot-deploy, pods og oppstartslogger. Ikke start manuell reprosessering."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
+
+        - alert: EhandelkanalMetricsMissing
+          expr: sum(absent(jvm_memory_bytes_used{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2", area="heap"})) > 0
+          for: 20m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "JVM-målinger fra ehandelkanal mangler i dev."
+            consequence: "Alarmene kan ikke bekrefte at appen fungerer. Manglende data betyr ikke at alt er i orden."
+            action: "Kontroller deployment, /internal/prometheus, scrape-target og datakilde. Avklar om feilen gjelder flere apper."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
+
+        - alert: EhandelkanalHeapPressure
+          expr: |
+            max(
+              jvm_memory_bytes_used{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2", area="heap"}
+              /
+              (jvm_memory_bytes_max{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2", area="heap"} > 0)
+            ) > 0.85
+          for: 10m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "JVM-heap har vært over 85 % i 10 minutter."
+            consequence: "Store dokumenter eller minnepress kan stanse behandlingen."
+            action: "Se på heap, GC, dokumentstørrelser og container-minne. Undersøk årsaken før minnegrensen eventuelt økes."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
+
+        - alert: EhandelkanalRepeatedRestarts
+          expr: sum(increase(kube_pod_container_status_restarts_total{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2"}[1h])) > 3
+          for: 0m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "Ehandelkanal har restartet mer enn tre ganger siste time."
+            consequence: "Behandlingen er ustabil. Pågående meldinger kan bli forsøkt på nytt."
+            action: "Kontroller termination reason, forrige pod-logg, FTP-tilkobling og Vault-/DB-fornyelse."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
+
+        - alert: EhandelkanalOomKilled
+          expr: |
+            max(
+              (kube_pod_container_status_last_terminated_reason{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2", reason="OOMKilled"} == 1)
+              and on (cluster, namespace, pod, container)
+              (increase(kube_pod_container_status_restarts_total{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2"}[10m]) > 0)
+            ) > 0
+          for: 0m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "Ehandelkanal er drept av containerens minnegrense."
+            consequence: "Pågående behandling ble avbrutt og kan bli forsøkt på nytt."
+            action: "Undersøk dokumentstørrelse, heap og native minne. Kontroller leveringsstatus før meldinger eventuelt behandles på nytt."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
+
+        - alert: EhandelkanalLegalArchiveFailed
+          expr: sum(increase(ehandelkanal_2_exhausted_deliveries_legalarchive_total{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2"}[10m])) > 0
+          for: 0m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "Dokument kunne ikke lagres i juridisk arkiv etter alle forsøk."
+            consequence: "Videre behandling kan ha fortsatt uten arkivering."
+            action: "Undersøk juridisk arkiv og hvilke leveranser som mangler arkivering. Ikke send fakturaen på nytt uten å avklare duplikatfare."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
+
+        - alert: EhandelkanalManualDeliveryFailed
+          expr: sum(increase(ehandelkanal_2_exhausted_deliveries_errorhandler_total{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2"}[10m])) > 0
+          for: 0m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "Feilbehandling feilet: dokument kunne ikke leveres til manuellBehandling."
+            consequence: "Dokumentet kan bli liggende ubehandlet og forsøkes igjen ved senere polling."
+            action: "Kontroller FTP, tilgang og kapasitet i manuellBehandling. Avklar faktisk leverings- og lest-status før inngrep."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
+
+        - alert: EhandelkanalReportWriteFailed
+          expr: sum(increase(ehandelkanal_2_exhausted_deliveries_report_total{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2"}[10m])) > 0
+          for: 0m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "Rapportdata kunne ikke lagres etter alle forsøk."
+            consequence: "Rapporten kan være ufullstendig, og dokumentet kan ha gått til manuell behandling."
+            action: "Kontroller PostgreSQL, Vault-fornyelse og feilhåndteringen for dokumentet."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
+
+        - alert: EhandelkanalManualProcessing
+          expr: sum(increase(ehandelkanal_2_messages_failed_total{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2"}[10m])) > 0
+          for: 0m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "Dokument er levert til manuell behandling etter en behandlingsfeil."
+            consequence: "Automatisk behandling er ikke fullført. Telleren bekrefter ikke at noen har behandlet dokumentet manuelt."
+            action: "Finn årsaken og følg opp manuellBehandling. Dette er ikke en totalmåling av alle manuelle løp."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
+
+        - alert: EhandelkanalXmlParsingFailed
+          expr: sum(increase(ehandelkanal_2_xml_parsing_errors_total{cluster="dev-fss", namespace="team-oebs", container="ehandelkanal-2"}[10m])) > 0
+          for: 0m
+          labels:
+            namespace: team-oebs
+            app: ehandelkanal-2
+            env: dev-fss
+            alert_type: custom
+            severity: warning
+          annotations:
+            summary: "XML kunne ikke tolkes ved uthenting av rapportdata."
+            consequence: "Dokumentet kan ha blitt sendt til manuell behandling."
+            action: "Undersøk dokumentformat og schema i godkjent verktøy. Ikke legg XML eller fakturadata i Slack."
+            runbook_url: https://github.com/navikt/ehandelkanal-2#driftsrutiner-for-alarmer
