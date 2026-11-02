@@ -162,72 +162,25 @@ gjenoppretting og prod-godkjenning. Bruk bare avtalte testdata i dev.
 
 ## Alarmer i FSS
 
-Alarmene bruker `PrometheusRule`, som i okonomimodell-api, med egne filer for
-[dev-fss](.nais/prometheusrule-dev.yaml) og [prod-fss](.nais/prometheusrule-prod.yaml).
-Reglene bruker dagens simpleclient-metrikker, ikke Spring/Micrometer-navn fra referansen.
-Cluster, namespace og app avgrenses i uttrykkene. Resultatene samles per app, ikke per pod.
+[oebs-alerts](https://github.com/navikt/oebs-alerts) har ansvar for alarmregler,
+terskler, AlertmanagerConfig, Slack-ruting, tester, validering og deploy i dev-fss og prod-fss.
+Endringer i alarmoppsettet gjøres der, ikke i app-repoet. Driftsrutiner og oppfølging av
+varsler beskrives nedenfor.
 
-**AlertmanagerConfig settes opp av andre og er ikke del av dette repo-oppsettet.**
-Følgende labels er avtalen med den som setter opp rutingen:
+Appen eksponerer fortsatt simpleclient-metrikker på `/internal/prometheus`.
+Instrumentering og appens build/deploy, inkludert `deploy_prod`, forvaltes i dette repoet.
 
-| Label | Dev | Prod |
-|---|---|---|
-| `namespace` | `team-oebs` | `team-oebs` |
-| `app` | `ehandelkanal-2` | `ehandelkanal-2` |
-| `env` | `dev-fss` | `prod-fss` |
-| `alert_type` | `custom` | `custom` |
+### Overføring av alarmansvar
 
-`alert_type=custom` velger bort standardruten. **Uten en fungerende egendefinert rute
-kan reglene evaluere uten at noen får Slack-varsel.** AlertmanagerConfig må matche avtalen
-over og bruke `httpConfig.proxyUrl: http://webproxy.nais:8088` i `slackConfigs` for FSS.
-Avtal mottakere, reaksjonstid og hvem som følger opp varsler utenfor arbeidstid.
-Anbefalt gruppering er `namespace`, `app`, `env` og `alertname`, med `sendResolved: true`.
-Grupper retries og flere pods; ikke send ett Slack-varsel per logglinje. Vurder å dempe
-sekundære varsler når appen er utilgjengelig, men ikke skjul arkiverings- eller leveringsfeil.
+Overtakelsen i dev-fss og prod-fss er bekreftet av ansvarlig:
+reglene evaluerer med reelle data, og firing/resolved når riktig mottaker.
+Gamle alarmkjøringer er avklart. Alarmvalidering håndheves i oebs-alerts.
+Oppryddingen i Git skal ikke slette installerte alarm- eller rutingsressurser i clusterne.
 
-### Utrulling og aktivering
+### Betydningen av varsler
 
-Workflowen **Validate and deploy FSS alerts** validerer reglene på PR-er, også mot master
-under overgangen. Endringer i alarmfilene på main deployer automatisk til dev-fss.
-Prod krever manuell kjøring på main med `deploy_prod=true`, vellykket dev-deploy og godkjenning
-i `prod-fss:team-oebs`. Workflowen endrer bare alarmregler, ikke app eller AlertmanagerConfig.
-`WAIT=false` brukes fordi reglene ikke har en app-utrulling å vente på; deploy er ikke
-bekreftelse på at uttrykkene gir data eller at Slack-rutingen virker.
-
-Før aktivering må ansvarlig for rutingen kontrollere følgende i begge FSS-miljøene:
-
-- Verifiser faktiske `cluster`-, `namespace`- og `container`-labels i Grafana, og at alle
-  metrikknavnene i reglene finnes. Kontroller også `kube_pod_container_status_last_terminated_reason`.
-- Kontroller at det ikke allerede finnes tilsvarende regler for appen som gir dobbeltvarsling.
-- Kontroller regelstatus og prøv hele varslingskjeden med en avtalt testalarm, inkludert resolved.
-  Ikke stopp prod-appen eller fremprovoser en fakturafeil for å teste rutingen.
-- Se over terskler og konsekvens sammen med driftsansvarlig før prod godkjennes.
-
-Lokalt kjøres `bash .github/smoke/test-alerts.sh` med Ruby og `promtool` på PATH.
-En annen promtool-sti kan gis som første argument. CI henter en fast versjon med verifisert
-SHA-256. Testene dekker utløsning, ventetid, counter-reset, fravær av data, miljøskille og opphør.
-
-### Terskler og betydning
-
-Dette er startverdier som må justeres etter normal drift. Dev har lengre ventetid ved
-utilgjengelighet og manglende målinger for å tåle `Recreate` og Dependabot-testing.
-
-| Alarm | Utløsning | Prod | Dev |
-|---|---|---|---|
-| `EhandelkanalUnavailable` | Ingen tilgjengelige replikaer | critical etter 5 min | warning etter 15 min |
-| `EhandelkanalMetricsMissing` | JVM-heap-målingen er fraværende | warning etter 10 min | warning etter 20 min |
-| `EhandelkanalHeapPressure` | Heap over 85 % i 10 min | warning | warning |
-| `EhandelkanalRepeatedRestarts` | Mer enn 3 restarter siste time | warning | warning |
-| `EhandelkanalOomKilled` | OOMKilled og restart siste 10 min | critical | warning |
-| `EhandelkanalLegalArchiveFailed` | Arkiv-retries er brukt opp siste 10 min | critical | warning |
-| `EhandelkanalManualDeliveryFailed` | Levering til feilmappen feilet etter retries siste 10 min | critical | warning |
-| `EhandelkanalReportWriteFailed` | Rapportlagring feilet etter retries siste 10 min | warning | warning |
-| `EhandelkanalManualProcessing` | Feilruten har levert til manuell behandling siste 10 min | warning | warning |
-| `EhandelkanalXmlParsingFailed` | XML-tolkning ved rapportuttrekk feilet siste 10 min | warning | warning |
-
-Hendelsesalarmene utløses ved økning større enn null, uten ekstra `for`-ventetid.
-En permanent arkiveringsfeil skal ikke skjules av lav trafikk eller en prosentgrense.
-At slike alarmer går til resolved betyr bare at hendelsen har falt ut av tidsvinduet,
+Se oebs-alerts for gjeldende alarmuttrykk, terskler og ventetider.
+At en hendelsesalarm går til resolved betyr at hendelsen har falt ut av regelens tidsvindu,
 **ikke** at dokumentet er rettet eller arkivert. Fravær av målinger påvirkes også av
 Prometheus sin lookback-periode; feil i selve alarmmotoren må overvåkes av plattformen.
 
@@ -235,6 +188,10 @@ Prometheus sin lookback-periode; feil i selve alarmmotoren må overvåkes av pla
 
 Start med miljø og tidsrom fra alarmen. Kontroller deployment og logger i riktig FSS-cluster,
 ikke en GCP-instans. Bruk godkjent logg-/fagsystem for å finne berørte meldinger.
+Avtal mottakere, reaksjonstid og hvem som følger opp varsler utenfor arbeidstid.
+Ved manglende Slack-varsler kontrollerer alarmansvarlig regler og ruting i oebs-alerts.
+Prøv varslingskjeden med en avtalt testalarm, inkludert resolved; ikke stopp prod-appen
+eller fremprovoser en fakturafeil for å teste rutingen.
 
 | Type feil | Kontroller og følg opp |
 |---|---|
@@ -252,8 +209,8 @@ metrikklabeller skal ikke inneholde XML, body, headers, fakturanummer, leverand�
 
 ### Målinger og oppsett som fortsatt bør forbedres
 
-Første versjon endrer ikke behandlingslogikk, readiness eller eksisterende tellere.
-Den dekker derfor ikke hele fakturaflyten:
+Alarmoppsettet er avhengig av appens målinger, som ikke dekker hele fakturaflyten.
+Følgende forbedringer må vurderes i app-repoet og samordnes med alarmreglene i oebs-alerts:
 
 - Mål vellykket polling, pågående arbeid, behandlingsfremdrift og restansealder. Varsle om
   stillstand med arbeid som venter, ikke om lav trafikk alene. Terskler må ta høyde for store batcher.
@@ -272,11 +229,6 @@ Den dekker derfor ikke hele fakturaflyten:
 - Gjennomgå readiness etter asynkron DB-initialisering. Ikke gjør liveness avhengig av alle
   eksterne tjenester; det kan gi restartstormer uten å rette integrasjonsfeilen.
 - Fjern unødvendig body-/header-logging før eventuelle loggbaserte alarmer innføres.
-
-Kilder: [Nais-regelreferanse](https://docs.nais.io/observability/alerting/reference/prometheusrule/),
-[egendefinert ruting og FSS-proxy](https://docs.nais.io/observability/alerting/how-to/prometheus-advanced/),
-[varslingsstrategi](https://docs.nais.io/observability/alerting/) og
-[referanserepoets alarmregler](https://github.com/navikt/okonomimodell-api/blob/df141c348781c59463158f6bdf6f328661195eec/.nais/prometheusrule-dev.yaml).
 
 ## Dokumentasjon
 Det eksisterer ingen dokumentasjon på tjenesten utover denne readme-filen, så det bør gjøres oppdateringer her 
