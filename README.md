@@ -187,12 +187,16 @@ sekundære varsler når appen er utilgjengelig, men ikke skjul arkiverings- elle
 
 ### Utrulling og aktivering
 
-Workflowen **Validate and deploy FSS alerts** validerer reglene på PR-er, også mot master
-under overgangen. Endringer i alarmfilene på main deployer automatisk til dev-fss.
-Prod krever manuell kjøring på main med `deploy_prod=true`, vellykket dev-deploy og godkjenning
-i `prod-fss:team-oebs`. Workflowen endrer bare alarmregler, ikke app eller AlertmanagerConfig.
-`WAIT=false` brukes fordi reglene ikke har en app-utrulling å vente på; deploy er ikke
-bekreftelse på at uttrykkene gir data eller at Slack-rutingen virker.
+Workflowen **Validate FSS alerts** beholder **Validate alert rules** på PR-er,
+også mot master under overgangen. Alarm-deployjobbene og valget `deploy_prod` er fjernet
+fra denne workflowen. Main-push og manuell kjøring validerer bare alarmreglene.
+Appens build- og deploy-workflow, inkludert dens `deploy_prod`-valg, er uendret.
+
+Alarm-deploy flyttes til [oebs-alerts](https://github.com/navikt/oebs-alerts).
+Dev-ruting og firing/resolved-leveranse er bekreftet der; prod-overtakelsen må verifiseres
+separat før gamle alarmfiler og tester fjernes. Behold required check **Validate alert rules**
+så lenge valideringsjobben finnes. Endringen gjelder nye kjøringer som bruker den oppdaterte
+workflowen; avklar eldre pågående kjøringer før overtakelsen.
 
 Før aktivering må ansvarlig for rutingen kontrollere følgende i begge FSS-miljøene:
 

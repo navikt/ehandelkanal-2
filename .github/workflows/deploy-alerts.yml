@@ -1,4 +1,4 @@
-name: Validate and deploy FSS alerts
+name: Validate FSS alerts
 
 on:
   pull_request:
@@ -14,12 +14,6 @@ on:
       - .github/smoke/test-alerts.sh
       - .github/workflows/deploy-alerts.yml
   workflow_dispatch:
-    inputs:
-      deploy_prod:
-        description: Deploy production alert rules after approval
-        required: true
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -51,55 +45,3 @@ jobs:
           echo "$RUNNER_TEMP/promtool" >> "$GITHUB_PATH"
       - name: Test alert rules
         run: bash .github/smoke/test-alerts.sh
-
-  deploy-dev:
-    name: Deploy alerts to dev-fss
-    needs: validate
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    environment: dev-fss:team-oebs
-    concurrency:
-      group: ehandelkanal-2-alerts-dev-fss
-      cancel-in-progress: false
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Require current main revision
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          current=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
-          [[ "$current" == "$GITHUB_SHA" ]] || { echo "::error::Main has advanced; deploy the current main revision instead"; exit 1; }
-      - uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
-        env:
-          CLUSTER: dev-fss
-          RESOURCE: .nais/prometheusrule-dev.yaml
-          ENVIRONMENT: dev-fss:team-oebs
-          WAIT: "false"
-          TIMEOUT: 5m
-
-  deploy-prod:
-    name: Deploy alerts to prod-fss
-    needs: [validate, deploy-dev]
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.deploy_prod
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    environment: prod-fss:team-oebs
-    concurrency:
-      group: ehandelkanal-2-alerts-prod-fss
-      cancel-in-progress: false
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
-        env:
-          CLUSTER: prod-fss
-          RESOURCE: .nais/prometheusrule-prod.yaml
-          ENVIRONMENT: prod-fss:team-oebs
-          WAIT: "false"
-          TIMEOUT: 5m
