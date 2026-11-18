@@ -40,7 +40,7 @@ jobs:
             exit 1
           fi
       - name: Automerge Dependabot PRs
-        uses: navikt/automerge-dependabot@09f5db3dd1413c6de20825c6b6c3e1cb682c92de # v1
+        uses: navikt/automerge-dependabot@2c57e8fdb262ad558901e1242c89b19346e3a7a1 # v1
         with:
           token: ${{ steps.app-token.outputs.token }}
           blackout-periods: "Sat,Sun,May 1,May 17,Dec 24-Jan 3"
