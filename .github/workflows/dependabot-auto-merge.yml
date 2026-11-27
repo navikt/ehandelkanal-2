@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
         id: app-token
         with:
           app-id: ${{ vars.CLIENT_ID }}
@@ -40,7 +40,7 @@ jobs:
             exit 1
           fi
       - name: Automerge Dependabot PRs
-        uses: navikt/automerge-dependabot@09f5db3dd1413c6de20825c6b6c3e1cb682c92de # v1
+        uses: navikt/automerge-dependabot@69852d2204654904759e85f88f4a45bbf8854905 # v1
         with:
           token: ${{ steps.app-token.outputs.token }}
           blackout-periods: "Sat,Sun,May 1,May 17,Dec 24-Jan 3"
